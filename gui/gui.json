@@ -1,0 +1,25 @@
+{
+    "db_uri"           : "postgresql://gmd:gmd@uhura:5432/gmd",
+    "conn_strg"        : "host=uhura port=5432 dbname=gmd user=gmd password=gmd target_session_attrs=read-write",
+    "debug_value-list" :
+    [
+        { "debug" : "off"     }, 
+        { "debug" : "read"    }, 
+        { "debug" : "write"   },
+        { "debug" : "all"     },
+        { "debug" : "verbose" }
+    ],
+    "debug"                  : "all",
+    "text.width"             :  30,
+    "integer.width"          :  10,
+    "bigint.width"           :  10,
+    "date.width"             :  10,
+    "double precision.width" :  10,
+    "character.width"        :  10,
+    "run.mode-list":
+    [
+        { "run.mode"  : "normal" },
+        { "run.mode"  : "dry"    }
+    ],
+    "run.mode"               : "normal"
+}

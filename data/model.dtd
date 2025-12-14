@@ -1,0 +1,138 @@
+<!ENTITY % BOOL    "YES|NO">
+<!ENTITY % ACTION  "create|alter">
+
+
+<!ELEMENT model (tablespaces?,schemas?,domains?,sequences?,tables?,references?,metadata?)>
+<!ATTLIST model  project  CDATA  #REQUIRED
+                 version  CDATA  #REQUIRED>
+
+<!ELEMENT tablespaces (tablespace+)>
+
+<!ELEMENT tablespace (location,comment?)>
+<!ATTLIST tablespace  name    CDATA       #REQUIRED
+                      action  (%ACTION;)  #REQUIRED>
+
+
+<!ELEMENT schemas (schema+)>
+
+<!ELEMENT schema (comment?)>
+<!ATTLIST schema name       CDATA       #REQUIRED
+                 auto       (%BOOL;)    #REQUIRED
+                 action     (%ACTION;)  #REQUIRED>
+
+<!ELEMENT domains (domain+)>
+
+<!ELEMENT domain (size?,constraint?,default?,comment?)>
+<!ATTLIST domain name      CDATA      #REQUIRED
+                 schema    CDATA      #REQUIRED
+                 type      CDATA      #REQUIRED
+                 nullable  (%BOOL;)   #REQUIRED
+                 action    (%ACTION;) #REQUIRED>
+
+<!ELEMENT sequences (sequence+)>
+
+<!ELEMENT sequence (config?,comment?)>
+<!ATTLIST sequence name    CDATA       #REQUIRED
+                   schema  CDATA       #REQUIRED
+                   type    CDATA       #REQUIRED
+                   action  (%ACTION;)  #REQUIRED>
+
+<!ELEMENT tables (table+)>
+
+<!ELEMENT table (columns,unique?,primary,triggers?,comment?)>
+<!ATTLIST table name        CDATA      #REQUIRED
+                schema      CDATA      #REQUIRED
+                tablespace  CDATA      #REQUIRED
+                auto        (%BOOL;)   #REQUIRED
+                action      (%ACTION;) #REQUIRED>
+
+<!ELEMENT location (#PCDATA)>
+
+<!ELEMENT comment (#PCDATA)>
+
+<!ELEMENT config EMPTY>
+<!ATTLIST config start        CDATA #REQUIRED
+                 min          CDATA #REQUIRED
+                 max          CDATA #REQUIRED
+                 increment    CDATA #REQUIRED
+                 cycle        CDATA #REQUIRED>
+
+<!ELEMENT default (#PCDATA)>
+
+<!ELEMENT constraint (value+)>
+<!ATTLIST constraint name     CDATA    #REQUIRED
+                     type     (any)    #REQUIRED>
+
+<!ELEMENT size (#PCDATA)>
+
+<!ELEMENT value (#PCDATA)>
+
+<!ELEMENT columns (column+)>
+
+<!ELEMENT column (size?,default?,comment?)>
+<!ATTLIST column name     CDATA      #REQUIRED
+                 type     CDATA      #REQUIRED
+                 nullable (%BOOL;)   #REQUIRED
+                 auto     (%BOOL;)   #REQUIRED
+                 action   (%ACTION;) #REQUIRED>
+
+<!ELEMENT primary (key+)>
+<!ATTLIST primary name CDATA #REQUIRED>
+
+<!ELEMENT unique (key+)>
+<!ATTLIST unique name CDATA #REQUIRED>
+
+<!ELEMENT key (#PCDATA)>
+
+<!ELEMENT references (reference+)>
+
+<!ELEMENT reference (source,target,foreign)>
+<!ATTLIST reference name     CDATA      #REQUIRED
+                    action   (%ACTION;) #REQUIRED>
+
+<!ELEMENT source EMPTY>
+<!ATTLIST source schema CDATA   #REQUIRED
+                 table  CDATA   #REQUIRED>
+
+<!ELEMENT target EMPTY>
+<!ATTLIST target schema CDATA   #REQUIRED
+                 table  CDATA   #REQUIRED>
+
+<!ELEMENT foreign (key+)>
+
+
+<!ELEMENT triggers  (trigger+)>
+
+<!ELEMENT trigger  (definition,(fields|function))>
+<!ATTLIST trigger table-name     CDATA #REQUIRED
+                  trigger-name   CDATA #REQUIRED
+                  function-name  CDATA #REQUIRED>
+
+<!ELEMENT fields  (field+)>
+
+<!ELEMENT field  EMPTY>
+<!ATTLIST field name CDATA    #REQUIRED
+                hist (%BOOL;) #REQUIRED>
+
+<!ELEMENT definition  (statement,column-list)>
+<!ATTLIST definition  action (insert|update|delete)  #REQUIRED
+                      level  (row|statement)         #REQUIRED
+                      timing (before|after)          #REQUIRED>
+
+<!ELEMENT statement (#PCDATA)>
+
+<!ELEMENT column-list (#PCDATA)>
+
+<!ELEMENT function (#PCDATA)>
+
+<!ELEMENT metadata (table,insert,commit)>
+
+<!ELEMENT insert  (project,version)>
+<!ATTLIST insert  schema  CDATA  #REQUIRED
+                  table   CDATA  #REQUIRED>
+
+<!ELEMENT project (#PCDATA)>
+
+<!ELEMENT version (#PCDATA)>
+
+<!ELEMENT commit EMPTY>

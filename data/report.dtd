@@ -1,0 +1,6 @@
+<!ELEMENT report (table+)>
+
+<!ELEMENT table (reference*)>
+<!ATTLIST table name        CDATA    #REQUIRED>
+
+<!ELEMENT reference (table)>
