@@ -1,0 +1,14 @@
+<?xml version='1.0'?>
+<!DOCTYPE project SYSTEM 'project.dtd'>
+<project>
+  <item name="tablespace-root" value="/var/lib/postgresql/18"/>
+  <item name="valid-from"      value="gueltig_ab"/>
+  <item name="valid-to"        value="gueltig_bis"/>
+  <item name="base"            value="base_{}"         info="writable"/>
+  <item name="dim"             value="dim_{}"          info="writable"/>
+  <item name="fact"            value="fakt_{}"         info="writable"/>
+  <item name="hist"            value="hist_{}"         info="readable"/>
+  <item name="id-type"         value="integer"         info="sequence"/>
+  <item name="id-max"          value="2147483647"      info="sequence"/>
+</project>
+  
