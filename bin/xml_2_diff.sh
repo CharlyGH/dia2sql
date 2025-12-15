@@ -74,11 +74,12 @@ fi
 
 XML_2_DIFF="${LIB_DIR}/xml_2_diff.xslt"
 
-EMPTY_DELTA="${DATA_DIR}/delta.xml"
+EMPTY_DELTA="${XML_DIR}/delta.xml"
 
 xslt_params=""
 xslt_params="${xslt_params} --stringparam oldfile ${oldinputfile}"
 xslt_params="${xslt_params} --stringparam newfile ${newinputfile}"
+xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_DIFF} ${EMPTY_DELTA} ${outputfile}"
@@ -89,7 +90,7 @@ ret="$?"
 #set -x
 if [[ -n "${check}" ]] ; then
     [[ -n "${verbose}" ]] && echo "xmllint --valid --noout ${outputfile}"
-    xmllint --valid --noout "${outputfile}"
+    xmllint --valid --noout --path "${DTD_DIR}" "${outputfile}"
     ret="$?"
 fi
 

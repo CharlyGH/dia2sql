@@ -132,7 +132,7 @@ if [[ -n "${check}" ]] ; then
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
 
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -f "${inputfile}" -o "${tempchk}" 
+    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -o "${tempchk}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" "1"
 #    cat "${tempchk}"

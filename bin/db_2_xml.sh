@@ -78,7 +78,7 @@ DB_2_MD="${LIB_DIR}/db_2_md.tpl"
 
 DB_DAT_2_XML="${LIB_DIR}/db_dat_2_xml.awk"
 
-PROJECT_XML="${DATA_DIR}/project.xml"
+PROJECT_XML="${XML_DIR}/project.xml"
 PROJECT_XML_2_DAT="${LIB_DIR}/project.xslt"
 
 XML_2_DAT="${LIB_DIR}/project.xslt"
@@ -221,7 +221,7 @@ db_version="v${infoline#*:}"
 
 echo "exporting version ${db_version} of project ${db_project}"
 
-[[ -z "${outputfile}" ]] && outputfile="${DATA_DIR}/${project}_db_${db_version}.xml"
+[[ -z "${outputfile}" ]] && outputfile="${XML_DIR}/${project}_db_${db_version}.xml"
 
 
 awk_params=""

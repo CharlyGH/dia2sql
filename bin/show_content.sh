@@ -74,7 +74,7 @@ name="${name##*/}"
 [[ -z "${level}" ]] && error_exit "missing -a, -c, -t or -s option" "${USAGE}" 1
 
 
-xslt_params="--stringparam level ${level} --path ${DATA_DIR}"
+xslt_params="--stringparam level ${level} --path ${DTD_DIR}"
 
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XSLT_SCRIPT} ${input}"
 xsltproc ${xslt_params} "${XSLT_SCRIPT}" "${input}"

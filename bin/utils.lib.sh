@@ -40,21 +40,27 @@ function format_gen()
 ROOT_DIR="${BIN_DIR%/*}"
 FULL_BIN_DIR="${ROOT_DIR}/bin"
 FULL_DATA_DIR="${ROOT_DIR}/data"
+FULL_DIA_DIR="${ROOT_DIR}/dia"
+FULL_DTD_DIR="${ROOT_DIR}/dtd"
 FULL_LIB_DIR="${ROOT_DIR}/lib"
 FULL_OUT_DIR="${ROOT_DIR}/out"
 FULL_SQL_DIR="${ROOT_DIR}/sql"
 FULL_TEMP_DIR="${ROOT_DIR}/temp"
+FULL_XML_DIR="${ROOT_DIR}/xml"
 
 PWD="$(pwd)/"
 
 BIN_DIR="${FULL_BIN_DIR/${PWD}/}"
 DATA_DIR="${FULL_DATA_DIR/${PWD}/}"
+DIA_DIR="${FULL_DIA_DIR/${PWD}/}"
+DTD_DIR="${FULL_DTD_DIR/${PWD}/}"
 LIB_DIR="${FULL_LIB_DIR/${PWD}/}"
 OUT_DIR="${FULL_OUT_DIR/${PWD}/}"
 SQL_DIR="${FULL_SQL_DIR/${PWD}/}"
 TEMP_DIR="${FULL_TEMP_DIR/${PWD}/}"
+XML_DIR="${FULL_XML_DIR/${PWD}/}"
 
-FULL_PROJECT_FILE="${FULL_DATA_DIR}/project.xml"
+FULL_PROJECT_FILE="${FULL_XML_DIR}/project.xml"
 
-PROJECT_FILE="${DATA_DIR}/project.xml"
+PROJECT_FILE="${XML_DIR}/project.xml"
 

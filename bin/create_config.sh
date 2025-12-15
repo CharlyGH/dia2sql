@@ -52,7 +52,7 @@ done
 [[ ! -r "${inputfile}" ]] && error_exit "cannot open inputfile ${inputfile}"  "" 1
 
 
-[[ -z "${projectfile}" ]] && projectfile="${DATA_DIR}/project.xml"
+[[ -z "${projectfile}" ]] && projectfile="${XML_DIR}/project.xml"
 [[ ! -r "${projectfile}" ]] && error_exit "cannot open projectfile ${projectfile}"  "" 1
 
 temp="${inputfile##*/}"
@@ -61,9 +61,10 @@ temp="${temp%.*}"
 
 basename="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
 [[ -z "${basename}" ]] && basename="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/delta/@project")"
-[[ -z "${basename}" ]] && error_exit "no project name in "${inputfile}"
+[[ -z "${basename}" ]] && error_exit "no project name in ${inputfile}"
 
 xslt_params="--stringparam basename ${basename}" 
+xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XSLT_SCRIPT} ${projectfile} ${outputfile}"
 xsltproc ${xslt_params} "${XSLT_SCRIPT}" "${projectfile}" >"${outputfile}"

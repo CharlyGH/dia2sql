@@ -51,7 +51,7 @@ XSLT_SCRIPT="${LIB_DIR}/${ME%.*}.xslt"
 
 [[ ! -f "${XSLT_SCRIPT}" ]] && error_exit "cannot open script file ${XSLT_SCRIPT}" "" 1
 
-xsltproc --path "${DATA_DIR}" --stringparam path "${path}" "${XSLT_SCRIPT}" "${inputfile}"
+xsltproc --path "${DTD_DIR}" --stringparam path "${path}" "${XSLT_SCRIPT}" "${inputfile}"
 ret="$?"
 
 [[ "${ret}" != "0" ]] && error_exit "error in script ${XSLT_SCRIPT} applied to file ${inputfile}" "" 1

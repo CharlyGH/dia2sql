@@ -113,7 +113,7 @@ ret=""
 if [[ -n "${gendot}" ]] ; then
     tempd="${TEMP_DIR}/${name}.dot"
 
-    xslt_params="--path ${DATA_DIR}"
+    xslt_params="--path ${DTD_DIR}"
     [[ -n "${debug}" ]] && xslt_params="${xslt_params} --stringparam debug 1"
     [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_DOT} ${input} ${tempd}"
     xsltproc ${xslt_params} "${XML_2_DOT}" "${input}" > "${tempd}"
@@ -126,7 +126,7 @@ if [[ -n "${genlout}" ]] ; then
     templu="${TEMP_DIR}/${name}.lout.utf"
     templ="${TEMP_DIR}/${name}.lout"
    
-    xslt_params="--path ${DATA_DIR}"
+    xslt_params="--path ${DTD_DIR}"
     [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_LOUT} ${input} ${templu}"
     xsltproc ${xslt_params} "${XML_2_LOUT}" "${input}" > "${templu}"
     ret="$?"

@@ -10,12 +10,12 @@ source "${BIN_DIR}/utils.lib.sh"
 
 XML_2_REP="${LIB_DIR}/xml_2_rep_xml.xslt"
 
-USAGE="usage: ${ME} -b basename [-c] [-f filename] [-p projectfile] [-s schema] [-t table] [-k] [-v]"
+USAGE="usage: ${ME} -i inputfile [-c] [-o outputfile] [-p projectfile] [-s schema] [-t table] [-k] [-v]"
 HELP="${USAGE}
-    -b basename     basename for schemas and tablespaces
     -c check        check the xml output file
-    -f filename     name of input file, default is basename.xml in ${DATA_DIR}
+    -i inputfile    name of input file
     -k keep         keep, do not delete temp files
+    -o outputfile   name of output file, default is inputfile with extension .rep.xml 
     -p projectfile  configuration file for historization, default is ${PROJECT_FILE}
     -s schema       only this schema
     -t table        only this table
@@ -23,33 +23,33 @@ HELP="${USAGE}
 "
 
 
-basename=""
 check=""
-filename=""
+inputfile=""
 keep=""
+outputfile=""
 projectfile="${PROJECT_FILE}"
 schema="all"
 table="all"
 verbose=""
 
-while getopts "b:cf:hkp:s:t:v" OPT
+while getopts "chi:ko:p:s:t:v" OPT
 do
     case ${OPT} in
-      b)
-          basename="${OPTARG}"
-          ;;
-      c)
+
           check="1"
-          ;;
-      f)
-          file="${OPTARG}"
           ;;
       h)
           echo "${HELP}"
           exit 0
           ;;
+      i)
+          inputfile="${OPTARG}"
+          ;;
       k)
           keep="1"
+          ;;
+      o)
+          outputfile="${OPTARG}"
           ;;
       p)
           projectfile="${OPTARG}"
@@ -70,36 +70,33 @@ do
 done
 
 #set -x
-[[ -z "${basename}" ]] && error_exit "missing -b basename option" "${USAGE}"  "1"
-
-[[ -z "${file}" ]] && file="${DATA_DIR}/${basename}.xml"
+[[ -z "${inputfile}" ]] && error_exit "missing -i inputfile option" "${USAGE}"  "1"
 
 
-input="${file}"
-name="${input%.*}"
+name="${inputfile%.*}"
 name="${name##*/}"
 
-output="${DATA_DIR}/${name}.rep.xml"
+[[ -z "${outputfile}" ]] && outputfile="${XML_DIR}/${name}.rep.xml"
 
-[[ "${input}" = "${output}" ]] && error_exit "input file '${input}' and output file are identical" ""  1
-[[ ! -f "${input}" ]] && error_exit "input file '${input}' not found"  ""  1
+[[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" ""  1
+[[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found"  ""  1
 
 xslt_params="--stringparam projectfile ${projectfile}  --stringparam basename ${basename}"
 xslt_params="${xslt_params} --stringparam table ${table} --stringparam schema ${schema}"
 
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_REP} ${input} ${output}"
-xsltproc ${xslt_params} "${XML_2_REP}" "${input}" > "${output}"
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_REP} ${inputfile} ${outputfile}"
+xsltproc ${xslt_params} "${XML_2_REP}" "${inputfile}" > "${outputfile}"
 ret="$?"
 [[ "${ret}" != "0" ]] && exit "${ret}"
 
 #set -x
 if [[ -n "${check}" ]] ; then
-    [[ -n "${verbose}" ]] && echo "xmllint --noout --valid ${output}"
-    xmllint --noout --valid "${output}"
+    [[ -n "${verbose}" ]] && echo "xmllint --noout --valid ${outputfile}"
+    xmllint --noout --valid "${outputfile}"
     ret="$?"
 fi
 
 
 [[ "${ret}" != "0" ]] && error_exit "syntax error in generated json file" "" "${ret}"
 
-cat "${output}"
+cat "${outputfile}"
