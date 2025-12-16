@@ -9,14 +9,18 @@
   <xsl:output method="text" omit-xml-declaration="yes" indent="no"/>
 
 
-  <xsl:param name="basename"/>
+  <xsl:param name="projectname"/>
+
+  <xsl:param name="referencefile"/>
 
   <xsl:param name="projectfile"/>
 
-  <xsl:variable name="base-schema" select="fcn:get-project-value($projectfile,'base',$basename)"/>
-  <xsl:variable name="dim-schema"  select="fcn:get-project-value($projectfile,'dim', $basename)"/>
-  <xsl:variable name="fact-schema" select="fcn:get-project-value($projectfile,'fact',$basename)"/>
-  <xsl:variable name="hist-schema" select="fcn:get-project-value($projectfile,'hist',$basename)"/>
+  <xsl:param name="filetype"/>
+
+  <xsl:variable name="base-schema" select="fcn:get-project-value($projectfile,'base',$projectname)"/>
+  <xsl:variable name="dim-schema"  select="fcn:get-project-value($projectfile,'dim', $projectname)"/>
+  <xsl:variable name="fact-schema" select="fcn:get-project-value($projectfile,'fact',$projectname)"/>
+  <xsl:variable name="hist-schema" select="fcn:get-project-value($projectfile,'hist',$projectname)"/>
   
   <xsl:variable name="valid-from" select="document($projectfile)/project/item[@name = 'valid-from']/@value"/>
   <xsl:variable name="valid-to"   select="document($projectfile)/project/item[@name = 'valid-to'  ]/@value"/>
@@ -80,6 +84,24 @@
   </xsl:template>
 
   
+  <xsl:template name="get-dom-type">
+    <xsl:param name="simple-type"/>
+    <xsl:choose>
+      <xsl:when test="$filetype = 'model'">
+        <xsl:value-of select="//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
+      </xsl:when>
+      <xsl:when test="$filetype = 'delta'">
+        <xsl:value-of select="document($referencefile)//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:message terminate="yes">
+          <xsl:value-of select="concat('undefined file type ',$filetype,$nl)"/>
+        </xsl:message>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  
   <xsl:template match="model">
     <xsl:call-template name="drop-schemas"/>
     <xsl:value-of select="$nl"/>
@@ -113,6 +135,8 @@
     <xsl:apply-templates select="references/reference"/>
     <xsl:value-of select="$nl"/>
     <xsl:apply-templates select="informations/information"/>
+    <xsl:value-of select="$nl"/>
+    <xsl:apply-templates select="metadata"/>
   </xsl:template>
 
   
@@ -282,7 +306,7 @@
     <xsl:variable name="table" select="@name" />
     <xsl:variable name="tablespace" select="@tablespace" />
     <xsl:variable name="comment" select="comment" />
-    <xsl:value-of select="concat('create table ',$schema,'.',$table,' (',$nl)" />
+    <xsl:value-of select="concat('alter table ',$schema,'.',$table,$nl)" />
     <xsl:apply-templates select="columns/column" mode="alter">
       <xsl:with-param name="schema" select="$schema" />
     </xsl:apply-templates>
@@ -303,7 +327,7 @@
       <xsl:with-param name="table" select="$table" />
       <xsl:with-param name="tablespace" select="$tablespace" />
     </xsl:apply-templates>
-    <xsl:value-of select="concat(') tablespace ',$tablespace,';',$nl)" />
+    <xsl:value-of select="concat(';',$nl)" />
     <xsl:if test="string-length(comment)">
       <xsl:value-of select="concat('comment on table ',$schema,'.',@name,' is ',$q,comment,$q,';',$nl)"/>
     </xsl:if>
@@ -345,7 +369,11 @@
     <xsl:param name="table-action" />
     <xsl:variable name="column" select="@name"/>
     <xsl:variable name="simple-type" select="@type"/>
-    <xsl:variable name="dom-type" select="//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
+    <xsl:variable name="dom-type">
+      <xsl:call-template name="get-dom-type">
+        <xsl:with-param name="simple-type" select="$simple-type"/>
+      </xsl:call-template>
+    </xsl:variable>
     <xsl:variable name="comment" select="@comment"/>
     <xsl:variable name="type">
       <xsl:choose>
@@ -374,14 +402,7 @@
     <xsl:if test="@nullable = 'NO'">
       <xsl:value-of select="' not null'"/>
     </xsl:if>
-    <xsl:choose>
-      <xsl:when test="$table-action = 'create' or position() != last()">
-        <xsl:value-of select="concat(',',$nl)"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="concat('',$nl)"/>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:value-of select="concat(',',$nl)"/>
   </xsl:template>
 
   
@@ -390,7 +411,11 @@
     <xsl:param name="table-action" />
     <xsl:variable name="column" select="@name"/>
     <xsl:variable name="simple-type" select="@type"/>
-    <xsl:variable name="dom-type" select="//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
+    <xsl:variable name="dom-type">
+      <xsl:call-template name="get-dom-type">
+        <xsl:with-param name="simple-type" select="$simple-type"/>
+      </xsl:call-template>
+    </xsl:variable>
     <xsl:variable name="comment" select="@comment"/>
     <xsl:variable name="type">
       <xsl:choose>
@@ -409,7 +434,21 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <xsl:value-of select="concat($tab,fcn:format-column($column,$type))"/>
+    <xsl:choose>
+      <xsl:when test="@action = 'alter'">
+        <xsl:value-of select="'      alter '"/>
+      </xsl:when>
+      <xsl:when test="@action = 'create'">
+        <xsl:value-of select="'      add '"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:message terminate="yes">
+          <xsl:value-of select="concat('undefined column action ',@action,$nl)"/>
+        </xsl:message>
+      </xsl:otherwise>
+    </xsl:choose>
+    
+    <xsl:value-of select="concat('',fcn:format-column($column,$type))"/>
     <xsl:if test="string-length(default) != 0">
       <xsl:value-of select="concat(' default ',default)"/>
     </xsl:if>
@@ -677,13 +716,21 @@
   <xsl:template match="metadata">
     <xsl:apply-templates select="table"/>
     <xsl:apply-templates select="insert"/>
+    <xsl:apply-templates select="update"/>
     <xsl:apply-templates select="commit"/>
   </xsl:template>
 
   
   <xsl:template match="insert">
     <xsl:value-of select="concat('insert into ',@schema,'.',@table,' (project, version)',$nl)"/>
-    <xsl:value-of select="concat('            values (',$q,project,$q,', ',version,');',$nl,$nl)"/>
+    <xsl:value-of select="concat('            values (',$q,project/text(),$q,', ',version/text(),');',$nl,$nl)"/>
+  </xsl:template>
+
+
+  <xsl:template match="update">
+    <xsl:value-of select="concat('update ',@schema,'.',@table,$nl)"/>
+    <xsl:value-of select="concat('   set version = ',version/text(),';',$nl,$nl)"/>
+
   </xsl:template>
 
 

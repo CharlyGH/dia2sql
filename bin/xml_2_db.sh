@@ -8,24 +8,24 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 LINES="1"
 
-USAGE="usage: ${ME} -i inputfile [-d database] [-u user] [-o outputfile] {-q|-t} [-l lines] [-p projectfile] [-c] [-D] [-e] [-h] [-k] [-r] [-v] [-y]"
+USAGE="usage: ${ME} -i inputfile [-r referencefile] [-d database] [-u user] [-o outputfile] {-s|-t} [-l lines] [-p projectfile] [-c] [-D] [-e] [-h] [-k] [-r] [-v] [-y]"
 HELP="${USAGE}
-    -c check        check the xml file before generating sql code
-    -d database     database, default is ${USER}
-    -D delete       delete all existing rows with truncate table
-    -e execute      execute generated sql script 
-    -h help         print this help text
-    -i inputfile    filename to process
-    -k keep         keep, do not delete temp files
-    -l lines        lines to insert, default is ${LINES}
-    -o outputfile   output filename, default is input file name with xml replaced by sql or dat.sql
-    -p projectfile  configuration file for historization, default is ${PROJECT_FILE}
-    -r rows         rows to insert, default is ${ROWS}
-    -s sql          generate sql script
-    -t test         create test data
-    -u user         dabase user, default is ${USER}
-    -v verbose      show all execution steps
-    -y yes          answer yes to all questions
+    -c check          check the xml file before generating sql code
+    -d database       database, default is ${USER}
+    -D delete         delete all existing rows with truncate table
+    -e execute        execute generated sql script 
+    -h help           print this help text
+    -i inputfile      filename to process
+    -k keep           keep, do not delete temp files
+    -l lines          lines to insert, default is ${LINES}
+    -o outputfile     output filename, default is input file name with xml replaced by sql or dat.sql
+    -p projectfile    configuration file for historization, default is ${PROJECT_FILE}
+    -r referencefile  rows to insert, default is ${ROWS}
+    -s sql            generate sql script
+    -t test           create test data
+    -u user           dabase user, default is ${USER}
+    -v verbose        show all execution steps
+    -y yes            answer yes to all questions
 "
 
 check=""
@@ -37,13 +37,14 @@ keep=""
 lines="${LINES}"
 output=""
 projectfile="${FULL_PROJECT_FILE}"
+referencefile=""
 sql=""
 test=""
 user=""
 verbose=""
 yes=""
 
-while getopts "cd:Dehi:kl:o:p:rstu:vy" OPT
+while getopts "cd:Dehi:kl:o:p:r:stu:vy" OPT
 do
     case ${OPT} in
         c)
@@ -76,6 +77,9 @@ do
             ;;
         p)
             projectfile="${OPTARG}"
+            ;;
+        r)
+            referencefile="${OPTARG}"
             ;;
         s)
             sql="1"
@@ -110,18 +114,30 @@ FMT_2_DAT="${LIB_DIR}/fmt_2_dat.awk"
 [[ ! -r "${inputfile}" ]] && error_exit "cannot read inputfile ${inputfile}" "${USAGE}" 1
 
 #set -x
+
+filetype=""
+projectname="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
+[[ -n "${projectname}" ]] && filetype="model"
+[[ -z "${projectname}" ]] && projectname="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/delta/@project")"
+[[ -n "${projectname}" && -z "${filetype}" ]] && filetype="delta"
+[[ -z "${projectname}" ]] && error_exit "no project name in ${inputfile}"
+
+if [[ "${filetype}" == "delta" ]] ; then
+    [[ -z "${referencefile}" ]] && error_exit "missing -r referencefile option" "${USAGE}" 1
+    referencefile="${FULL_DATA_DIR}/${referencefile##*/}"
+    [[ ! -r "${referencefile}" ]] && error_exit "cannot read referencefile ${referencefile}" "${USAGE}" 1
+fi
     
 name="${inputfile%.*}"
 name="${name##*/}"
 
 tempchk="${TEMP_DIR}/${name}.chk.dat"
 tempfmt="${TEMP_DIR}/${name}.fmt.dat"
-tempprj="${TEMP_DIR}/${name}.prj.xml"
+tempprj="${FULL_TEMP_DIR}/${name}.prj.xml"
 
 [[ -n "${sql}" ]] && outputfile="${OUT_DIR}/${name}.sql"
 [[ -n "${test}" ]] && outputfile="${OUT_DIR}/${name}.dat.sql"
 
-[[ -z "${inputfile}"  ]] && error_exit "missing input file name" "${USAGE}"  1
 [[ -z "${check}${sql}${test}" ]] && error_exit "no option -c, -s or -t supplied" "${USAGE}"  1
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found" "" 1
 
@@ -132,23 +148,23 @@ if [[ -n "${check}" ]] ; then
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
 
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -o "${tempchk}" 
+    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -p "${tempprj}" -o "${tempchk}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" "1"
 #    cat "${tempchk}"
 fi
-
-basename="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
-[[ -z "${basename}" ]] && basename="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/delta/@project")"
-[[ -z "${basename}" ]] && error_exit "no project name in ${inputfile}"
-
-xslt_params="--stringparam projectfile ${projectfile}  --stringparam basename ${basename}"
 
 
 awk_params="-v lines=${lines}"
 [[ -n "${delete}" ]] && awk_params="${awk_params} -v truncate="${delete}""
 
 #set -x
+
+xslt_params="--stringparam projectfile ${projectfile}"
+xslt_params="${xslt_params}  --stringparam projectname ${projectname}"
+[[ -n "${referencefile}" ]] && xslt_params="${xslt_params}  --stringparam referencefile ${referencefile}"
+xslt_params="${xslt_params}  --path ${DTD_DIR}"
+xslt_params="${xslt_params}  --stringparam filetype ${filetype}"
 
 
 if [[ -n "${sql}" ]] ; then

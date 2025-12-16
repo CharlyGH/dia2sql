@@ -105,6 +105,7 @@ tempms="${TEMP_DIR}/${project}.md.sql"
 tempmd="${TEMP_DIR}/${project}.md.dat"
 
 xslt_params="--stringparam basename ${project}"
+xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${PROJECT_XML_2_DAT} ${PROJECT_XML} ${temppd}"
 xsltproc ${xslt_params} "${PROJECT_XML_2_DAT}" "${PROJECT_XML}" >"${temppd}"
@@ -221,7 +222,7 @@ db_version="v${infoline#*:}"
 
 echo "exporting version ${db_version} of project ${db_project}"
 
-[[ -z "${outputfile}" ]] && outputfile="${XML_DIR}/${project}_db_${db_version}.xml"
+[[ -z "${outputfile}" ]] && outputfile="${DATA_DIR}/${project}_db_${db_version}.xml"
 
 
 awk_params=""
@@ -241,8 +242,8 @@ if [[ -n "${check}" ]] ; then
 fi
 
 if [[ -z "${keep}" ]] ; then
-    for file in "${temprs}" "${temprd}" "${tempss}" "${tempsd}" "${tempds}" "${tempdd}" "${temppd}" \
-                            "${tempfd}" "${tempms}" "${tempmd}" ; do
+    for file in "${temprs}" "${temprd}" "${tempss}" "${tempst}" "${tempsd}" "${tempds}" "${tempdd}" "${temppd}" \
+                            "${tempfd}" "${tempfs}" "${tempms}" "${tempmd}" ; do
         [[ -f "${file}" ]] && rm "${file}"
     done
 fi

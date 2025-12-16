@@ -89,10 +89,13 @@ ret="$?"
 
 #set -x
 if [[ -n "${check}" ]] ; then
-    [[ -n "${verbose}" ]] && echo "xmllint --valid --noout ${outputfile}"
+    [[ -n "${verbose}" ]] && echo "xmllint --valid --noout --path ${DTD_DIR} ${outputfile}"
     xmllint --valid --noout --path "${DTD_DIR}" "${outputfile}"
     ret="$?"
 fi
+
+${BIN_DIR}/xpath.sh -i data/verein_v01_v02.xml -p "concat('migrate version ',/delta/@old-version,' to ',/delta/@new-version)"
+
 
 
 [[ "${ret}" != "0" ]] && error_exit "syntax error in generated xml file ${output}" "" "${ret}"

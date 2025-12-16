@@ -1,3 +1,5 @@
 data/*.xml
+out/*.sql
 pdf/*.pdf
 user.txt
+test.sh
