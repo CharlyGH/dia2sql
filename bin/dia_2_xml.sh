@@ -138,7 +138,7 @@ fi
 
 
 if [[ -n "${auto}" ]] ; then
-    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_XML} ${tempout} ${outqt}"
+    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_XML} ${tempout} ${tempqt}"
     xsltproc ${xslt_params} "${XML_2_XML}" "${tempout}" > "${tempqt}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${XML_2_XML}" "" "${ret}"

@@ -207,13 +207,25 @@ psql_options="-q -A -t"
 #set -x
 
 if [[ -n "${execute}" ]] ; then
+    result="$(psql -q -A -t -c "select dat.table_name from dba.all_tables dat where dat.schema_name like 'base_%' and  dat.table_name = 'metadata'")"
+    ret="$?"
+    [[ "${ret}" != "0" ]] && error_exit "Cannot access dba.all_tables" "Is dba.sql installed?" "${ret}"
+
+    db_version=""
+
     action=""
     project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /model/@project)"
     if [[ -n "${project}" ]] ; then
         action="model"
         version="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /model/@version)"
         [[ -z "${version}" ]] && error_exit "no version found for project ${project} in ${inputfile}" "" 1
-        db_version="$(psql ${psql_options} -c "select version from base_${project}.metadata;")"
+ 
+        if [[ -z "${result}" ]] ; then
+            echo "Cannot find base_${project}, assuming no old version exists"
+        else
+            db_version="$(psql ${psql_options} -c "select version from base_${project}.metadata;")"
+        fi
+
         if [[ -n "${db_version}" ]] ;then
             if [[  -n "${yes}" ]] ; then
                 echo "replacing installed version ${db_version} with version ${version}"
@@ -230,7 +242,13 @@ if [[ -n "${execute}" ]] ; then
 
             [[ -z "${old_version}" ]] && error_exit "no old_version found for project ${project} in ${inputfile}" "" 1
             [[ -z "${new_version}" ]] && error_exit "no new_version found for project ${project} in ${inputfile}" "" 1
-            db_version="$(psql ${psql_options} -c "select version from base_${project}.metadata;")"
+
+            if [[ -z "${result}" ]] ; then
+                echo "Cannot find base_${project}, assuming no old version exists"
+            else
+                db_version="$(psql ${psql_options} -c "select version from base_${project}.metadata;")"
+            fi
+
             [[ -z "${db_version}" ]] && error_exit "no db_version found for project ${project} in database" "" 1
             if [[ "${db_version}" = "${old_version}" ]] ; then
                 echo "replacing installed version ${db_version} with version ${new_version}"                

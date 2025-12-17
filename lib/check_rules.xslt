@@ -16,6 +16,7 @@
       #      1.1 all fields should have domain types
       #      1.2 tablespace name should match schema name
       #      1.3 schema name should match schema name
+      #      1.4 schema and tablespace name of tables should not be empty
       #   2. dim (dimension) tables
       #      2.1 it should have a primary key of one id_type
       #      2.2 it should have a unique key of one text_type
@@ -107,6 +108,27 @@
       <xsl:value-of select="$result"/>
     </fcn:result>
   </fcn:function>
+
+  
+  <fcn:function name="fcn:get-nth-element">
+    <xsl:param name="strg"/>
+    <xsl:param name="n"/>
+    <xsl:param name="delim"/>
+    <fcn:result>
+      <xsl:choose>
+        <xsl:when test="not(contains($strg,$delim))">
+          <xsl:value-of select="$strg"/>
+        </xsl:when>
+         <xsl:when test="$n = 1">
+          <xsl:value-of select="substring-before($strg,$delim)"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="fcn:get-nth-element(substring-after($strg,$delim), $n - 1, $delim)"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </fcn:result>
+  </fcn:function>
+  
   
 
   <xsl:variable name="base-schema" select="document($projectconfig)/config/schemaconf[@name = 'base']/@value"/>
@@ -123,6 +145,7 @@
       <xsl:apply-templates select="tables/table"            mode="rule_1_1"/>
       <xsl:apply-templates select="tablespaces/tablespace"  mode="rule_1_2"/>
       <xsl:apply-templates select="schemas/schema"          mode="rule_1_3"/>
+      <xsl:apply-templates select="tables/table"            mode="rule_1_4"/>
 
       <xsl:apply-templates select="tables/table[@schema = $dim-schema]" mode="rule_2_1"/>
       <xsl:apply-templates select="tables/table[@schema = $dim-schema]" mode="rule_2_2"/>
@@ -222,6 +245,31 @@
   </xsl:template>
 
   
+  <xsl:template match="table" mode="rule_1_4">
+    <xsl:variable name="table" select="@name" />
+    <xsl:variable name="schema" select="@schema"/>
+    <xsl:variable name="tablespace" select="@tablespace"/>
+    <xsl:variable name="missing-schema-name" select="'schema name for table is empty'"/>
+    <xsl:variable name="missing-tablespace-name" select="'tablespace name for table is empty'"/>
+    <xsl:variable name="unmatched-schema-tablespace-name" select="'schema name and tablespace name for table are different'"/>
+
+    <xsl:choose>
+      <xsl:when test="string-length($schema) = 0">
+        <xsl:value-of select="concat('rule_1_4:ERROR:',$table,$d,$missing-schema-name,$nl)"/>
+      </xsl:when>
+      <xsl:when test="string-length($tablespace) = 0">
+        <xsl:value-of select="concat('rule_1_4:ERROR:',$table,$d,$missing-tablespace-name,$nl)"/>
+      </xsl:when>
+      <xsl:when test="$schema != $tablespace">
+        <xsl:value-of select="concat('rule_1_4:ERROR:',$table,$d,$unmatched-schema-tablespace-name,$nl)"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="concat('rule_1_4:OK:',$table,$d,$schema,$d,$tablespace,$nl)"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+
   <xsl:template match="table" mode="rule_2_1">
     <xsl:variable name="table" select="@name" />
     <xsl:variable name="schema" select="@schema"/>
@@ -487,13 +535,28 @@
     <xsl:param name="unique"/>
     <xsl:variable name="column" select="text()"/>
     <xsl:variable name="type" select="//table[@name = $table and @schema = $schema]//column[@name = $column]/@type"/>
+
     <xsl:if test="$type = 'id_type'">
-      <xsl:variable name="ref-tab"
-                    select="//source[@schema = $schema and @table = $table]/../target[@schema = $dim-schema]/@table"/>
-      <xsl:variable name="ref-col"
-                    select="//table[@name = $ref-tab and @schema = $dim-schema]/primary/key/text()"/>
-      <xsl:variable name="pk-error" select="concat('column name does not match referenced',$d,$ref-tab,$s,$ref-col)"/> 
-      <xsl:if test="$column != $ref-col">
+      <xsl:variable name="target">
+        <xsl:for-each select="//source[@schema = $schema and @table = $table]/../foreign/key">
+          <xsl:if test="text() = $column">
+            <xsl:value-of select="concat(../../target/@schema,$d,../../target/@table,$d,text())"/>
+          </xsl:if>
+        </xsl:for-each>
+      </xsl:variable>
+      <xsl:variable name="ref-schema" select="fcn:get-nth-element($target,1,$d)"/>
+      <xsl:variable name="ref-table"  select="fcn:get-nth-element($target,2,$d)"/>
+      <xsl:variable name="ref-column" select="fcn:get-nth-element($target,3,$d)"/>
+      
+      <xsl:variable name="ref-pk">
+        <xsl:for-each select="//table[@schema = $ref-schema and @name = $ref-table]/primary/key">
+          <xsl:value-of select="concat($d,text(),$d)"/>
+        </xsl:for-each>
+      </xsl:variable>
+      <xsl:variable name="pk-error"
+                    select="concat('referenced column is not pk of target table',$d,
+                            $ref-schema,$s,$ref-table,$s,$ref-column)"/> 
+      <xsl:if test="not(contains($ref-pk,$column))">
         <xsl:value-of select="concat('rule_3_3:ERROR:',$schema,$d,$table,$s,$column,$d,$pk-error,$nl)"/>
       </xsl:if>
     </xsl:if>    

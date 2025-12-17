@@ -287,6 +287,41 @@
   </xsl:template>
 
 
+  <xsl:template match="sequence" mode="asxml">
+    <xsl:variable name="sequence" select="@name"/>
+    <xsl:variable name="old-count"
+                  select="count(document($oldfile)//sequence[@name = $sequence])"/>
+    <xsl:variable name="old-sequence">
+      <xsl:apply-templates select="document($oldfile)//sequence[@name = $sequence]" mode="astext"/>
+    </xsl:variable>
+    <xsl:variable name="new-sequence">
+      <xsl:apply-templates select="document($newfile)//sequence[@name = $sequence]" mode="astext"/>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="$old-count = 0">
+        <xsl:copy-of select="."/>
+      </xsl:when>
+      <xsl:when test="$old-sequence != $new-sequence">
+        <xsl:element name="sequence">
+          <xsl:attribute name="name">
+            <xsl:value-of select="$sequence"/>
+          </xsl:attribute>
+          <xsl:attribute name="schema">
+            <xsl:value-of select="@schema"/>
+          </xsl:attribute>
+          <xsl:attribute name="type">
+            <xsl:value-of select="@type"/>
+          </xsl:attribute>
+          <xsl:attribute name="action">
+            <xsl:value-of select="'alter'"/>
+          </xsl:attribute>
+          <xsl:copy-of select="document($newfile)//sequence[@name = $sequence]/config"/>
+        </xsl:element>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
+
   <xsl:template match="table" mode="asxml">
     <xsl:variable name="table"  select="@name"/>
     <xsl:variable name="schema" select="@schema"/>

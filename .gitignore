@@ -4,3 +4,4 @@ pdf/*.pdf
 !pdf/dia2sql.pdf
 user.txt
 test.sh
+*~
