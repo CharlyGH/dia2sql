@@ -568,9 +568,9 @@ BEGIN {
     version = $3;
     
     print "    </table>";
-    print "    <insert schema='base_verein' table='metadata'>";
-    print "      <project>verein</project>";
-    print "      <version>1</version>";
+    print "    <insert schema='" base_schema "' table='metadata'>";
+    print "      <project>" project "</project>";
+    print "      <version>" version "</version>";
     print "    </insert>";
     print "    <commit/>";
 

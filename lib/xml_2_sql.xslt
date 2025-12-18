@@ -11,7 +11,9 @@
 
   <xsl:param name="projectname"/>
 
-  <xsl:param name="referencefile"/>
+  <xsl:param name="oldfile"/>
+
+  <xsl:param name="newfile"/>
 
   <xsl:param name="projectfile"/>
 
@@ -91,7 +93,7 @@
         <xsl:value-of select="//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
       </xsl:when>
       <xsl:when test="$filetype = 'delta'">
-        <xsl:value-of select="document($referencefile)//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
+        <xsl:value-of select="document($newfile)//domain[@name = $simple-type and @schema = $base-schema]/@type"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:message terminate="yes">
@@ -270,16 +272,12 @@
     <xsl:apply-templates select="constraint[@type = 'any']" mode="check">
       <xsl:with-param name="schema" select="$schema" />
     </xsl:apply-templates>
-    <xsl:apply-templates select="references">
-      <xsl:with-param name="schema" select="$schema" />
-      <xsl:with-param name="table" select="$table" />
-    </xsl:apply-templates>
-    <xsl:apply-templates select="unique">
+    <xsl:apply-templates select="unique" mode="create">
       <xsl:with-param name="schema" select="$schema" />
       <xsl:with-param name="table" select="$table" />
       <xsl:with-param name="tablespace" select="$tablespace" />
     </xsl:apply-templates>
-    <xsl:apply-templates select="primary">
+    <xsl:apply-templates select="primary" mode="create">
       <xsl:with-param name="schema" select="$schema" />
       <xsl:with-param name="table" select="$table" />
       <xsl:with-param name="tablespace" select="$tablespace" />
@@ -313,21 +311,24 @@
     <xsl:apply-templates select="constraint[@type = 'any']" mode="check">
       <xsl:with-param name="schema" select="$schema" />
     </xsl:apply-templates>
-    <xsl:apply-templates select="references">
-      <xsl:with-param name="schema" select="$schema" />
-      <xsl:with-param name="table" select="$table" />
-    </xsl:apply-templates>
-    <xsl:apply-templates select="unique">
-      <xsl:with-param name="schema" select="$schema" />
-      <xsl:with-param name="table" select="$table" />
-      <xsl:with-param name="tablespace" select="$tablespace" />
-    </xsl:apply-templates>
-    <xsl:apply-templates select="primary">
+    <xsl:value-of select="concat(';',$nl,$nl)" />
+
+    <xsl:variable name="old-unique"
+                  select="document($oldfile)//table[@name = $table and @schema = $schema]/unique/text()"/>
+    <xsl:variable name="old-primary"
+                  select="document($oldfile)//table[@name = $table and @schema = $schema]/primary/text()"/>
+    <xsl:apply-templates select="unique" mode="alter">
       <xsl:with-param name="schema" select="$schema" />
       <xsl:with-param name="table" select="$table" />
       <xsl:with-param name="tablespace" select="$tablespace" />
+      <xsl:with-param name="old-unique" select="$old-unique" />
     </xsl:apply-templates>
-    <xsl:value-of select="concat(';',$nl)" />
+    <xsl:apply-templates select="primary" mode="alter">
+      <xsl:with-param name="schema" select="$schema" />
+      <xsl:with-param name="table" select="$table" />
+      <xsl:with-param name="tablespace" select="$tablespace" />
+      <xsl:with-param name="old-primary" select="$old-primary" />
+    </xsl:apply-templates>
     <xsl:if test="string-length(comment)">
       <xsl:value-of select="concat('comment on table ',$schema,'.',@name,' is ',$q,comment,$q,';',$nl)"/>
     </xsl:if>
@@ -478,7 +479,7 @@
   </xsl:template>
 
   
-  <xsl:template match="unique">
+  <xsl:template match="unique" mode="create">
     <xsl:param name="schema" />
     <xsl:param name="table" />
     <xsl:param name="tablespace" />
@@ -501,7 +502,36 @@
   </xsl:template>
 
 
-  <xsl:template match="primary">
+  <xsl:template match="unique" mode="alter">
+    <xsl:param name="schema" />
+    <xsl:param name="table" />
+    <xsl:param name="tablespace" />
+    <xsl:param name="old-unique" />
+    <xsl:variable name="constraint" select="@name" />
+    <xsl:variable name="key">
+       <xsl:for-each select="key">
+        <xsl:choose>
+        <xsl:when test="position() = last()">
+          <xsl:value-of select="text()"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="concat(text(),', ')"/>
+        </xsl:otherwise>
+        </xsl:choose>
+      </xsl:for-each >
+    </xsl:variable>
+    <xsl:if test="string-length($old-unique) != 0">
+      <xsl:value-of select="concat('alter table ',$schema,'.',$table,$nl)" />
+      <xsl:value-of select="concat($tab,'drop constraint ',$constraint,';',$nl,$nl)" />
+    </xsl:if>
+    <xsl:value-of select="concat('alter table ',$schema,'.',$table,$nl)" />
+    <xsl:value-of select="concat($tab,'add constraint ',$constraint,$nl)" />
+    <xsl:value-of select="concat($tab,'unique ',' (',$key,')',$nl)" />
+    <xsl:value-of select="concat($tab,'using index tablespace ',$tablespace,';',$nl,$nl)" />
+  </xsl:template>
+
+
+  <xsl:template match="primary" mode="create">
     <xsl:param name="schema" />
     <xsl:param name="table" />
     <xsl:param name="tablespace" />
@@ -521,6 +551,35 @@
     <xsl:value-of select="concat($tab,fcn:format-column('constraint',$constraint),$nl)" />
     <xsl:value-of select="concat($tab,$space,'primary key ',' (',$key,')',$nl)" />
     <xsl:value-of select="concat($tab,$space,'using index tablespace ',$tablespace,$nl)" />
+  </xsl:template>
+
+  
+  <xsl:template match="primary" mode="alter">
+    <xsl:param name="schema" />
+    <xsl:param name="table" />
+    <xsl:param name="tablespace" />
+    <xsl:param name="old-primary" />
+    <xsl:variable name="constraint" select="@name" />
+    <xsl:variable name="key">
+       <xsl:for-each select="key">
+        <xsl:choose>
+        <xsl:when test="position() = last()">
+          <xsl:value-of select="text()"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="concat(text(),', ')"/>
+        </xsl:otherwise>
+        </xsl:choose>
+      </xsl:for-each >
+    </xsl:variable>
+    <xsl:if test="string-length($old-primary) != 0">
+      <xsl:value-of select="concat('alter table ',$schema,'.',$table,$nl)" />
+      <xsl:value-of select="concat($tab,'drop constraint ',$constraint,';',$nl,$nl)" />
+    </xsl:if>
+    <xsl:value-of select="concat('alter table ',$schema,'.',$table,$nl)" />
+    <xsl:value-of select="concat($tab,'add constraint ',$constraint,$nl)" />
+    <xsl:value-of select="concat($tab,'primary key ',' (',$key,')',$nl)" />
+    <xsl:value-of select="concat($tab,'using index tablespace ',$tablespace,';',$nl,$nl)" />
   </xsl:template>
 
   

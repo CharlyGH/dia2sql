@@ -333,7 +333,6 @@
     <xsl:variable name="new-table">
       <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]" mode="astext"/>
     </xsl:variable>
-
     <xsl:choose>
       <xsl:when test="$old-count = 0">
         <xsl:copy-of select="."/>
@@ -355,6 +354,7 @@
           <xsl:attribute name="action">
             <xsl:value-of select="'alter'"/>
           </xsl:attribute>
+          <!-- columns -->
           <xsl:variable name="old-columns">
             <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]//column"
                                  mode="astext"/>
@@ -372,6 +372,32 @@
               </xsl:apply-templates>
             </xsl:element>
           </xsl:if>
+          <!-- unique -->
+          <xsl:variable name="old-unique">
+            <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]/unique"
+                                 mode="astext"/>
+          </xsl:variable>
+          <xsl:variable name="new-unique">
+            <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]/unique"
+                                 mode="astext"/>
+          </xsl:variable>
+          <xsl:if test="$old-unique != $new-unique">
+            <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/unique"/>
+          </xsl:if>
+
+          <!-- primary -->
+          <xsl:variable name="old-primary">
+            <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]/primary"
+                                 mode="astext"/>
+          </xsl:variable>
+          <xsl:variable name="new-primary">
+            <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]/primary"
+                                 mode="astext"/>
+          </xsl:variable>
+          <xsl:if test="$old-primary != $new-primary">
+            <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/primary"/>
+          </xsl:if>
+
         </xsl:element>
       </xsl:when>
     </xsl:choose>

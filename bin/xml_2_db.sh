@@ -8,24 +8,24 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 LINES="1"
 
-USAGE="usage: ${ME} -i inputfile [-r referencefile] [-d database] [-u user] [-o outputfile] {-s|-t} [-l lines] [-p projectfile] [-c] [-D] [-e] [-h] [-k] [-r] [-v] [-y]"
+USAGE="usage: ${ME} -i inputfile [-r reffiles] [-d database] [-u user] [-o outputfile] {-s|-t} [-l lines] [-p projectfile] [-c] [-D] [-e] [-h] [-k] [-r] [-v] [-y]"
 HELP="${USAGE}
-    -c check          check the xml file before generating sql code
-    -d database       database, default is ${USER}
-    -D delete         delete all existing rows with truncate table
-    -e execute        execute generated sql script 
-    -h help           print this help text
-    -i inputfile      filename to process
-    -k keep           keep, do not delete temp files
-    -l lines          lines to insert, default is ${LINES}
-    -o outputfile     output filename, default is input file name with xml replaced by sql or dat.sql
-    -p projectfile    configuration file for historization, default is ${PROJECT_FILE}
-    -r referencefile  rows to insert, default is ${ROWS}
-    -s sql            generate sql script
-    -t test           create test data
-    -u user           dabase user, default is ${USER}
-    -v verbose        show all execution steps
-    -y yes            answer yes to all questions
+    -c check         check the xml file before generating sql code
+    -d database      database, default is ${USER}
+    -D delete        delete all existing rows with truncate table
+    -e execute       execute generated sql script 
+    -h help          print this help text
+    -i inputfile     filename to process
+    -k keep          keep, do not delete temp files
+    -l lines         lines to insert, default is ${LINES}
+    -o outputfile    output filename, default is input file name with xml replaced by sql or dat.sql
+    -p projectfile   configuration file for historization, default is ${PROJECT_FILE}
+    -r reffiles      referencefiles: oldfile,newfile
+    -s sql           generate sql script
+    -t test          create test data
+    -u user          dabase user, default is ${USER}
+    -v verbose       show all execution steps
+    -y yes           answer yes to all questions
 "
 
 check=""
@@ -37,7 +37,7 @@ keep=""
 lines="${LINES}"
 output=""
 projectfile="${FULL_PROJECT_FILE}"
-referencefile=""
+reffile=""
 sql=""
 test=""
 user=""
@@ -79,7 +79,7 @@ do
             projectfile="${OPTARG}"
             ;;
         r)
-            referencefile="${OPTARG}"
+            reffile="${OPTARG}"
             ;;
         s)
             sql="1"
@@ -123,9 +123,13 @@ projectname="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
 [[ -z "${projectname}" ]] && error_exit "no project name in ${inputfile}"
 
 if [[ "${filetype}" == "delta" ]] ; then
-    [[ -z "${referencefile}" ]] && error_exit "missing -r referencefile option" "${USAGE}" 1
-    referencefile="${FULL_DATA_DIR}/${referencefile##*/}"
-    [[ ! -r "${referencefile}" ]] && error_exit "cannot read referencefile ${referencefile}" "${USAGE}" 1
+    [[ -z "${reffile}" ]] && error_exit "missing -r referencefile option" "${USAGE}" 1
+    oldfile="${reffile%,*}"
+    newfile="${reffile#*,}"
+    oldfile="${FULL_DATA_DIR}/${oldfile##*/}"
+    newfile="${FULL_DATA_DIR}/${newfile##*/}"
+    [[ ! -r "${oldfile}" ]] && error_exit "cannot read old reference file ${oldfile}" "${USAGE}" 1
+    [[ ! -r "${newfile}" ]] && error_exit "cannot readnew reference file ${oldfile}" "${USAGE}" 1
 fi
     
 name="${inputfile%.*}"
@@ -162,7 +166,8 @@ awk_params="-v lines=${lines}"
 
 xslt_params="--stringparam projectfile ${projectfile}"
 xslt_params="${xslt_params}  --stringparam projectname ${projectname}"
-[[ -n "${referencefile}" ]] && xslt_params="${xslt_params}  --stringparam referencefile ${referencefile}"
+[[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
+[[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
 xslt_params="${xslt_params}  --path ${DTD_DIR}"
 xslt_params="${xslt_params}  --stringparam filetype ${filetype}"
 

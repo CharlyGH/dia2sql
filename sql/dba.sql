@@ -417,12 +417,18 @@ select t.trigger_catalog        as trigger_user,
        t.action_timing          as action_timing,
        dba.trigger_function_name (t.action_statement, 'schema')   as function_schema,
        dba.trigger_function_name (t.action_statement, 'table')    as function_name,
-       string_agg (event_object_column, ',')   as event_column_list
+       string_agg (tc.event_object_column, ',')   as event_column_list
   from information_schema.triggers as t
-  join information_schema.triggered_update_columns as tuc
-    on tuc.trigger_catalog = t.trigger_catalog
-   and tuc.trigger_schema  = t.trigger_schema
-   and tuc.trigger_name    = t.trigger_name
+  join (select tuc.trigger_catalog, tuc.trigger_schema, tuc.trigger_name, tuc.event_object_column, c.ordinal_position 
+          from information_schema.triggered_update_columns tuc 
+          join information_schema.columns c 
+            on c.table_catalog  = tuc.event_object_catalog 
+           and c.table_schema   = tuc.event_object_schema 
+           and c.column_name    = tuc.event_object_column 
+         order by c.ordinal_position) as tc
+    on tc.trigger_catalog = t.trigger_catalog
+   and tc.trigger_schema  = t.trigger_schema
+   and tc.trigger_name    = t.trigger_name
  group by trigger_user, t.trigger_schema, t.trigger_name, event_action,
           event_user, event_schema, event_table,
           event_order, action_statement, action_level, action_timing,
