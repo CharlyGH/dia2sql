@@ -398,6 +398,10 @@
             <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/primary"/>
           </xsl:if>
 
+          <xsl:if test="$old-columns != $new-columns">
+            <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/triggers"/>
+          </xsl:if>
+
         </xsl:element>
       </xsl:when>
     </xsl:choose>

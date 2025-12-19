@@ -18,7 +18,7 @@
       #      1.3 schema name should match schema name
       #      1.4 schema and tablespace name of tables should not be empty
       #   2. dim (dimension) tables
-      #      2.1 it should have a primary key of one id_type
+      #      2.1 first column should be a primary key of one id_type
       #      2.2 it should have a unique key of one text_type
       #      2.3 it should have a valid_from field if historisation is active
       #                        no valid_from field if historisation is not active
@@ -316,9 +316,16 @@
     <xsl:variable name="column" select="text()"/>
     <xsl:variable name="type" select="fcn:type-of($schema,$table,$column)"/>
     <xsl:variable name="wrong-type" select="concat('type ',$type,' is not id_type')"/>
+    <xsl:variable name="wrong-position" select="concat('primary key ',$column,' is not first column')"/>
     <xsl:if test="$type != 'id_type'">
       <xsl:value-of select="concat('rule_2_1:ERROR:',$schema,$s,$table,$s,$column,$d,$primary,$d,$wrong-type,$nl)"/>
     </xsl:if>
+    <xsl:variable name="first-col"
+                  select="//table[@name = $table and @schema = $schema]//column[position() = 1]/@name"/>
+    <xsl:if test="$first-col != $column">
+      <xsl:value-of select="concat('rule_2_1:ERROR:',$schema,$s,$table,$s,$column,$d,$first-col,$d,$wrong-position,$nl)"/>
+    </xsl:if>
+
   </xsl:template>
 
 

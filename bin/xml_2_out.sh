@@ -159,9 +159,9 @@ fi
 if [[ -n "${check}" ]] ; then
     if [[ -n "${dot}" ]] ; then
         output="${TEMP_DIR}/${name}.dot.pdf"
-        params="-T pdf"
-        [[ -n "${verbose}" ]] && echo "dot ${params} ${tempd} ${output}"
-        dot ${params}  "${tempd}" > "${output}"
+        dot_params="-T pdf"
+        [[ -n "${verbose}" ]] && echo "dot ${dot_params} ${tempd} ${output}"
+        dot ${dot_params}  "${tempd}" > "${output}"
         ret="$?"
         [[ "${ret}" != "0" ]] && error_exit "error in dot script ${tempd}" "" "${ret}"
     fi
@@ -170,9 +170,9 @@ if [[ -n "${check}" ]] ; then
     if [[ -n "${lout}" ]] ; then
         lout_cr_file="${TEMP_DIR}/${name}"
         output="${TEMP_DIR}/${name}.lout.pdf"
-        params="-r${REPEAT} -c "${lout_cr_file}" -Z -I ${DATA_DIR}"
-        [[ -n "${verbose}" ]] && echo "lout ${params} -o ${output} ${templ}"
-        lout ${params} -o "${output}" "${templ}"
+        lout_params="-r${REPEAT} -c "${lout_cr_file}" -Z -I ${DTD_DIR}"
+        [[ -n "${verbose}" ]] && echo "lout ${lout_params} -o ${output} ${templ}"
+        lout ${lout_params} -o "${output}" "${templ}"
         ret="$?"
         [[ "${ret}" != "0" ]] && error_exit "error in lout script ${templ}" "" "${ret}"
     fi
@@ -185,9 +185,9 @@ if [[ -n "${svg}" ]] ; then
     temps2="${TEMP_DIR}/${name}.temp2.svg"
 
     output="${OUT_DIR}/${name}.svg"
-    params="-T svg"
-    [[ -n "${verbose}" ]] && echo "dot ${params} ${tempd} ${temps0}"
-    dot ${params}  "${tempd}" > "${temps0}"
+    dot_params="-T svg"
+    [[ -n "${verbose}" ]] && echo "dot ${dot_params} ${tempd} ${temps0}"
+    dot ${dot_params}  "${tempd}" > "${temps0}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in dot script ${tempd}" "" "${ret}"
 
@@ -211,16 +211,16 @@ if [[ -n "${pdf}" ]] ; then
     tempdp="${TEMP_DIR}/${name}.dot.pdf"
     templp="${TEMP_DIR}/${name}.lout.pdf"
     lout_cr_file="${DATA_DIR}/${name}.lout"
-    output="${OUT_DIR}/${name}.pdf"
-    params="-T pdf"
-    [[ -n "${verbose}" ]] && echo "dot ${params} ${tempd} ${tempdp}"
-    dot ${params}  "${tempd}" > "${tempdp}"
+    output="${PDF_DIR}/${name}.pdf"
+    dot_params="-T pdf"
+    [[ -n "${verbose}" ]] && echo "dot ${dot_params} ${tempd} ${tempdp}"
+    dot ${dot_params}  "${tempd}" > "${tempdp}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in dot script ${tempd}" "" "${ret}"
 
-    params="-r${REPEAT} -c "${lout_cr_file}" -Z -I ${DATA_DIR}"
-    [[ -n "${verbose}" ]] && echo "lout ${params} -o ${templp} ${templ}"
-    lout ${params} -o "${templp}" "${templ}"
+    lout_params="-r${REPEAT} -c "${lout_cr_file}" -Z -I ${DTD_DIR}"
+    [[ -n "${verbose}" ]] && echo "lout ${lout_params} -o ${templp} ${templ}"
+    lout ${lout_params} -o "${templp}" "${templ}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in lout script ${templ}" "" "${ret}"
 

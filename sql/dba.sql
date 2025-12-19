@@ -137,7 +137,11 @@ select co.table_catalog as user_name,
        co.numeric_precision as precision,
        co.numeric_scale as scale,
        pg_catalog.pg_get_expr(d.adbin, d.adrelid, true) default_value,
-       pd.description as column_comment
+       pd.description as column_comment,
+       case when pki.constraint_type is null
+            then 'NO'
+            else 'YES'
+        end as is_pk
   from information_schema.columns as co
  inner join pg_catalog.pg_class as cc on cc.relname = 'pg_class'
  inner join pg_catalog.pg_class as cl on cl.relname = co.table_name
@@ -149,10 +153,21 @@ select co.table_catalog as user_name,
                                              and a.atthasdef
  left outer join pg_catalog.pg_description as pd on  pd.objoid = cl.oid
                                                  and pd.objsubid = co.ordinal_position and pd.classoid = cc.oid
+ left outer join (select kcu.table_catalog, kcu.table_schema , kcu.table_name, kcu.column_name, tc.constraint_type 
+                    from information_schema.key_column_usage kcu 
+                    join information_schema.table_constraints tc 
+                      on tc.constraint_catalog = kcu.constraint_catalog 
+                     and tc.constraint_schema  = kcu.constraint_schema 
+                     and tc.constraint_name    = kcu.constraint_name 
+                     and tc.constraint_type    = 'PRIMARY KEY') pki  on pki.table_catalog = co.table_catalog 
+                                                                    and pki.table_schema  = co.table_schema 
+                                                                    and pki.table_name    = co.table_name 
+                                                                    and pki.column_name   = co.column_name 
  where cl.relispartition = 'f'
    and cl.relkind in ('r','p')
    and ns.nspname != 'information_schema'
-   and ns.nspname not like 'pg_%';
+   and ns.nspname not like 'pg_%'
+ order by is_pk desc, co.ordinal_position;
 
 
 --drop view dba.all_view_columns;
@@ -424,6 +439,7 @@ select t.trigger_catalog        as trigger_user,
           join information_schema.columns c 
             on c.table_catalog  = tuc.event_object_catalog 
            and c.table_schema   = tuc.event_object_schema 
+           and c.table_name     = tuc.event_object_table 
            and c.column_name    = tuc.event_object_column 
          order by c.ordinal_position) as tc
     on tc.trigger_catalog = t.trigger_catalog

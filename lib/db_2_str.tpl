@@ -20,7 +20,7 @@ select concat('column',
  where atc.user_name   = '{user}'
    and atc.schema_name = '{schema}'
    and atc.table_name  = '{table}'
- order by atc.position;
+ order by atc.is_pk desc, atc.position;
 
 
 select concat('unique',

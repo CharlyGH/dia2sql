@@ -477,14 +477,20 @@
   <xsl:template match="columns" mode="copy">
     <xsl:param name="is-dim"/>
     <xsl:element name="columns">
-      <xsl:if test="$is-dim = 'true'">
-        <xsl:call-template name="hist-date-field">
-          <xsl:with-param name="field-name" select="$valid-from"/>
-          <xsl:with-param name="field-default" select="'current_date'"/>
-          <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Von-Datum'"/>
-        </xsl:call-template>
-      </xsl:if>
-      <xsl:apply-templates select="column" mode="copy"/>
+      <xsl:choose>
+        <xsl:when test="$is-dim = 'true'">
+          <xsl:apply-templates select="column[position() = 1]" mode="copy"/>
+          <xsl:call-template name="hist-date-field">
+            <xsl:with-param name="field-name" select="$valid-from"/>
+            <xsl:with-param name="field-default" select="'current_date'"/>
+            <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Von-Datum'"/>
+          </xsl:call-template>
+          <xsl:apply-templates select="column[position() != 1]" mode="copy"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="column" mode="copy"/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:element>
   </xsl:template>
 
@@ -492,19 +498,25 @@
   <xsl:template match="columns" mode="hist">
     <xsl:param name="is-dim"/>
     <xsl:element name="columns">
-      <xsl:if test="$is-dim = 'true'">
-        <xsl:call-template name="hist-date-field">
-          <xsl:with-param name="field-name" select="$valid-from"/>
-          <xsl:with-param name="field-default" select="'current_date'"/>
-          <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Von-Datum'"/>
-        </xsl:call-template>
-        <xsl:call-template name="hist-date-field">
-          <xsl:with-param name="field-name" select="$valid-to"/>
-          <xsl:with-param name="field-default" select="'current_date - 1'"/>
-          <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Bis-Datum'"/>
-        </xsl:call-template>
-      </xsl:if>
-      <xsl:apply-templates select="column" mode="hist"/>
+      <xsl:choose>
+        <xsl:when test="$is-dim = 'true'">
+          <xsl:apply-templates select="column[position() = 1]" mode="hist"/>
+          <xsl:call-template name="hist-date-field">
+            <xsl:with-param name="field-name" select="$valid-from"/>
+            <xsl:with-param name="field-default" select="'current_date'"/>
+            <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Von-Datum'"/>
+          </xsl:call-template>
+          <xsl:call-template name="hist-date-field">
+            <xsl:with-param name="field-name" select="$valid-to"/>
+            <xsl:with-param name="field-default" select="'current_date - 1'"/>
+            <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Bis-Datum'"/>
+          </xsl:call-template>
+          <xsl:apply-templates select="column[position() != 1]" mode="hist"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="column" mode="hist"/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:element>
   </xsl:template>
 

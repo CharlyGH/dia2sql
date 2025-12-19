@@ -1,6 +1,8 @@
 data/*.xml
+data/*.lout.li
 out/*.sql
 pdf/*.pdf
+temp/*
 !pdf/dia2sql.pdf
 user.txt
 test.sh
