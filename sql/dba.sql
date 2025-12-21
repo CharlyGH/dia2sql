@@ -432,23 +432,25 @@ select t.trigger_catalog        as trigger_user,
        t.action_timing          as action_timing,
        dba.trigger_function_name (t.action_statement, 'schema')   as function_schema,
        dba.trigger_function_name (t.action_statement, 'table')    as function_name,
-       string_agg (tc.event_object_column, ',')   as event_column_list
+       tc.event_column_list     as event_column_list
   from information_schema.triggers as t
-  join (select tuc.trigger_catalog, tuc.trigger_schema, tuc.trigger_name, tuc.event_object_column, c.ordinal_position 
-          from information_schema.triggered_update_columns tuc 
-          join information_schema.columns c 
-            on c.table_catalog  = tuc.event_object_catalog 
-           and c.table_schema   = tuc.event_object_schema 
-           and c.table_name     = tuc.event_object_table 
-           and c.column_name    = tuc.event_object_column 
-         order by c.ordinal_position) as tc
+  join (
+        with trigger_column_list as 
+             (select tuc.trigger_catalog, tuc.trigger_schema, tuc.trigger_name, c.ordinal_position, tuc.event_object_column
+                from information_schema.columns c 
+                join information_schema.triggered_update_columns tuc 
+                  on c.table_catalog  = tuc.event_object_catalog 
+                 and c.table_schema   = tuc.event_object_schema 
+                 and c.table_name     = tuc.event_object_table 
+                 and c.column_name    = tuc.event_object_column
+               order by c.table_catalog, c.table_schema, c.table_name, c.ordinal_position) 
+        select tcl.trigger_catalog, tcl.trigger_schema, tcl.trigger_name, 
+               string_agg(tcl.event_object_column,',') event_column_list
+          from trigger_column_list tcl
+         group by tcl.trigger_catalog, tcl.trigger_schema, tcl.trigger_name  ) as tc
     on tc.trigger_catalog = t.trigger_catalog
    and tc.trigger_schema  = t.trigger_schema
    and tc.trigger_name    = t.trigger_name
- group by trigger_user, t.trigger_schema, t.trigger_name, event_action,
-          event_user, event_schema, event_table,
-          event_order, action_statement, action_level, action_timing,
-          function_schema, function_name
 ;
 
 -- drop view dba.all_functions;

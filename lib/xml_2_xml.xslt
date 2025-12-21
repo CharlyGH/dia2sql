@@ -704,18 +704,21 @@
     <xsl:param name="schema"/>
     <xsl:variable name="table-name" select="@name"/>
     <xsl:variable name="pk-column" select="//table[@name = $table-name and @schema = $schema]/primary/key"/>
-
     <xsl:variable name="function-name" select="concat($table-name,'_trg_fun')"/>
     <xsl:variable name="source-list">
-      <xsl:value-of select="concat('t.',$valid-from,', ')"/>
-      <xsl:apply-templates select="columns/column" mode="source"/>
+      <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="list">
+        <xsl:with-param name="prefix" select="'t.'"/>
+      </xsl:apply-templates>
+      <xsl:value-of select="concat(', t.',$valid-from,', ')"/>
+      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
     </xsl:variable>
     <xsl:variable name="target-list">
-      <xsl:value-of select="concat($valid-from,', ')"/>
-      <xsl:apply-templates select="columns/column" mode="target"/>
+      <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="list"/>
+      <xsl:value-of select="concat(', ', $valid-from,', ')"/>
+      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
     </xsl:variable>
     <xsl:variable name="update-list">
-      <xsl:apply-templates select="columns/column" mode="update"/>
+      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
     </xsl:variable>
     <xsl:element name="triggers">
       <xsl:element name="trigger">
@@ -770,28 +773,14 @@
   </xsl:template>
 
 
-  <xsl:template match="column" mode="source">
+  <xsl:template match="column" mode="list">
+    <xsl:param name="prefix"/>
     <xsl:variable name="column-name" select="@name"/>
     <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
-    <xsl:value-of select="concat('t.',$column-name,$delim)"/>
+    <xsl:value-of select="concat($prefix,$column-name,$delim)"/>
   </xsl:template>
   
-  
-  <xsl:template match="column" mode="target">
-    <xsl:variable name="column-name" select="@name"/>
-    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
-    <xsl:value-of select="concat($column-name,$delim)"/>
-  </xsl:template>
-  
-  
-  <xsl:template match="column" mode="update">
-    <xsl:variable name="column-name" select="@name"/>
-    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
-    <xsl:value-of select="concat($column-name,$delim)"/>
-  </xsl:template>
-
-
-  <xsl:template match="references">
+    <xsl:template match="references">
     <xsl:element name="references">
       <xsl:apply-templates select="reference"/>
     </xsl:element>

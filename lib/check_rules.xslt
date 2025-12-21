@@ -554,7 +554,7 @@
       <xsl:variable name="ref-schema" select="fcn:get-nth-element($target,1,$d)"/>
       <xsl:variable name="ref-table"  select="fcn:get-nth-element($target,2,$d)"/>
       <xsl:variable name="ref-column" select="fcn:get-nth-element($target,3,$d)"/>
-      
+
       <xsl:variable name="ref-pk">
         <xsl:for-each select="//table[@schema = $ref-schema and @name = $ref-table]/primary/key">
           <xsl:value-of select="concat($d,text(),$d)"/>
@@ -564,7 +564,7 @@
                     select="concat('referenced column is not pk of target table',$d,
                             $ref-schema,$s,$ref-table,$s,$ref-column)"/> 
       <xsl:if test="not(contains($ref-pk,$column))">
-        <xsl:value-of select="concat('rule_3_3:ERROR:',$schema,$d,$table,$s,$column,$d,$pk-error,$nl)"/>
+        <xsl:value-of select="concat('rule_3_3:WARNING:',$schema,$d,$table,$s,$column,$d,$pk-error,$nl)"/>
       </xsl:if>
     </xsl:if>    
   </xsl:template>

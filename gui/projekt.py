@@ -54,6 +54,8 @@ class Projekt(object):
         if kind == "name" or kind == "comment":
             res = list()
             for schema in name_list:
+                if not schema in self.data.keys():
+                    continue
                 value = self.data[schema][kind]
                 count = self.data[schema]["table-count"]
                 if empty or count > 0:

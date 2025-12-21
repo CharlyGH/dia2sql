@@ -385,6 +385,7 @@ BEGIN {
             column_name     = column_name_tab[idx];
             column_type     = column_type_tab[idx];
             column_default  = column_default_tab[idx];
+            
             column_nullable = column_nullable_tab[idx];
             column_comment  = column_comment_tab[idx];
 

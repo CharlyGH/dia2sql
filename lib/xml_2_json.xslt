@@ -202,9 +202,6 @@
 
   
   <xsl:template match="model">
-    <xsl:message terminate="no">
-      <xsl:value-of select="concat('basename=',$basename,',  base-schema=',$base-schema,$nl)"/>
-    </xsl:message>
     <xsl:apply-templates select="schemas"/>
   </xsl:template>
 
@@ -251,10 +248,9 @@
     <xsl:variable name="nltab"    select="concat($ltab,$gtab)" />
     <xsl:variable name="nnltab"   select="concat($nltab,$gtab)" />
 
-    <xsl:variable name="t-count"  select="count(//table[@schema = $schema])"/>
+    <xsl:variable name="t-count"  select="count(/model/tables/table[@schema = $schema])"/>
     <xsl:variable name="opt-comma" select="fcn:if-then-else($t-count,'=','0','',',')"/>
 
-    
     <xsl:if test="$t-count != 0">
       <xsl:value-of select="concat($nltab, $dq,@name,         $dq, ': {',                           $nl)"/>
       <xsl:value-of select="concat($nnltab,$dq,'name',        $dq, ': ',$dq, $schema, $dq, $comma,    $nl)"/>
@@ -280,16 +276,12 @@
   <xsl:template match="tables" mode="list">
     <xsl:param name="schema"/>
     <xsl:param name="ltab"/>
-
     <xsl:value-of select="concat($ltab,$dq,'tables',$dq,': [',$nl)"/>
-
     <xsl:apply-templates select="table[@schema = $schema]" mode="list">
       <xsl:with-param name="schema" select="$schema" />
       <xsl:with-param name="ltab" select="concat($ltab,$gtab)" />
     </xsl:apply-templates>
-
     <xsl:value-of select="concat($ltab,'],',$nl)"/>
-
   </xsl:template>
 
   

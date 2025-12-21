@@ -20,7 +20,7 @@ HELP="${USAGE}
 check=""
 inputfile=""
 outputfile=""
-projectfile="${PROJECT_FILE}"
+projectfile="${FULL_PROJECT_FILE}"
 verbose=""
 
 while getopts "chi:o:p:v" OPT
@@ -69,7 +69,8 @@ name="${name##*/}"
 [[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" ""  1
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found"  ""  1
 
-xslt_params="--stringparam projectfile ${projectfile}"
+xslt_params="--path ${DTD_DIR}"
+xslt_params="${xslt_params} --stringparam projectfile ${projectfile}"
 
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_JSON} ${inputfile} ${outputfile}"
 xsltproc ${xslt_params} "${XML_2_JSON}" "${inputfile}" > "${outputfile}"
