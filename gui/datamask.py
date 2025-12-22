@@ -30,7 +30,7 @@ class DataMask(tk.Frame):
         bgcolor = "#dfdfff"
         projekt = pr.Projekt.get_instance()
 
-        print ("datamask.init: schema_name=" , schema_name, ",  table_name=", table_name)
+        #print ("datamask.init: schema_name=" , schema_name, ",  table_name=", table_name)
         self.column_list   = projekt.get_column_list(schema_name, table_name)
         self.value_list    = list()
         self.lis_len       = projekt.get_column_count(schema_name, table_name)
@@ -46,9 +46,9 @@ class DataMask(tk.Frame):
         label_list = list()
         for idx in range(self.lis_len):
             field       = self.column_list[idx]["name"]
-            print("datamask.init: field=", field)
+            #print("datamask.init: field=", field)
             var_type    = self.column_list[idx]["type"]
-            print("datamask.init: var_type=", var_type)
+            #print("datamask.init: var_type=", var_type)
             col_size    = self.conf.get(var_type + ".width")
             descr_size  = self.conf.get("text.width")
             lbl_txt     = self.column_list[idx]["comment"]
@@ -71,7 +71,7 @@ class DataMask(tk.Frame):
             else:
                 label_font = tf.Font(self,size=10, weight="normal")
             if refcomment != None:
-                lbl_txt = lbl_txt + " (" + refcomment + ")"
+                lbl_txt = refcomment
 
             body = tk.Frame(self, background=bgcolor)
             body.place(relx=0.0,rely=height*idx,relheight=height, relwidth=1.0)
@@ -147,8 +147,8 @@ class DataMask(tk.Frame):
 
 
     def execute_mask_query(self, idx, ispk, table, refschema, reftable, reffield):
-        print ("datamask: execute_mask_query idx=", idx, "  ispk=", ispk, 
-               "  refschema=", refschema, "  reftable=", reftable, "  reffield=", reffield)
+        #print ("datamask: execute_mask_query idx=", idx, "  ispk=", ispk, 
+        #       "  refschema=", refschema, "  reftable=", reftable, "  reffield=", reffield)
         self.data.execute_mask_query(idx, ispk, self, refschema, reftable, reffield)
         
     

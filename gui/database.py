@@ -91,7 +91,7 @@ class Database():
     def execute_controll_command(self, action, contr):
         chk = dm.check_input(action, contr.column_list, contr.datamask.value_list)
         if chk == "OK":
-            sql = dm.get_sql_controll_command(action, contr.schema_table_name, 
+            sql = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, 
                                               contr.column_list, contr.datamask.value_list)
             if self.run_mode == "dry":
                 if self.debug == "write" or self.debug == "all":
@@ -109,7 +109,7 @@ class Database():
     
 
     def execute_controll_query(self, action, contr):
-        sql = dm.get_sql_controll_command(action, contr.schema_table_name, contr.column_list, contr.datamask.value_list)
+        sql = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, contr.column_list, contr.datamask.value_list)
         self.execute_db_query(sql)
         self.status = action + ":" + self.status 
         dm.set_sql_controll_result(action, contr, self.result_tuples)

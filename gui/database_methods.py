@@ -86,7 +86,7 @@ def is_dimension(column_list):
     return pk_cnt == 1
 
 
-def get_sql_insert(table_name,column_list,value_list):
+def get_sql_insert(schema_name,table_name,column_list,value_list):
     is_dim = is_dimension(column_list)
     lis_len = len(column_list)
     name_strg = ""
@@ -107,13 +107,13 @@ def get_sql_insert(table_name,column_list,value_list):
         name_strg = name_strg + requ_delim + name
         value_strg = value_strg + requ_delim + format(txt,typ)
         requ_delim = ", "
-    statement = "insert into " + table_name + " ("
+    statement = "insert into " + schema_name + "." + table_name + " ("
     statement = statement + name_strg + ") values (" + value_strg 
     statement = statement + ") returning " + res_strg
     return statement
 
 
-def get_sql_update(table_name,column_list,value_list):
+def get_sql_update(schema_name,table_name,column_list,value_list):
     lis_len = len(column_list)
     set_strg = ""
     where_strg = ""
@@ -126,7 +126,7 @@ def get_sql_update(table_name,column_list,value_list):
         is_pk = column_list[idx]["ispk"]
         name = column_list[idx]["name"]
         typ = column_list[idx]["type"]
-        print ("idx=", idx, ",  name=", name,",  auto=",auto)
+        #print ("idx=", idx, ",  name=", name,",  auto=",auto)
         txt = value_list[idx].get()
         if auto:
             new_strg = name + " = current_date"
@@ -140,13 +140,13 @@ def get_sql_update(table_name,column_list,value_list):
         else:
             set_strg = set_strg + set_delim + new_strg
             set_delim = ", "
-    statement = "update " + table_name + " set "
+    statement = "update " + schema_name + "." + table_name + " set "
     statement = statement + set_strg + " where " + where_strg
     statement = statement + " returning " + res_strg
     return statement
 
 
-def get_sql_delete(table_name,column_list,value_list):
+def get_sql_delete(schema_name,table_name,column_list,value_list):
     lis_len = len(column_list)
     where_strg = ""
     res_strg = ""
@@ -165,14 +165,14 @@ def get_sql_delete(table_name,column_list,value_list):
             where_delim = " and "
         else:
             pass
-    statement = "delete from " + table_name 
+    statement = "delete from " + schema_name + "." + table_name 
     statement = statement + " where " + where_strg
     statement = statement + " returning " + res_strg
     return statement
 
 
 
-def get_sql_search(table_name,column_list,value_list):
+def get_sql_search(schema_name,table_name,column_list,value_list):
     lis_len = len(column_list)
     name_strg = ""
     where_strg = ""
@@ -202,7 +202,7 @@ def get_sql_search(table_name,column_list,value_list):
         if txt != "" and not auto and not ispk:
             where_strg = where_strg + where_delimiter + new_strg
             where_delimiter = " and "
-    statement = "select " + name_strg + " from " + table_name
+    statement = "select " + name_strg + " from " + schema_name + "." + table_name
     if where_strg != "":
         statement = statement + " where " + where_strg
     if order_strg != "":
@@ -216,25 +216,29 @@ def get_sql_search(table_name,column_list,value_list):
 
 
 
-def get_sql_controll_command(action, schema_table_name, column_list, value_list):
+def get_sql_controll_command(action, schema_name, table_name, column_list, value_list):
 
     if debug != "off":
         print ("get sql command for action " + action)
         
     if action == "insert":
-        statement = get_sql_insert(schema_table_name,
+        statement = get_sql_insert(schema_name, 
+                                   table_name,
                                    column_list,
                                    value_list)
     elif action == "update":
-        statement = get_sql_update(schema_table_name,
-                                    column_list,
-                                    value_list)
+        statement = get_sql_update(schema_name, 
+                                   table_name,
+                                   column_list,
+                                   value_list)
     elif action == "delete":
-        statement = get_sql_delete(schema_table_name,
+        statement = get_sql_delete(schema_name, 
+                                   table_name,
                                    column_list,
                                    value_list)
     elif action == "search":
-        statement = get_sql_search(schema_table_name,
+        statement = get_sql_search(schema_name, 
+                                   table_name,
                                    column_list,
                                    value_list)
     elif action == "clear":
@@ -245,7 +249,7 @@ def get_sql_controll_command(action, schema_table_name, column_list, value_list)
 
 
 def get_sql_mask_command(idx, data, mask, refschema, reftable, reffield):
-    print ("idx=" + str(idx) + ",  table=" + mask.table_name + ",  reffield=" + reffield)
+    #print ("idx=" + str(idx) + ",  table=" + mask.table_name + ",  reffield=" + reffield)
 
     projekt = pr.Projekt.get_instance()
     if reftable == None:
@@ -339,7 +343,7 @@ def check_input(action, column_list, value_list):
                break
     else:
         raise ValueError("Unbekannte Aktion [" + action + "]")
-    print ("check_input: idx=" + str(idx) + " val=[" + str(val) + "],  result=" + result)
+    #print ("check_input: idx=" + str(idx) + " val=[" + str(val) + "],  result=" + result)
     return result
 
 

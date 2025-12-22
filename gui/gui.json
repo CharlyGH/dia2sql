@@ -10,7 +10,7 @@
         { "debug" : "verbose" }
     ],
     "debug"                  : "all",
-    "text.width"             :  30,
+    "text.width"             :  50,
     "integer.width"          :  10,
     "bigint.width"           :  10,
     "date.width"             :  10,

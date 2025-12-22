@@ -21,7 +21,8 @@ class Controll(tk.Frame):
 
 
         self.column_list = projekt.get_column_list(schema_name, table_name)
-        self.schema_table_name = schema_name + "." + table_name
+        self.schema_name = schema_name
+        self.table_name  = table_name
         self.data              = data
 
   

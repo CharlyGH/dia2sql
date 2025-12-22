@@ -28,7 +28,7 @@ class ResultTable(win.Windows):
         offset = 4
         height = 1.0/(rows + offset)
         self.cols   = len(result_list[0])
-        print("cols=" + str(self.cols))
+        #print("cols=" + str(self.cols))
 
         self.geometry(self.get_size(180*self.cols+50,35*(rows + offset),300,120))
         self.ispk        = ispk
@@ -107,8 +107,10 @@ class ResultTable(win.Windows):
                 self.parent.datamask.value_list[col].set(value)
         else:
             ##TODO indices geeignet wählen 
-            value = value_list[1].get()
-            descr = value_list[2].get()
+            value = value_list[0].get()
+            descr = value_list[1].get()
+            for idx in range(2, len(value_list)):
+                descr = descr + "|" + value_list[idx].get()
             self.parent.datamask.value_list[self.target_idx].set(value)
             self.parent.datamask.descr_list[self.target_idx].set(descr)
         self.on_closing()

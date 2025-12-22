@@ -374,6 +374,9 @@ BEGIN {
     else if ((section == "tables") && (in_table_def)) {
         in_table_def = 0;    
         table_schema            = table_schema_tab[table_name];
+        dim_schema  = schema_name_tab["dim"];
+        base_schema = schema_name_tab["base"];
+        is_dim_table = (table_schema == dim_schema);
         table_definition = "name='" table_name "' " ;
         table_definition = table_definition "schema='" table_schema "' ";
         table_definition = table_definition "tablespace='" table_schema "' ";
@@ -383,8 +386,13 @@ BEGIN {
 
         for (idx = 1; idx <= column_count; idx++) {
             column_name     = column_name_tab[idx];
+            ispk_column = (index(primary_list_tab[table_name], column_name) != 0);
+            
             column_type     = column_type_tab[idx];
             column_default  = column_default_tab[idx];
+            if ((column_default == "") && is_dim_table && ispk_column) {
+                column_default = "nextval('" base_schema ".seq_" table_name "_" column_name "'::regclass)";
+            }
             
             column_nullable = column_nullable_tab[idx];
             column_comment  = column_comment_tab[idx];

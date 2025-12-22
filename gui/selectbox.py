@@ -48,5 +48,5 @@ class SelectBox(ttk.Combobox):
     def changed_value(self, event):
         idx = self.current()
         self.current_value = self.value_list[idx]
-        print ("setting current value zu " + self.current_value)
+        # print ("setting current value zu " + self.current_value)
         
