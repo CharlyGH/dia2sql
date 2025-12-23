@@ -42,6 +42,7 @@ class EditTable(win.Windows):
         offset = 4
         height = 1.0/(offset + lis_len)
         self.geometry(self.get_size(800,50*(lis_len + offset),700,80))
+        self.columns = projekt.get_column_list(schema_name, table_name)
 
           
         head = tk.Frame(self, background=bgcolor)

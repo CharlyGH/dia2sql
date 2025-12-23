@@ -25,13 +25,16 @@ class Database():
 
 
 
-    def execute_db_query (self, sql):
+    def execute_db_query (self, sql, arglist):
         if self.debug == "read" or self.debug == "all" or self.debug == "verbose":
             print("sql=[" + sql + "]")
+            print("arglist=[" + str(arglist) + "]")
         with pg.connect(self.conn_strg) as conn:
 #            print ("datestyle=",conn.execute("show datestyle").fetchone()[0])
             with conn.cursor() as curs:
                 curs.execute(sql)
+                if arglist != None:
+                    curs.execute(arglist)
                 self.meta          = curs.description
                 self.col_count     = len(self.meta)
                 self.row_count     = curs.rowcount
@@ -45,12 +48,15 @@ class Database():
                 print (row)
 
 
-    def execute_db_command (self, sql):
+    def execute_db_command (self, sql, arglist):
         if self.debug == "write" or self.debug == "all":
             print("sql=[" + sql + "]")
+            print("arglist=[" + str(arglist) + "]")
         with pg.connect(self.conn_strg) as conn:
             with conn.cursor() as curs:
                 curs.execute(sql)
+                if arglist != None:
+                    curs.execute(arglist)
                 self.meta          = curs.description
                 self.col_count     = len(self.meta)
                 self.row_count     = curs.rowcount
@@ -91,8 +97,8 @@ class Database():
     def execute_controll_command(self, action, contr):
         chk = dm.check_input(action, contr.column_list, contr.datamask.value_list)
         if chk == "OK":
-            sql = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, 
-                                              contr.column_list, contr.datamask.value_list)
+            sql, arglist = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, 
+                                                       contr.column_list, contr.datamask.value_list)
             if self.run_mode == "dry":
                 if self.debug == "write" or self.debug == "all":
                     print(sql)
@@ -101,7 +107,7 @@ class Database():
                 self.result_tuples.append(0)
                 dm.set_sql_controll_result(action, contr, self.result_tuples)
             else:
-                self.execute_db_command(sql)
+                self.execute_db_command(sql, arglist)
                 self.status = action + ":" + self.status 
                 dm.set_sql_controll_result(action, contr, self.result_tuples)
         else:
@@ -109,8 +115,9 @@ class Database():
     
 
     def execute_controll_query(self, action, contr):
-        sql = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, contr.column_list, contr.datamask.value_list)
-        self.execute_db_query(sql)
+        sql, arglist = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, 
+                                                   contr.column_list, contr.datamask.value_list)
+        self.execute_db_query(sql, arglist)
         self.status = action + ":" + self.status 
         dm.set_sql_controll_result(action, contr, self.result_tuples)
 
@@ -123,7 +130,7 @@ class Database():
 
     def execute_mask_query(self, idx, ispk, mask, refschema, reftable, reffield):
         sql = dm.get_sql_mask_command(idx, self, mask, refschema, reftable, reffield)
-        self.execute_db_query(sql)
+        self.execute_db_query(sql, None)
         self.status = "read:" + self.status 
         mask.controll.message.set(self.status)
         dm.set_mask_query_result(self.result_tuples, mask, idx, ispk)

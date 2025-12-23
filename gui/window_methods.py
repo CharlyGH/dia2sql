@@ -83,8 +83,16 @@ def get_window(parent, name,
 
 
 def format_label(field):
-    first = field[0].upper()
-    rest  = field[1:].lower()
-    return first + rest
+    upper = True
+    result = ""
+    for idx in range(len(field)):
+        chr = field[idx]
+        if upper:
+            result += chr.upper()
+        else:
+            result += chr.lower()
+        upper = (chr == '_')
+            
+    return result
 
 

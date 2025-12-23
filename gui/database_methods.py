@@ -91,9 +91,12 @@ def get_sql_insert(schema_name,table_name,column_list,value_list):
     lis_len = len(column_list)
     name_strg = ""
     value_strg = ""
+    prep_value_strg = ""
+    type_strg = ""
     requ_delim = ""
     res_strg = ""
     res_delim = ""
+    val_idx = 1
     for idx in range(lis_len):
         is_pk = column_list[idx]["ispk"]
         auto = column_list[idx]["auto"]
@@ -104,23 +107,31 @@ def get_sql_insert(schema_name,table_name,column_list,value_list):
         res_delim = ", "
         if (is_pk and is_dim) or auto:
             continue
+        type_strg = type_strg + requ_delim + typ
         name_strg = name_strg + requ_delim + name
         value_strg = value_strg + requ_delim + format(txt,typ)
+        prep_value_strg = prep_value_strg + requ_delim + "$" + str(val_idx) 
+        val_idx = val_idx + 1
         requ_delim = ", "
-    statement = "insert into " + schema_name + "." + table_name + " ("
-    statement = statement + name_strg + ") values (" + value_strg 
+    statement = "prepare insert_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "insert into " + schema_name + "." + table_name + " ("
+    statement = statement + name_strg + ") values (" + prep_value_strg 
     statement = statement + ") returning " + res_strg
-    return statement
+    arglist = "execute insert_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
 
 
 def get_sql_update(schema_name,table_name,column_list,value_list):
     lis_len = len(column_list)
     set_strg = ""
     where_strg = ""
+    type_strg = ""
+    value_strg = ""
     res_strg = ""
     set_delim = ""
     where_delim = ""
     res_delim = ""
+    val_idx = 1
     for idx in range(lis_len):
         auto = column_list[idx]["auto"]
         is_pk = column_list[idx]["ispk"]
@@ -131,19 +142,25 @@ def get_sql_update(schema_name,table_name,column_list,value_list):
         if auto:
             new_strg = name + " = current_date"
         else:
-            new_strg = name + " = " + format(txt,typ)
+            new_strg = name + " = " + "$" + val_idx
         res_strg = res_strg + res_delim + name
+        type_strg = type_strg + res_delim + typ
+        value_strg = value_strg + set_delim + format(txt,typ)
         res_delim = ", "
+        
         if is_pk:
-            where_strg = where_strg + where_delim + new_strg
+            where_strg = where_strg + where_delim + "$" + str(val_idx)
             where_delim = " and "
         else:
             set_strg = set_strg + set_delim + new_strg
             set_delim = ", "
-    statement = "update " + schema_name + "." + table_name + " set "
+        val_idx = val_idx + 1
+    statement = "prepare update_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "update " + schema_name + "." + table_name + " set "
     statement = statement + set_strg + " where " + where_strg
     statement = statement + " returning " + res_strg
-    return statement
+    arglist = "execute update_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
 
 
 def get_sql_delete(schema_name,table_name,column_list,value_list):
@@ -151,24 +168,31 @@ def get_sql_delete(schema_name,table_name,column_list,value_list):
     where_strg = ""
     res_strg = ""
     where_delim = ""
+    type_strg = ""
+    value_strg = ""
     res_delim = ""
+    val_idx = 1
     for idx in range(lis_len):
         is_pk = column_list[idx]["ispk"]
         name = column_list[idx]["name"]
         typ = column_list[idx]["type"]
         txt = value_list[idx].get()
-        new_strg = name + " = " + format(txt,typ)
         res_strg = res_strg + res_delim + name
+        type_strg = type_strg + res_delim + typ
+        value_strg = value_strg + res_delim + format(txt,typ)
         res_delim = ", "
         if is_pk:
-            where_strg = where_strg + where_delim + new_strg
+            where_strg = where_strg + where_delim + "$" + str(val_idx)
             where_delim = " and "
         else:
             pass
-    statement = "delete from " + schema_name + "." + table_name 
+        val_idx = val_idx + 1
+    statement = "prepare delete_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "delete from " + schema_name + "." + table_name 
     statement = statement + " where " + where_strg
     statement = statement + " returning " + res_strg
-    return statement
+    arglist = "execute update_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
 
 
 
@@ -177,9 +201,13 @@ def get_sql_search(schema_name,table_name,column_list,value_list):
     name_strg = ""
     where_strg = ""
     order_strg = ""
-    name_delimiter = ""
-    where_delimiter = ""
-    order_delimiter = ""
+    type_strg = ""
+    name_delim = ""
+    where_delim = ""
+    order_delim = ""
+    type_delim = ""
+    value_strg = ""
+    val_idx = 1
     for idx in range(lis_len):
         name = column_list[idx]["name"]
         typ  = column_list[idx]["type"]
@@ -193,22 +221,28 @@ def get_sql_search(schema_name,table_name,column_list,value_list):
             op = " like "
         else:
             op = " = "
-        new_strg = name + op + format(txt,typ)
-        name_strg = name_strg + name_delimiter + name
+        new_strg = name + op + "$" + str(val_idx)
+        name_strg = name_strg + name_delim + name
+        name_delim = ", "
         if isuk:
-            order_strg = order_strg + order_delimiter + name
-            order_delimiter = ", "
-        name_delimiter = ", "
+            order_strg = order_strg + order_delim + name
+            order_delim = ", "
         if txt != "" and not auto and not ispk:
-            where_strg = where_strg + where_delimiter + new_strg
-            where_delimiter = " and "
-    statement = "select " + name_strg + " from " + schema_name + "." + table_name
+            type_strg = type_strg + type_delim + typ
+            value_strg = value_strg + type_delim + format(txt,typ)
+            where_strg = where_strg + where_delim + new_strg
+            where_delim = " and "
+            type_delim = ", "
+            val_idx = val_idx + 1
+    statement = "prepare select_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "select " + name_strg + " from " + schema_name + "." + table_name
     if where_strg != "":
         statement = statement + " where " + where_strg
     if order_strg != "":
         statement = statement + " order by " + order_strg
+    arglist = "execute select_" + table_name + "(" + value_strg + ")"
         
-    return statement
+    return statement, arglist
 
 
 
@@ -222,30 +256,30 @@ def get_sql_controll_command(action, schema_name, table_name, column_list, value
         print ("get sql command for action " + action)
         
     if action == "insert":
-        statement = get_sql_insert(schema_name, 
-                                   table_name,
-                                   column_list,
-                                   value_list)
+        statement, arglist = get_sql_insert(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
     elif action == "update":
-        statement = get_sql_update(schema_name, 
-                                   table_name,
-                                   column_list,
-                                   value_list)
+        statement, arglist = get_sql_update(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
     elif action == "delete":
-        statement = get_sql_delete(schema_name, 
-                                   table_name,
-                                   column_list,
-                                   value_list)
+        statement, arglist = get_sql_delete(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
     elif action == "search":
-        statement = get_sql_search(schema_name, 
-                                   table_name,
-                                   column_list,
-                                   value_list)
+        statement, arglist = get_sql_search(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
     elif action == "clear":
-        statement = None
+        statement, arglist = None, None
     else:
         raise ValueError("Unbekannte Aktion [" + action + "]")
-    return statement
+    return statement, arglist
 
 
 def get_sql_mask_command(idx, data, mask, refschema, reftable, reffield):
