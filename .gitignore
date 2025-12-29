@@ -4,6 +4,7 @@ out/*.sql
 out/*.json
 pdf/*.pdf
 temp/*
+test/*
 !pdf/dia2sql.pdf
 user.txt
 test.sh

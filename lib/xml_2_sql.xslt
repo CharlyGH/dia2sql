@@ -9,23 +9,21 @@
   <xsl:output method="text" omit-xml-declaration="yes" indent="no"/>
 
 
-  <xsl:param name="projectname"/>
-
   <xsl:param name="oldfile"/>
 
   <xsl:param name="newfile"/>
 
-  <xsl:param name="projectfile"/>
+  <xsl:param name="projectconfig"/>
 
   <xsl:param name="filetype"/>
 
-  <xsl:variable name="base-schema" select="fcn:get-project-value($projectfile,'base',$projectname)"/>
-  <xsl:variable name="dim-schema"  select="fcn:get-project-value($projectfile,'dim', $projectname)"/>
-  <xsl:variable name="fact-schema" select="fcn:get-project-value($projectfile,'fact',$projectname)"/>
-  <xsl:variable name="hist-schema" select="fcn:get-project-value($projectfile,'hist',$projectname)"/>
-  
-  <xsl:variable name="valid-from" select="document($projectfile)/project/item[@name = 'valid-from']/@value"/>
-  <xsl:variable name="valid-to"   select="document($projectfile)/project/item[@name = 'valid-to'  ]/@value"/>
+  <xsl:variable name="base-schema" select="document($projectconfig)/config/schemaconf[@name = 'base']/@value"/>
+  <xsl:variable name="dim-schema"  select="document($projectconfig)/config/schemaconf[@name = 'dim' ]/@value"/>
+  <xsl:variable name="fact-schema" select="document($projectconfig)/config/schemaconf[@name = 'fact']/@value"/>
+  <xsl:variable name="hist-schema" select="document($projectconfig)/config/schemaconf[@name = 'hist']/@value"/>
+
+  <xsl:variable name="valid-from"  select="document($projectconfig)/config/columnconf[@name = 'valid-from']/@value"/>
+  <xsl:variable name="valid-to"    select="document($projectconfig)/config/columnconf[@name = 'valid-to'  ]/@value"/>
 
 
   <xsl:variable name="space">

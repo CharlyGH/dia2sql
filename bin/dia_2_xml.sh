@@ -112,7 +112,6 @@ gen="$(grep '^version#' "${tempss}" | cut -d'#' -f2)"
 
 xslt_params="--stringparam basename ${basename}"
 xslt_params="${xslt_params} --stringparam projectfile ${FULL_PROJECT_FILE}"
-xslt_params="${xslt_params} --stringparam trigger ${trigger}"
 xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
@@ -135,6 +134,10 @@ if [[ -n "${check}" ]] ; then
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in script check_rules.sh" "" 1
 fi
+
+xslt_params="--stringparam projectconfig ${tempprj}"
+xslt_params="${xslt_params} --stringparam trigger ${trigger}"
+xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
 if [[ -n "${auto}" ]] ; then

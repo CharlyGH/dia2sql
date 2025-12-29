@@ -117,7 +117,7 @@
                 hist (%BOOL;) #REQUIRED>
 
 <!ELEMENT definition  (statement,column-list)>
-<!ATTLIST definition  action (insert|update|delete)  #REQUIRED
+<!ATTLIST definition  action CDATA                   #REQUIRED
                       level  (row|statement)         #REQUIRED
                       timing (before|after)          #REQUIRED>
 

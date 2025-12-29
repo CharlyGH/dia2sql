@@ -164,8 +164,7 @@ awk_params="-v lines=${lines}"
 
 #set -x
 
-xslt_params="--stringparam projectfile ${projectfile}"
-xslt_params="${xslt_params}  --stringparam projectname ${projectname}"
+xslt_params="--stringparam projectconfig ${tempprj}"
 [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
 [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
 xslt_params="${xslt_params}  --path ${DTD_DIR}"

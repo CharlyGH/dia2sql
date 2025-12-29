@@ -21,23 +21,18 @@
 
   <xsl:include href="functions.xslt"/>
   
-  <xsl:param name="basename"/>
-
-  <xsl:param name="projectfile"/>
+  <xsl:param name="projectconfig"/>
   
   <xsl:param name="trigger"/>
   
-  <xsl:variable name="valid-from" select="document($projectfile)/project/item[@name = 'valid-from']/@value"/>
 
-  <xsl:variable name="valid-to" select="document($projectfile)/project/item[@name = 'valid-to']/@value"/>
+  <xsl:variable name="base-schema" select="document($projectconfig)/config/schemaconf[@name = 'base']/@value"/>
+  <xsl:variable name="dim-schema"  select="document($projectconfig)/config/schemaconf[@name = 'dim' ]/@value"/>
+  <xsl:variable name="fact-schema" select="document($projectconfig)/config/schemaconf[@name = 'fact']/@value"/>
+  <xsl:variable name="hist-schema" select="document($projectconfig)/config/schemaconf[@name = 'hist']/@value"/>
 
-  <xsl:variable name="base-name" select="fcn:get-project-value($projectfile,'base',$basename)"/>
-  
-  <xsl:variable name="dim-name" select="fcn:get-project-value($projectfile,'dim',$basename)"/>
-  
-  <xsl:variable name="hist-name" select="fcn:get-project-value($projectfile,'hist',$basename)"/>
-  
-  <xsl:variable name="fact-name" select="fcn:get-project-value($projectfile,'fact',$basename)"/>
+  <xsl:variable name="valid-from"  select="document($projectconfig)/config/columnconf[@name = 'valid-from']/@value"/>
+  <xsl:variable name="valid-to"    select="document($projectconfig)/config/columnconf[@name = 'valid-to'  ]/@value"/>
 
 
   <xsl:template name="metacolumn">
@@ -82,7 +77,7 @@
     <xsl:param name="version"/>
     <xsl:element name="insert">
       <xsl:attribute name="schema">
-        <xsl:value-of select="$base-name"/>
+        <xsl:value-of select="$base-schema"/>
       </xsl:attribute>
       <xsl:attribute name="table">
         <xsl:value-of select="'metadata'"/>
@@ -106,10 +101,10 @@
           <xsl:value-of select="'metadata'"/>
         </xsl:attribute>
         <xsl:attribute name="schema">
-          <xsl:value-of select="$base-name"/>
+          <xsl:value-of select="$base-schema"/>
         </xsl:attribute>
         <xsl:attribute name="tablespace">
-          <xsl:value-of select="$base-name"/>
+          <xsl:value-of select="$base-schema"/>
         </xsl:attribute>
         <xsl:attribute name="auto">
           <xsl:value-of select="'NO'"/>
@@ -340,9 +335,9 @@
 
   <xsl:template match="tables">
     <xsl:element name="tables">
-      <xsl:apply-templates select="table[@schema = $dim-name]"  mode="copy"/>
-      <xsl:apply-templates select="table[@schema = $fact-name]" mode="copy"/>
-      <xsl:apply-templates select="table[@schema = $dim-name]"  mode="hist"/>
+      <xsl:apply-templates select="table[@schema = $dim-schema]"  mode="copy"/>
+      <xsl:apply-templates select="table[@schema = $fact-schema]" mode="copy"/>
+      <xsl:apply-templates select="table[@schema = $dim-schema]"  mode="hist"/>
     </xsl:element>
   </xsl:template>
 
@@ -423,10 +418,10 @@
           <xsl:value-of select="@name"/>
         </xsl:attribute>
       <xsl:attribute name="schema">
-        <xsl:value-of select="$hist-name"/>
+        <xsl:value-of select="$hist-schema"/>
       </xsl:attribute>
         <xsl:attribute name="tablespace">
-          <xsl:value-of select="$hist-name"/>
+          <xsl:value-of select="$hist-schema"/>
         </xsl:attribute>
         <xsl:attribute name="auto">
           <xsl:value-of select="'YES'"/>
@@ -483,7 +478,12 @@
           <xsl:call-template name="hist-date-field">
             <xsl:with-param name="field-name" select="$valid-from"/>
             <xsl:with-param name="field-default" select="'current_date'"/>
-            <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Von-Datum'"/>
+            <xsl:with-param name="field-comment" select="concat('automatisch erzeugtes ',$valid-from,'-Datum')"/>
+          </xsl:call-template>
+          <xsl:call-template name="hist-date-field">
+            <xsl:with-param name="field-name" select="$valid-to"/>
+            <xsl:with-param name="field-default" select="concat($q,'31.12.9999',$q,'::date')"/>
+            <xsl:with-param name="field-comment" select="concat('automatisch erzeugtes ',$valid-to,'-Datum')"/>
           </xsl:call-template>
           <xsl:apply-templates select="column[position() != 1]" mode="copy"/>
         </xsl:when>
@@ -504,12 +504,12 @@
           <xsl:call-template name="hist-date-field">
             <xsl:with-param name="field-name" select="$valid-from"/>
             <xsl:with-param name="field-default" select="'current_date'"/>
-            <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Von-Datum'"/>
+            <xsl:with-param name="field-comment" select="concat('automatisch erzeugtes ',$valid-from,'-Datum')"/>
           </xsl:call-template>
           <xsl:call-template name="hist-date-field">
             <xsl:with-param name="field-name" select="$valid-to"/>
-            <xsl:with-param name="field-default" select="'current_date - 1'"/>
-            <xsl:with-param name="field-comment" select="'automatisch erzeugtes Gültig-Bis-Datum'"/>
+            <xsl:with-param name="field-default" select="concat($q,'31.12.9999',$q,'::date')"/>
+            <xsl:with-param name="field-comment" select="concat('automatisch erzeugtes ',$valid-to,'-Datum')"/>
           </xsl:call-template>
           <xsl:apply-templates select="column[position() != 1]" mode="hist"/>
         </xsl:when>
@@ -622,10 +622,10 @@
       <xsl:attribute name="name">
         <xsl:value-of select="$name"/>
       </xsl:attribute>
+      <xsl:apply-templates select="key" mode="hist"/>
       <xsl:apply-templates select="key" mode="hist">
         <xsl:with-param name="key" select="$valid-from"/>
       </xsl:apply-templates>
-      <xsl:apply-templates select="key" mode="hist"/>
     </xsl:element>
   </xsl:template>
 
@@ -635,8 +635,9 @@
     <xsl:variable name="table-name" select="@name"/>
     <xsl:variable name="trigger-name" select="concat($table-name,'_trg')"/>
     <xsl:variable name="function-name" select="concat($table-name,'_trg_fun')"/>
+    <xsl:variable name="pk-column" select="//table[@name = $table-name and @schema = $schema]/primary/key"/>
     <xsl:variable name="column-list">
-      <xsl:apply-templates select="columns/column" mode="update"/>
+      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
     </xsl:variable>
     <xsl:element name="triggers">
       <xsl:element name="trigger">
@@ -656,7 +657,7 @@
         </xsl:if>
         <xsl:element name="definition">
           <xsl:attribute name="action">
-            <xsl:value-of select="'update'"/>
+            <xsl:value-of select="'insert or update'"/>
           </xsl:attribute>
           <xsl:attribute name="level">
             <xsl:value-of select="'row'"/>
@@ -672,6 +673,7 @@
           </xsl:element>
         </xsl:element>
         <xsl:element name="fields">
+          <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="trigger-xml"/>
           <xsl:element name="field">
             <xsl:attribute name="name">
               <xsl:value-of select="$valid-from"/>
@@ -680,7 +682,15 @@
               <xsl:value-of select="'YES'"/>
             </xsl:attribute>
           </xsl:element>
-          <xsl:apply-templates select="columns/column" mode="trigger-xml"/>
+          <xsl:element name="field">
+            <xsl:attribute name="name">
+              <xsl:value-of select="$valid-to"/>
+            </xsl:attribute>
+            <xsl:attribute name="hist">
+              <xsl:value-of select="'YES'"/>
+            </xsl:attribute>
+          </xsl:element>
+          <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="trigger-xml"/>
         </xsl:element>
       </xsl:element>
     </xsl:element>
@@ -705,21 +715,29 @@
     <xsl:variable name="table-name" select="@name"/>
     <xsl:variable name="pk-column" select="//table[@name = $table-name and @schema = $schema]/primary/key"/>
     <xsl:variable name="function-name" select="concat($table-name,'_trg_fun')"/>
+
     <xsl:variable name="source-list">
       <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="list">
         <xsl:with-param name="prefix" select="'t.'"/>
       </xsl:apply-templates>
-      <xsl:value-of select="concat(', t.',$valid-from,', ')"/>
-      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
+      <xsl:value-of select="concat(', t.',$valid-from)"/>
+      <xsl:value-of select="concat(', t.',$valid-to,', ')"/>
+      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list">
+        <xsl:with-param name="prefix" select="'t.'"/>
+      </xsl:apply-templates>
     </xsl:variable>
+
     <xsl:variable name="target-list">
       <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="list"/>
-      <xsl:value-of select="concat(', ', $valid-from,', ')"/>
+      <xsl:value-of select="concat(', ', $valid-from)"/>
+      <xsl:value-of select="concat(', ', $valid-to,', ')"/>
       <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
     </xsl:variable>
+
     <xsl:variable name="update-list">
       <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
     </xsl:variable>
+
     <xsl:element name="triggers">
       <xsl:element name="trigger">
         <xsl:attribute name="table-name">
@@ -759,10 +777,10 @@
           <xsl:value-of select="concat(' language plpgsql',$nl)"/>
           <xsl:value-of select="concat('as $function$',$nl)"/>
           <xsl:value-of select="concat('  begin',$nl)"/>
-          <xsl:value-of select="concat('    insert into ',$hist-name,'.',$table-name,$nl)"/>
+          <xsl:value-of select="concat('    insert into ',$hist-schema,'.',$table-name,$nl)"/>
           <xsl:value-of select="concat('      (',$target-list,')',$nl)"/>
           <xsl:value-of select="concat('      select ',$source-list,$nl)"/>
-          <xsl:value-of select="concat('        from ',$dim-name,'.',$table-name,' as t',$nl)"/>
+          <xsl:value-of select="concat('        from ',$dim-schema,'.',$table-name,' as t',$nl)"/>
           <xsl:value-of select="concat('       where t.',$pk-column,' = old.',$pk-column,';',$nl)"/>
           <xsl:value-of select="concat('  return new;',$nl)"/>
           <xsl:value-of select="concat('  end;',$nl)"/>
