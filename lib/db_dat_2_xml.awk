@@ -106,63 +106,82 @@ function fail_on_error(cond, message) {
 
 
 function check_trigger_line(line_text, line_no, src_schema, func_name, tgt_schema, table,
-                            expect, field_list, field_tab, cnt) {
+                            expect, field_list) {
     result = "";
     if (line_no == 1) {
         expect = "create or replace function " src_schema "." func_name "()";
-        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");        
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
     if (line_no == 2) {
         expect = " returns trigger";
-        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");        
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
     if (line_no == 3) {
         expect = " language plpgsql";
-        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");        
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
     if (line_no == 4) {
         expect = "as $function$";
-        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");        
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
     if (line_no == 5) {
         expect = "  begin";
-        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");        
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
     if (line_no == 6) {
-        expect = "    insert into " tgt_schema "." table;
-        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");        
+        expect = "        insert into " tgt_schema "." table;
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
+        result = line_text;
     }
     if (line_no == 7) {
-        field_list = substring_between(line_text, "      (", ")");
-        cnt = split(field_list, field_tab, ", ");
-        fail_on_error(field_tab[1] != columnconf_tab[1], "found unexpected column name [" field_tab[1] "]");
-        for (idx = 1; idx <= cnt; idx++) {
-            result = result "                <field name='" field_tab[idx] "' hist='"
-            result = result "" ((idx == 1) ? "YES" : "NO") "'/>" ((idx == cnt) ? "" : "\n");
-        }
+        field_list = substring_between(line_text, "          (", ")");
+        field_cnt = split(field_list, field_tab, ",");
+        fail_on_error(field_tab[2] != columnconf_tab[1], "line #" line_no "\n" \
+                      "found unexpected column name [" field_tab[2] "]");
+        fail_on_error(field_tab[3] != columnconf_tab[2], "line #" line_no "\n" \
+                      "found unexpected column name [" field_tab[3] "]");
+        result = line_text;
     }
     if (line_no == 8) {
-        expect = "      select ";
+        expect = "        select ";
         fail_on_error(substr(line_text,1,length(expect)) != expect,
                       "line #" line_no "\n received [" substr(line_text,1,length(expect)) "]\n expected [" expect "]");
+        result = line_text;
     }
     if (line_no == 9) {
-        expect = "        from " src_schema "." table " as t";
+        expect = "        on conflict on constraint pk_" table;
         fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
+        result = line_text;
     }
     if (line_no == 10) {
-        expect = "       where t." table "_id = old." table "_id;";
+        expect = "        do update set";
         fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
+        result = line_text;
     }
     if (line_no == 11) {
-        expect = "  return new;";
+        expect = "           " columnconf_tab[1] " = current_date, " columnconf_tab[2] " = excluded." columnconf_tab[2] ",";
         fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
+        result = line_text;
     }
     if (line_no == 12) {
+        expect = "           ";
+        for (idx = 4; idx < field_cnt; idx++) {
+            expect = expect field_tab[idx] " = excluded." field_tab[idx] ", ";
+        }
+        expect = expect field_tab[field_cnt] " = excluded." field_tab[field_cnt] ";";
+
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
+        result = line_text;
+    }
+    if (line_no == 13) {
+        expect = "        return new;";
+        fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
+    }
+    if (line_no == 14) {
         expect = "  end;";
         fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
-    if (line_no == 13) {
+    if (line_no == 15) {
         expect = "$function$";
         fail_on_error(line_text != expect, "line #" line_no "\n received [" line_text "]\n expected [" expect "]");
     }
@@ -179,14 +198,24 @@ BEGIN {
     in_column_list = 0;
     schema_idx = 0;
     columnconf_cnt = 0;
+    in_functions = 0;
 }
 
 
 /^columnconf#/ {
-    column_name = $2;
+    column_type = $2;
+    column_name = $3;
     
     columnconf_cnt++;
     columnconf_tab[columnconf_cnt] = column_name;
+
+    if (column_type == "valid-from") {
+        valid_from = column_name;
+    }
+    if (column_type == "valid-to") {
+        valid_to = column_name;
+    }
+
 }
 
 
@@ -199,6 +228,9 @@ BEGIN {
 
     if (schema_type == "base") {
         base_schema = schema_name;
+    }
+    if (schema_type == "dim") {
+        dim_schema = schema_name;
     }
     if (schema_type == "hist") {
         hist_schema = schema_name;
@@ -351,8 +383,9 @@ BEGIN {
     table_auto = schema_conf_tab[schema];
     print "    <table name='" table "' schema='" schema "' tablespace='" tablespace "' auto='" table_auto "' action='create'>";
     print "      <columns>";
-    in_column_list = 1;
+    in_column_list  = 1;
     in_trigger_list = 0;
+    field_count     = 0;
 }
 
 
@@ -395,6 +428,9 @@ BEGIN {
         }
         print "        </column>"
     }
+
+    field_count++;
+    field_table[field_count] = column;
 }
 
 
@@ -437,6 +473,7 @@ BEGIN {
         print "        <key>" key_tab[idx] "</key>"
     }
     print "      </primary>"
+    primary_field = key_list;
 }
 
 
@@ -498,12 +535,12 @@ BEGIN {
 /^trigger#/ {
     name        = $2;
     action      = $3;
-    statement   = $4;
-    level       = $5;
-    timing      = $6;
+    level       = $4;
+    timing      = $5;
+    schema      = $6;
     table       = $7;
     func_name   = $8;
-    column_list = $9
+    language    = $9
 
     gsub(",", ", ", column_list);
     if (in_trigger_list == 0) {
@@ -511,50 +548,72 @@ BEGIN {
         print "      <triggers>"
     }
     trigger_line = 0;
-    print "        <trigger table-name='" table "' trigger-name='" name "' function-name='" func_name "'>"
-    print "          <definition action='" action "' level='" level "' timing='" timing"'>"
-    print "            <statement>" statement "</statement>"
-    print "            <column-list>" column_list "</column-list>"
+    print "        <trigger name='" name "'>"
+    print "          <definition action='" action "' level='" level "' timing='" timing "' language='" language "'>"
+    print "            <call name='" func_name "' schema='" schema "'/>"
+    print "            <fields>"
+    for (idx = 1; idx <= field_count; idx++) {
+        field = field_table[idx];
+        type = "other";
+        if (field == primary_field) {
+            type = "primary";
+        }
+        if (field == valid_from) {
+            type = "valid-from";
+        }
+        if (field == valid_to) {
+            type = "valid-to";
+        }
+        print "              <field name='" field "' type='" type "'/>"
+    }
+    print "            </fields>"
     print "          </definition>"
+    print "        </trigger>"
+}
+
+
+/^functions/ {
+    print "  <functions>";
+    in_functions = 1;
+    current_node = $1;
 }
 
 
 /^function#/ {
     func_name  = $2;
     language   = $3;
-    comment    = $4;
+    fun_table  = $4;
+    comment    = $5;
+    print "    <function name='" func_name "' schema='" dim_schema "' table='" fun_table "'>";
+    
 }
 
 
 /^definition#/ {
     def_name   = $2;
     fail_on_error(def_name != func_name, "function name [" func_name "] does not match definition name [" def_name "]");
+    trigger_line = 0;
 
-    buffer = "";
+    print "      <text language='" language "'>"
 }
 
 
 
 /^def#/ {
-    fail_on_error(in_trigger_list == 0,"found trigger code outdide trigger definition");
 
     line = $2;
-    if (trigger) {
-        trigger_line++;
-        result = check_trigger_line(line, trigger_line, tablespace, func_name, hist_schema, table);
-        if (result != "") {
-            buffer = result;
-        }
-    }
-    else {
-        if (buffer == "") {
-            buffer = line;
-        }
-        else {
-            buffer = buffer "\n" line;
-        }
+    trigger_line++;
+    result = check_trigger_line(line, trigger_line, dim_schema, func_name, hist_schema, fun_table);
+    if (result != "") {
+        print result;
     }
 }
+
+
+/^###/ {
+    print "      </text>"
+    print "    </function>";
+}        
 
 
 /^metadata/ {
@@ -575,19 +634,6 @@ BEGIN {
     print "    <commit/>";
 
 }
-
-/^###/ {
-    if (trigger) {
-        print "          <fields>";
-        print buffer;
-        print "          </fields>";
-    }
-    else {
-        print "          <function>" buffer "</function>";        
-    }
-    print "        </trigger>";
-}        
-
 
 /^end/ {
     if (in_trigger_list == 1) {
@@ -614,6 +660,9 @@ BEGIN {
         print "  </" current_node ">"
         current_node = "none";
     }
+    if (in_functions == 1) {
+       in_functions = 0;
+    };
 }
 
 

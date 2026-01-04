@@ -28,10 +28,19 @@ create or replace function dba.trigger_function_name (statement text, field text
         end if;
         full_name := substring (statement from 18 for (arg_len - 19));
         delim_pos := position ('.' in full_name);
+
         if field = 'schema' then
-            ret_val := substring (full_name from 1 for (delim_pos - 1));
+            if (delim_pos = 0) then
+                ret_val := '';
+            else
+                ret_val := substring (full_name from 1 for (delim_pos - 1));
+            end if;
         elsif field = 'table' then
-            ret_val := substring (full_name from (delim_pos + 1));
+            if (delim_pos = 0) then
+                ret_val := full_name;
+            else
+                ret_val := substring (full_name from (delim_pos + 1));
+            end if;
         else
             raise exception 'invalid action statement field [%]', field;
         end if;
@@ -419,22 +428,22 @@ select pg_catalog.pg_get_userbyid(c.relowner) as user_name,
 
 -- drop view dba.all_triggers;
 create or replace view dba.all_triggers as
-select t.trigger_catalog        as trigger_user,
-       t.trigger_schema         as trigger_schema,
-       t.trigger_name           as trigger_name,
-       t.event_manipulation     as event_action,
-       t.event_object_catalog   as event_user,
-       t.event_object_schema    as event_schema,
-       t.event_object_table     as event_table,
-       t.action_order           as event_order,
-       t.action_statement       as action_statement,
-       t.action_orientation     as action_level,
-       t.action_timing          as action_timing,
+select t.trigger_catalog          as trigger_user,
+       t.trigger_schema           as trigger_schema,
+       t.trigger_name             as trigger_name,
+       t.event_manipulation       as event_action,
+       t.event_object_catalog     as event_user,
+       t.event_object_schema      as event_schema,
+       t.event_object_table       as event_table,
+       t.action_order             as event_order,
+       t.action_statement         as action_statement,
+       t.action_orientation       as action_level,
+       t.action_timing            as action_timing,
        dba.trigger_function_name (t.action_statement, 'schema')   as function_schema,
        dba.trigger_function_name (t.action_statement, 'table')    as function_name,
-       tc.event_column_list     as event_column_list
+       tc.event_column_list       as update_column_list
   from information_schema.triggers as t
-  join (
+  left join (
         with trigger_column_list as 
              (select tuc.trigger_catalog, tuc.trigger_schema, tuc.trigger_name, c.ordinal_position, tuc.event_object_column
                 from information_schema.columns c 

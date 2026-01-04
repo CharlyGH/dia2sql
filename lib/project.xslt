@@ -36,7 +36,7 @@
 
 
   <xsl:template match="item" mode="column">
-    <xsl:value-of select="concat('columnconf#',@value,'#','YES',$nl)"/>
+    <xsl:value-of select="concat('columnconf#',@name,'#',@value,'#','YES',$nl)"/>
   </xsl:template>
 
   

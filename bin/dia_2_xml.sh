@@ -9,14 +9,13 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 
 
-USAGE="usage: ${ME} -i inputfile [-a] [-c] [-k] [-t] [-v]"
+USAGE="usage: ${ME} -i inputfile [-a] [-c] [-k] [-v]"
 HELP="${USAGE}
     -a auto         generate historization fields and tables in output file
     -c check        validate generated file
     -i inputfile    name of input file
     -k keep         keep tempfiles, dop not delete at end
     -o outputfile   name of output file, default: inputfile with dia replaced by xml
-    -t trigger      generate sql-code in trigger-definition
     -v verbose      list all steps of execution
 "
 
@@ -26,7 +25,6 @@ inputfile=""
 keep=""
 outputfile=""
 rela_opt=""
-trigger="xml"
 verbose=""
 verb_opt=""
 
@@ -55,15 +53,12 @@ do
         o)
             outputfile="${OPTARG}"
             ;;
-        t)
-            trigger="sql"
-            ;;
         v)
             verbose="1"
             verb_opt="-v"
             ;;
         *)
-            error_exit "Invalid argument ${arg}::${OPTARG}" "" 1
+            error_exit "Invalid argument ${OPT}" "" 1
             ;;
     esac
 done
@@ -92,6 +87,7 @@ tempchk="${TEMP_DIR}/${name}.chk.dat"
 tempout="${TEMP_DIR}/${name}.out.xml"
 tempqt="${TEMP_DIR}/${name}.qt.xml"
 tempchk="${TEMP_DIR}/${name}.chk.dat"
+templld="${TEMP_DIR}/${name}.lout.ld"
 
 [[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" "" 1
 
@@ -122,12 +118,12 @@ xsltproc ${xslt_params} "${PROJECT_XML_2_DAT}" "${PROJECT_FILE}" >"${temppd}"
 [[ -n "${verbose}" ]] && echo "awk -F'#' -f ${DAT_2_XML} ${temppd} ${tempss} ${tempout}"
 awk -F'#' -f "${DAT_2_XML}" "${temppd}" "${tempss}" >"${tempout}"
 
-if [[ -n "${check}" ]] ; then
+[[ -n "${verbose}" ]] && echo "${BIN_DIR}/create_config.sh ${verb_opt} -i ${tempout} -p ${projectfile} -o ${tempprj}"
+${BIN_DIR}/create_config.sh ${verb_opt} -i "${tempout}" -p "${projectfile}" -o "${tempprj}" 
+ret="$?"
+[[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
 
-    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/create_config.sh ${verb_opt} -i ${tempout} -p ${projectfile} -o ${tempprj}"
-    ${BIN_DIR}/create_config.sh ${verb_opt} -i "${tempout}" -p "${projectfile}" -o "${tempprj}" 
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
+if [[ -n "${check}" ]] ; then
 
     [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verb_opt} -i ${tempout} -o ${tempchk} -p ${tempprj}" 
     ${BIN_DIR}/check_rules.sh ${verb_opt} -i "${tempout}" -o "${tempchk}" -p "${tempprj}" 
@@ -136,7 +132,6 @@ if [[ -n "${check}" ]] ; then
 fi
 
 xslt_params="--stringparam projectconfig ${tempprj}"
-xslt_params="${xslt_params} --stringparam trigger ${trigger}"
 xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
@@ -160,11 +155,14 @@ else
     cp "${tempout}" "${outputfile}" 
 fi
 
-
 if [[ -z "${keep}" ]] ; then
     for file in "${tempsd}" "${tempss}" "${temppd}" "${tempchk}" "${tempout}" \
-                            "${tempinfo}" "${tempqt}" "${tempprj}" "${tempchk}"  ; do
-        [[ -f "${file}" ]] && rm "${file}"
+                            "${tempinfo}" "${tempqt}" "${tempprj}" "${tempchk}" \
+                            "${templld}" ; do
+        if [[ -f "${file}" ]] ; then
+            [[ -n "${verbose}" ]] && echo "rm ${file}"
+            rm "${file}"
+        fi
     done
 fi
 

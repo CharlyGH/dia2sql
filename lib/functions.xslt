@@ -120,7 +120,9 @@
     <xsl:variable name="target">
       <xsl:choose>
         <xsl:when test="contains($source,$old)">
-          <xsl:value-of select="concat(substring-before($source,$old),$new,substring-after($source,$old))" />
+          <xsl:variable name="left" select="substring-before($source,$old)"/>
+          <xsl:variable name="right" select="substring-after($source,$old)"/>
+          <xsl:value-of select="concat($left,$new,fcn:replace($right,$old,$new))"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:value-of select="$source" />
@@ -128,14 +130,7 @@
       </xsl:choose>
     </xsl:variable>
     <fcn:result>
-      <xsl:choose>
-        <xsl:when test="contains($target,$old)">
-          <xsl:value-of select="fcn:replace($target,$old,$new)" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$target" />
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:value-of select="$target" />
     </fcn:result>
   </fcn:function>
 
@@ -174,5 +169,4 @@
   </fcn:function>
 
 
-  
 </xsl:stylesheet> 

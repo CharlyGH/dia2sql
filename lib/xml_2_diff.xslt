@@ -164,6 +164,18 @@
         </xsl:element>
       </xsl:if>
 
+      <xsl:variable name="old-functions">
+        <xsl:apply-templates select="document($oldfile)//function" mode="astext"/>
+      </xsl:variable>
+      <xsl:variable name="new-functions">
+        <xsl:apply-templates select="document($newfile)//function" mode="astext"/>
+      </xsl:variable>
+      <xsl:if test="$old-functions != $new-functions">
+        <xsl:element name="functions">
+          <xsl:apply-templates select="document($newfile)//function" mode="asxml"/>
+        </xsl:element>
+      </xsl:if>
+
       <xsl:element name="informations">
         <xsl:apply-templates select="document($newfile)/model" mode="comment"/>
       </xsl:element>
@@ -508,10 +520,33 @@
 
 
   
+  <xsl:template match="function" mode="asxml">
+    <xsl:variable name="function" select="@name"/>
+    <xsl:variable name="old-count"
+                  select="count(document($oldfile)//function[@name = $function])"/>
+    <xsl:variable name="old-function">
+      <xsl:apply-templates select="document($oldfile)//function[@name = $function]" mode="astext"/>
+    </xsl:variable>
+    <xsl:variable name="new-function">
+      <xsl:apply-templates select="document($newfile)//function[@name = $function]" mode="astext"/>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="$old-count = 0">
+        <xsl:copy-of select="."/>
+      </xsl:when>
+      <xsl:when test="$old-function != $new-function">
+        <xsl:copy-of select="."/>
+      </xsl:when>
+    </xsl:choose>
+
+  </xsl:template>
+
+
+  
   <!-- helper templates, mode=astext -->
 
 
-  <xsl:template match="location | comment | size | default | value | statement | function | column-list" mode="astext">
+  <xsl:template match="location | comment | size | default | value | statement | column-list" mode="astext">
     <xsl:value-of select="concat(node(),'#',text(),nll)"/>
   </xsl:template>
 
@@ -582,16 +617,25 @@
 
   
   <xsl:template match="trigger" mode="astext">
-    <xsl:value-of select="concat(node(),'#',@table-name,'#',@trigger-name,'#',@function-name,$nl)"/>
+    <xsl:value-of select="concat(node(),'#',@name,$nl)"/>
     <xsl:apply-templates select="definition"  mode="astext"/>
-    <xsl:apply-templates select="function"    mode="astext"/>
   </xsl:template>
 
   
   <xsl:template match="definition" mode="astext">
-    <xsl:value-of select="concat(node(),'#',@action,'#',@level,'#',@timing,$nl)"/>
-    <xsl:apply-templates select="statement"    mode="astext"/>
-    <xsl:apply-templates select="column-list"  mode="astext"/>
+    <xsl:value-of select="concat(node(),'#',@action,'#',@level,'#',@timing,'#',@language,$nl)"/>
+    <xsl:apply-templates select="call"           mode="astext"/>
+    <xsl:apply-templates select="fields/field"  mode="astext"/>
+  </xsl:template>
+
+  
+  <xsl:template match="call" mode="astext">
+    <xsl:value-of select="concat(node(),'#',@name,'#',@schema,$nl)"/>
+  </xsl:template>
+
+  
+  <xsl:template match="field" mode="astext">
+    <xsl:value-of select="concat(node(),'#',@name,'#',@type,$nl)"/>
   </xsl:template>
 
 
@@ -611,6 +655,18 @@
   <xsl:template match="foreign" mode="astext">
     <xsl:value-of select="concat(node(),$nl)"/>
     <xsl:apply-templates select="key"   mode="astext"/>
+  </xsl:template>
+
+
+  <xsl:template match="function" mode="astext">
+    <xsl:value-of select="concat(node(),'#',@name,'#',@schema,'#',@table,$nl)"/>
+    <xsl:apply-templates select="text"   mode="astext"/>
+  </xsl:template>
+
+
+  <xsl:template match="text" mode="astext">
+    <xsl:value-of select="concat(node(),'#',@language,$nl,text())"/>
+
   </xsl:template>
 
 

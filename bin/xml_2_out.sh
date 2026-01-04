@@ -210,7 +210,7 @@ fi
 if [[ -n "${pdf}" ]] ; then
     tempdp="${TEMP_DIR}/${name}.dot.pdf"
     templp="${TEMP_DIR}/${name}.lout.pdf"
-    lout_cr_file="${DATA_DIR}/${name}.lout"
+    lout_cr_file="${TEMP_DIR}/${name}"
     output="${PDF_DIR}/${name}.pdf"
     dot_params="-T pdf"
     [[ -n "${verbose}" ]] && echo "dot ${dot_params} ${tempd} ${tempdp}"

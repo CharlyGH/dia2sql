@@ -242,6 +242,8 @@
 
 
   <xsl:template match="table">
+    <xsl:variable name="schema" select="@schema"/>
+    <xsl:variable name="table" select="@name" />
     <xsl:choose>
       <xsl:when test="@action = 'create'">
         <xsl:apply-templates select="." mode="create"/>
@@ -290,8 +292,11 @@
       <xsl:with-param name="table" select="$table" />
     </xsl:apply-templates>
     <xsl:value-of select="$nl" />
+    <xsl:apply-templates select="/model/functions/function[@schema = $schema and @table = $table]"/>
+    <xsl:value-of select="$nl" />
     <xsl:apply-templates select="triggers">
       <xsl:with-param name="schema" select="$schema" />
+      <xsl:with-param name="table" select="$table" />
     </xsl:apply-templates>
     <xsl:value-of select="concat($nl,$nl)" />
   </xsl:template>
@@ -336,8 +341,11 @@
       <xsl:with-param name="table" select="$table" />
     </xsl:apply-templates>
     <xsl:value-of select="$nl" />
+    <xsl:apply-templates select="document($newfile)//function[@schema = $schema and @table = $table]"/>
+    <xsl:value-of select="$nl" />
     <xsl:apply-templates select="triggers">
       <xsl:with-param name="schema" select="$schema" />
+      <xsl:with-param name="table" select="$table" />
     </xsl:apply-templates>
     <xsl:value-of select="concat($nl,$nl)" />
   </xsl:template>
@@ -583,128 +591,71 @@
   
   <xsl:template match="triggers">
     <xsl:param name="schema" />
-    <xsl:variable name="fields-count" select="count(trigger/fields)"/>
-    <xsl:variable name="function-count" select="count(trigger/function)"/>
-    <xsl:choose>
-      <xsl:when test="$fields-count != 0 and $function-count = 0">
-        <xsl:apply-templates select="trigger" mode="fields">
-          <xsl:with-param name="schema" select="$schema" />
-        </xsl:apply-templates>
-      </xsl:when>
-      <xsl:when test="$fields-count = 0 and $function-count != 0">
-        <xsl:apply-templates select="trigger" mode="function">
-          <xsl:with-param name="schema" select="$schema" />
-        </xsl:apply-templates>
-      </xsl:when>
-      <xsl:when test="$fields-count = 0 and $function-count = 0">
-        <!-- nothing to do -->
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:message terminate="yes">
-          <xsl:value-of select="concat('Invalid combination of fields-count: ',
-                                $fields-count,' and function-count: ',$function-count)"/>
-        </xsl:message>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:param name="table" />
+    <xsl:apply-templates select="trigger">
+      <xsl:with-param name="schema" select="$schema" />
+      <xsl:with-param name="table" select="$table" />
+    </xsl:apply-templates>
   </xsl:template>
 
   
-  <xsl:template match="trigger" mode="fields">
+  <xsl:template match="trigger">
     <xsl:param name="schema" />
-    <xsl:variable name="table-name" select="@table-name"/>
-    <xsl:variable name="pk-column" select="//table[@name = $table-name and @schema = $schema]/primary/key"/>
-    <xsl:variable name="trigger-name" select="@trigger-name"/>
-    <xsl:variable name="function-name" select="@function-name"/>
+    <xsl:param name="table" />
+    <xsl:variable name="trigger" select="@name"/>
+    <xsl:apply-templates select="definition">
+      <xsl:with-param name="schema" select="$schema" />
+      <xsl:with-param name="table" select="$table" />
+      <xsl:with-param name="trigger" select="$trigger" />
+    </xsl:apply-templates>
+  </xsl:template>
 
-    <xsl:variable name="source-list">
-      <xsl:apply-templates select="fields" mode="source"/>
+  
+  <xsl:template match="definition">
+    <xsl:param name="schema" />
+    <xsl:param name="table" />
+    <xsl:param name="trigger" />
+    <xsl:variable name="function"    select="call/@name"/>
+    <xsl:variable name="constraint"  select="concat('pk_',$table)"/> 
+    <xsl:variable name="pk-column"   select="fields/field[@type = 'primary']/@name"/>
+    <xsl:variable name="valid-from"  select="fields/field[@type = 'valid-from']/@name"/>
+    <xsl:variable name="valid-to"    select="fields/field[@type = 'valid-to']/@name"/>
+    <xsl:variable name="statement"   select="concat('EXECUTE FUNCTION ',$dim-schema,'.',$function,'()')"/>
+    <xsl:variable name="column-list">
+      <xsl:apply-templates select="fields/field[@type = 'other']"/>
     </xsl:variable>
-    <xsl:variable name="target-list">
-      <xsl:apply-templates select="fields" mode="target"/>
-    </xsl:variable>
-    <xsl:variable name="update-list">
-      <xsl:apply-templates select="fields" mode="update"/>
-    </xsl:variable>
-    <xsl:variable name="action" select="definition/@action"/> 
-    <xsl:variable name="level" select="definition/@level"/> 
-    <xsl:variable name="timing" select="definition/@timing"/> 
-    <xsl:variable name="statement" select="definition/statement"/> 
-    <xsl:value-of select="concat('create or replace function ',$schema,'.',$function-name,'()',$nl)"/>
-    <xsl:value-of select="concat(' returns trigger',$nl)"/>
-    <xsl:value-of select="concat(' language plpgsql',$nl)"/>
-    <xsl:value-of select="concat('as $function$',$nl)"/>
-    <xsl:value-of select="concat('  begin',$nl)"/>
-    <xsl:value-of select="concat('    insert into ',$hist-schema,'.',$table-name,$nl)"/>
-    <xsl:value-of select="concat('      (',$target-list,')',$nl)"/>
-    <xsl:value-of select="concat('      select ',$source-list,$nl)"/>
-    <xsl:value-of select="concat('        from ',$dim-schema,'.',$table-name,' as t',$nl)"/>
-    <xsl:value-of select="concat('       where t.',$pk-column,' = old.',$pk-column,';',$nl)"/>
-    <xsl:value-of select="concat('  return new;',$nl)"/>
-    <xsl:value-of select="concat('  end;',$nl)"/>
-    <xsl:value-of select="concat('$function$;',$nl)"/>
-    <xsl:value-of select="$nl"/>
-    <xsl:value-of select="concat('create or replace trigger ',$trigger-name,$nl)"/>
-    <xsl:value-of select="concat('       ',$timing,' ',$action,' of ',$update-list,$nl)"/>
-    <xsl:value-of select="concat('                    on ',$dim-schema,'.',$table-name,$nl)"/>
-    <xsl:value-of select="concat('       for each ',$level,$nl)"/>
+    
+    <xsl:if test="$schema != call/@schema">
+      <xsl:message terminate="yes">
+        <xsl:value-of select="concat('schema missmatch in trigger definition:',$schema,' != ',call/@name,$nl)"/>
+      </xsl:message>
+    </xsl:if>
+
+    <xsl:value-of select="concat('create or replace trigger ',$trigger,$nl)"/>
+    <xsl:value-of select="concat('       ',@timing,' ',@action,' on ',$dim-schema,'.',$table,$nl)"/>
+    <xsl:value-of select="concat('       for each ',@level,$nl)"/>
     <xsl:value-of select="concat('       ',$statement,';',$nl,$nl)"/>
   </xsl:template>
 
   
-  <xsl:template match="trigger" mode="function">
-    <xsl:param name="schema" />
-    <xsl:variable name="table-name" select="@table-name"/>
-    <xsl:variable name="trigger-name" select="@trigger-name"/>
-    <xsl:variable name="function-name" select="@function-name"/>
-    <xsl:variable name="function-text">
-      <xsl:value-of select="function/text()"/>
-    </xsl:variable>
-    <xsl:variable name="statement-text">
-      <xsl:value-of select="definition/statement/text()"/>
-    </xsl:variable>
-    <xsl:variable name="target-list" select="definition/column-list/text()"/>
-    <xsl:variable name="action" select="definition/@action"/>
-    <xsl:variable name="level" select="definition/@level"/>
-    <xsl:variable name="timing" select="definition/@timing"/>
-    <xsl:value-of select="concat($function-text,';',$nl,$nl)"/>
-    <xsl:value-of select="concat('create or replace trigger ',$trigger-name,$nl)"/>
-    <xsl:value-of select="concat('       ',$timing,' ',$action,' of ',$target-list,$nl)"/>
-    <xsl:value-of select="concat('                    on ',$dim-schema,'.',$table-name,$nl)"/>
-    <xsl:value-of select="concat('       for each ',$level,$nl)"/>
-    <xsl:value-of select="concat('       execute function ',$schema,'.',$function-name,'();',$nl,$nl)"/>
-  </xsl:template>
-  
-  <xsl:template match="fields" mode="source">
-    <xsl:apply-templates select="field" mode="source"/>
-  </xsl:template>
-
-  <xsl:template match="fields" mode="target">
-    <xsl:apply-templates select="field" mode="target"/>
-  </xsl:template>
-
-  <xsl:template match="fields" mode="update">
-    <xsl:apply-templates select="field[@hist = 'NO']" mode="update"/>
-  </xsl:template>
-
-  
-  <xsl:template match="field" mode="source">
+  <xsl:template match="field">
     <xsl:variable name="field-name" select="@name"/>
-    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
-    <xsl:value-of select="concat('t.',$field-name,$delim)"/>
-  </xsl:template>
-  
-  
-  <xsl:template match="field" mode="target">
-    <xsl:variable name="field-name" select="@name"/>
-    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
+    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',',')"/>
     <xsl:value-of select="concat($field-name,$delim)"/>
   </xsl:template>
   
   
-  <xsl:template match="field" mode="update">
-    <xsl:variable name="field-name" select="@name"/>
-    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
-    <xsl:value-of select="concat($field-name,$delim)"/>
+  <xsl:template match="function">
+    <xsl:value-of select="concat('create or replace function ',@schema,'.',@name,'()',$nl)"/>
+    <xsl:value-of select="concat(' returns trigger',$nl)"/>
+    <xsl:value-of select="concat(' language ',text/@language,$nl)"/>
+    <xsl:value-of select="concat('as $function$',$nl)"/>
+    <xsl:value-of select="concat('','  begin')"/>
+    <xsl:value-of select="concat('',text/text())"/>
+    <xsl:value-of select="concat('  return new;',$nl)"/>
+    <xsl:value-of select="concat('  end;',$nl)"/>
+    <xsl:value-of select="concat('$function$;',$nl)"/>
+    <xsl:value-of select="$nl"/>
   </xsl:template>
   
   

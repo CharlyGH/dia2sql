@@ -22,10 +22,59 @@
   <xsl:include href="functions.xslt"/>
   
   <xsl:param name="projectconfig"/>
-  
-  <xsl:param name="trigger"/>
+
+
+  <fcn:function name="fcn:set-list">
+    <xsl:param name="column-list"/>
+    <xsl:param name="old-delim"/>
+    <xsl:param name="new-delim"/>
+    <xsl:variable name="target">
+      <xsl:choose>
+        <xsl:when test="contains($column-list,$old-delim)">
+          <xsl:variable name="left" select="substring-before($column-list,$old-delim)"/>
+          <xsl:variable name="right" select="substring-after($column-list,$old-delim)"/>
+          <xsl:value-of select="concat($left,$new-delim,$left,$old-delim,' ',
+                                fcn:set-list($right,$old-delim,$new-delim))"/>
+        </xsl:when>
+        <xsl:when test="string-length($column-list) = 0">
+          <xsl:value-of select="''" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="concat($column-list,$new-delim,$column-list)" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <fcn:result>
+      <xsl:value-of select="$target" />
+    </fcn:result>
+  </fcn:function>
+
+    
+  <fcn:function name="fcn:function-text">
+    <xsl:param name="schema" />
+    <xsl:param name="table" />
+    <xsl:param name="constraint" />
+    <xsl:param name="pk-column" />
+    <xsl:param name="valid-from" />
+    <xsl:param name="valid-to" />
+    <xsl:param name="column-list" />
+    <xsl:variable name="source-list" select="fcn:replace($column-list,',',', new.')"/>
+    <fcn:result>
+      <xsl:value-of select="concat(
+                            '        insert into ',$schema,'.',$table,$nl,
+                            '          (',$pk-column,',',$valid-from,',',$valid-to,',',$column-list,')',$nl,
+                            '        select new.',$pk-column,', new.',$valid-from,', new.',$valid-to,', new.',$source-list,$nl,
+                            '        on conflict on constraint ',$constraint,$nl,
+                            '        do update set',$nl,
+                            '           ',$valid-from,' = current_date, ',$valid-to,' = excluded.',$valid-to,',',$nl,
+                            '           ',fcn:set-list($column-list,',',' = excluded.'),';',$nl,'      '
+                            )"/>
+    </fcn:result>
+  </fcn:function>
+
   
 
+  
   <xsl:variable name="base-schema" select="document($projectconfig)/config/schemaconf[@name = 'base']/@value"/>
   <xsl:variable name="dim-schema"  select="document($projectconfig)/config/schemaconf[@name = 'dim' ]/@value"/>
   <xsl:variable name="fact-schema" select="document($projectconfig)/config/schemaconf[@name = 'fact']/@value"/>
@@ -35,108 +84,6 @@
   <xsl:variable name="valid-to"    select="document($projectconfig)/config/columnconf[@name = 'valid-to'  ]/@value"/>
 
 
-  <xsl:template name="metacolumn">
-    <xsl:param name="name"/>
-    <xsl:param name="type"/>
-    <xsl:element name="column">
-      <xsl:attribute name="name">
-        <xsl:value-of select="$name"/>
-      </xsl:attribute>
-      <xsl:attribute name="type">
-        <xsl:value-of select="$type"/>
-      </xsl:attribute>
-      <xsl:attribute name="nullable">
-        <xsl:value-of select="'NO'"/>
-      </xsl:attribute>
-      <xsl:attribute name="auto">
-        <xsl:value-of select="'NO'"/>
-      </xsl:attribute>
-      <xsl:attribute name="action">
-        <xsl:value-of select="'create'"/>
-      </xsl:attribute>
-    </xsl:element>
-  </xsl:template>
-
-  
-  <xsl:template name="metapk">
-    <xsl:param name="name"/>
-    <xsl:param name="key"/>
-    <xsl:element name="primary">
-      <xsl:attribute name="name">
-        <xsl:value-of select="$name"/>
-      </xsl:attribute>
-      <xsl:element name="key">
-        <xsl:value-of select="$key"/>
-      </xsl:element>
-    </xsl:element>
-  </xsl:template>
-
-  
-  <xsl:template name="metainsert">
-    <xsl:param name="project"/>
-    <xsl:param name="version"/>
-    <xsl:element name="insert">
-      <xsl:attribute name="schema">
-        <xsl:value-of select="$base-schema"/>
-      </xsl:attribute>
-      <xsl:attribute name="table">
-        <xsl:value-of select="'metadata'"/>
-      </xsl:attribute>
-      <xsl:element name="project">
-        <xsl:value-of select="$project"/>
-      </xsl:element>
-      <xsl:element name="version">
-        <xsl:value-of select="$version"/>
-      </xsl:element>
-    </xsl:element>
-  </xsl:template>
-  
-
-  <xsl:template name="metadata">
-    <xsl:param name="project"/>
-    <xsl:param name="version"/>
-    <xsl:element name="metadata">
-      <xsl:element name="table">
-        <xsl:attribute name="name">
-          <xsl:value-of select="'metadata'"/>
-        </xsl:attribute>
-        <xsl:attribute name="schema">
-          <xsl:value-of select="$base-schema"/>
-        </xsl:attribute>
-        <xsl:attribute name="tablespace">
-          <xsl:value-of select="$base-schema"/>
-        </xsl:attribute>
-        <xsl:attribute name="auto">
-          <xsl:value-of select="'NO'"/>
-        </xsl:attribute>
-        <xsl:attribute name="action">
-          <xsl:value-of select="'create'"/>
-        </xsl:attribute>
-        <xsl:element name="columns">
-          <xsl:call-template name="metacolumn">
-            <xsl:with-param name="name" select="'project'"/>
-            <xsl:with-param name="type" select="'text_type'"/>
-          </xsl:call-template>
-          <xsl:call-template name="metacolumn">
-            <xsl:with-param name="name" select="'version'"/>
-            <xsl:with-param name="type" select="'count_type'"/>
-          </xsl:call-template>
-        </xsl:element>
-        <xsl:call-template name="metapk">
-          <xsl:with-param name="name" select="'pk_metadata'"/>
-          <xsl:with-param name="key" select="'version'"/>
-        </xsl:call-template>
-      </xsl:element>    
-      <xsl:call-template name="metainsert">
-        <xsl:with-param name="project" select="$project"/>
-        <xsl:with-param name="version" select="$version"/>
-      </xsl:call-template>
-      <xsl:element name="commit">
-      </xsl:element>
-    </xsl:element>
-  </xsl:template>
-  
-  
   <xsl:template match="model">
     <xsl:variable name="project" select="@project"/>
     <xsl:variable name="version" select="@version"/>
@@ -151,8 +98,9 @@
       <xsl:apply-templates select="schemas"/>
       <xsl:apply-templates select="domains"/>
       <xsl:apply-templates select="sequences"/>
-      <xsl:apply-templates select="tables"/>
+      <xsl:apply-templates select="tables" mode="define"/>
       <xsl:apply-templates select="references"/>
+      <xsl:apply-templates select="tables" mode="trg-fun"/>
       <xsl:call-template name="metadata">
         <xsl:with-param name="project" select="$project"/>
         <xsl:with-param name="version" select="$version"/>
@@ -333,7 +281,7 @@
   </xsl:template>
 
 
-  <xsl:template match="tables">
+  <xsl:template match="tables"  mode="define">
     <xsl:element name="tables">
       <xsl:apply-templates select="table[@schema = $dim-schema]"  mode="copy"/>
       <xsl:apply-templates select="table[@schema = $fact-schema]" mode="copy"/>
@@ -342,6 +290,64 @@
   </xsl:template>
 
 
+  <xsl:template match="tables"  mode="trg-fun">
+    <xsl:element name="functions">
+      <xsl:apply-templates select="table[@schema = $dim-schema]"  mode="trg-fun"/>
+    </xsl:element>
+  </xsl:template>
+
+
+  <xsl:template match="table" mode="trg-fun">
+    <xsl:variable name="schema" select="@schema"/>
+    <xsl:variable name="table" select="@name"/>
+    <xsl:variable name="pk-column" select="//table[@name = $table and @schema = $schema]/primary/key"/>
+
+    <xsl:element name="function">
+      <xsl:attribute name="name">
+        <xsl:value-of select="concat(@name,'_trg_fun')"/>
+      </xsl:attribute>
+      <xsl:attribute name="schema">
+        <xsl:value-of select="$schema"/>
+      </xsl:attribute>
+      <xsl:attribute name="table">
+        <xsl:value-of select="$table"/>
+      </xsl:attribute>
+      <xsl:variable name="column-list">
+        <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
+      </xsl:variable>
+      <xsl:variable name="constraint" select="concat('pk_',$table)"/>
+      <xsl:element name="text">
+      <xsl:attribute name="language">
+        <xsl:value-of select="'plpgsql'"/>
+      </xsl:attribute>
+      <xsl:value-of select="$nl"/>
+      <xsl:value-of select="fcn:function-text($hist-schema,$table,$constraint,
+                            $pk-column,$valid-from,$valid-to,$column-list)"/>
+      </xsl:element>
+    </xsl:element>
+  </xsl:template>
+
+
+  <xsl:template match="column" mode="trg-fun">
+    <xsl:variable name="name" select="@name"/>
+    <xsl:element name="field">
+      <xsl:attribute name="name">
+        <xsl:value-of select="$name"/>
+      </xsl:attribute>
+      <xsl:attribute name="type">
+        <xsl:value-of select="'other'"/>
+      </xsl:attribute>
+    </xsl:element>
+  </xsl:template>
+    
+  
+  <xsl:template match="column" mode="list">
+    <xsl:param name="prefix"/>
+    <xsl:variable name="column-name" select="@name"/>
+    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',',')"/>
+    <xsl:value-of select="concat($prefix,$column-name,$delim)"/>
+  </xsl:template>
+  
 
   <xsl:template match="table" mode="copy">
     <xsl:variable name="schema" select="@schema"/>
@@ -377,23 +383,9 @@
       <xsl:apply-templates select="unique"/>
       <xsl:apply-templates select="primary" mode="copy"/>
       <xsl:if test="$is-dim = 'true'">
-        <xsl:choose>
-          <xsl:when test="$trigger = 'sql'">
-            <xsl:apply-templates select="."    mode="trigger-sql">
-              <xsl:with-param name="schema" select="$schema"/>
-            </xsl:apply-templates>
-          </xsl:when>
-          <xsl:when test="$trigger = 'xml'">
-            <xsl:apply-templates select="."    mode="trigger-xml">
-              <xsl:with-param name="schema" select="$schema"/>
-            </xsl:apply-templates>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:message terminate="yes">
-              <xsl:value-of select="concat('Invalid trigger mode: ',$trigger)"/>
-            </xsl:message>
-          </xsl:otherwise>
-        </xsl:choose>
+        <xsl:apply-templates select="."    mode="trigger">
+          <xsl:with-param name="schema" select="$schema"/>
+        </xsl:apply-templates>
       </xsl:if>
       <xsl:apply-templates select="comment"/>
     </xsl:element>
@@ -629,176 +621,115 @@
     </xsl:element>
   </xsl:template>
 
-  
-  <xsl:template match="table" mode="trigger-xml">
+
+  <xsl:template name="trigger">
     <xsl:param name="schema"/>
-    <xsl:variable name="table-name" select="@name"/>
-    <xsl:variable name="trigger-name" select="concat($table-name,'_trg')"/>
-    <xsl:variable name="function-name" select="concat($table-name,'_trg_fun')"/>
-    <xsl:variable name="pk-column" select="//table[@name = $table-name and @schema = $schema]/primary/key"/>
-    <xsl:variable name="column-list">
-      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
-    </xsl:variable>
-    <xsl:element name="triggers">
-      <xsl:element name="trigger">
-        <xsl:attribute name="table-name">
-          <xsl:value-of select="$table-name"/>
+    <xsl:param name="table"/>
+    <xsl:param name="trigger"/>
+    <xsl:param name="function"/>
+    <xsl:param name="action"/>
+    <xsl:param name="pk-column"/>
+    <xsl:element name="trigger">
+      <xsl:attribute name="name">
+        <xsl:value-of select="$trigger"/>
+      </xsl:attribute>
+      <xsl:element name="definition">
+        <xsl:attribute name="action">
+          <xsl:value-of select="$action"/>
         </xsl:attribute>
-        <xsl:attribute name="trigger-name">
-          <xsl:value-of select="$trigger-name"/>
+        <xsl:attribute name="level">
+          <xsl:value-of select="'row'"/>
         </xsl:attribute>
-        <xsl:attribute name="function-name">
-          <xsl:value-of select="$function-name"/>
+        <xsl:attribute name="timing">
+          <xsl:value-of select="'after'"/>
         </xsl:attribute>
-        <xsl:if test="count(columns/column[@name = $valid-from]) != 0">
-          <xsl:message terminate="yes">
-            <xsl:value-of select="concat('Table: ',$table-name,' has column ',$valid-from)"/>
-          </xsl:message>
-        </xsl:if>
-        <xsl:element name="definition">
-          <xsl:attribute name="action">
-            <xsl:value-of select="'insert or update'"/>
+        <xsl:attribute name="language">
+          <xsl:value-of select="'plpgsql'"/>
+        </xsl:attribute>
+        <xsl:element name="call">
+          <xsl:attribute name="name">
+            <xsl:value-of select="$function"/>
           </xsl:attribute>
-          <xsl:attribute name="level">
-            <xsl:value-of select="'row'"/>
+          <xsl:attribute name="schema">
+            <xsl:value-of select="$schema"/>
           </xsl:attribute>
-          <xsl:attribute name="timing">
-            <xsl:value-of select="'after'"/>
-          </xsl:attribute>
-          <xsl:element name="statement">
-            <xsl:value-of select="concat('execute function ',$schema,'.',$function-name,'()')"/>
-          </xsl:element>
-          <xsl:element name="column-list">
-            <xsl:value-of select="$column-list"/>
-          </xsl:element>
         </xsl:element>
         <xsl:element name="fields">
-          <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="trigger-xml"/>
+          <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="trigger-xml">
+            <xsl:with-param name="type" select="'primary'"/>
+          </xsl:apply-templates>
           <xsl:element name="field">
             <xsl:attribute name="name">
               <xsl:value-of select="$valid-from"/>
             </xsl:attribute>
-            <xsl:attribute name="hist">
-              <xsl:value-of select="'YES'"/>
+            <xsl:attribute name="type">
+              <xsl:value-of select="'valid-from'"/>
             </xsl:attribute>
           </xsl:element>
           <xsl:element name="field">
             <xsl:attribute name="name">
               <xsl:value-of select="$valid-to"/>
             </xsl:attribute>
-            <xsl:attribute name="hist">
-              <xsl:value-of select="'YES'"/>
+            <xsl:attribute name="type">
+              <xsl:value-of select="'valid-to'"/>
             </xsl:attribute>
           </xsl:element>
-          <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="trigger-xml"/>
+          <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="trigger-xml">
+            <xsl:with-param name="type" select="'other'"/>
+          </xsl:apply-templates>
         </xsl:element>
+
       </xsl:element>
+    </xsl:element>
+  </xsl:template>
+  
+
+  <xsl:template match="table" mode="trigger">
+    <xsl:param name="schema"/>
+    <xsl:variable name="table" select="@name"/>
+    <xsl:variable name="insert-trigger" select="concat($table,'_ins_trg')"/>
+    <xsl:variable name="update-trigger" select="concat($table,'_upd_trg')"/>
+    <xsl:variable name="function-name" select="concat($table,'_trg_fun')"/>
+    <xsl:variable name="pk-column" select="//table[@name = $table and @schema = $schema]/primary/key"/>
+    <xsl:variable name="column-list">
+      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
+    </xsl:variable>
+    <xsl:element name="triggers">
+      <xsl:call-template name="trigger">
+        <xsl:with-param name="schema"     select="$schema"/>
+        <xsl:with-param name="table"      select="$table"/>
+        <xsl:with-param name="trigger"    select="$insert-trigger"/>
+        <xsl:with-param name="function"   select="$function-name"/>
+        <xsl:with-param name="action"     select="'insert'"/>
+        <xsl:with-param name="pk-column"  select="$pk-column"/>
+      </xsl:call-template>
+      <xsl:call-template name="trigger">
+        <xsl:with-param name="schema"     select="$schema"/>
+        <xsl:with-param name="table"      select="$table"/>
+        <xsl:with-param name="trigger"    select="$update-trigger"/>
+        <xsl:with-param name="function"   select="$function-name"/>
+        <xsl:with-param name="action"     select="'update'"/>
+        <xsl:with-param name="pk-column"  select="$pk-column"/>
+      </xsl:call-template>
     </xsl:element>
   </xsl:template>
 
 
   <xsl:template match="column" mode="trigger-xml">
+    <xsl:param name="type"/>
     <xsl:variable name="name" select="@name"/>
     <xsl:element name="field">
       <xsl:attribute name="name">
         <xsl:value-of select="$name"/>
       </xsl:attribute>
-      <xsl:attribute name="hist">
-        <xsl:value-of select="'NO'"/>
+      <xsl:attribute name="type">
+        <xsl:value-of select="$type"/>
       </xsl:attribute>
     </xsl:element>
   </xsl:template>
-    
   
-  <xsl:template match="table" mode="trigger-sql">
-    <xsl:param name="schema"/>
-    <xsl:variable name="table-name" select="@name"/>
-    <xsl:variable name="pk-column" select="//table[@name = $table-name and @schema = $schema]/primary/key"/>
-    <xsl:variable name="function-name" select="concat($table-name,'_trg_fun')"/>
 
-    <xsl:variable name="source-list">
-      <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="list">
-        <xsl:with-param name="prefix" select="'t.'"/>
-      </xsl:apply-templates>
-      <xsl:value-of select="concat(', t.',$valid-from)"/>
-      <xsl:value-of select="concat(', t.',$valid-to,', ')"/>
-      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list">
-        <xsl:with-param name="prefix" select="'t.'"/>
-      </xsl:apply-templates>
-    </xsl:variable>
-
-    <xsl:variable name="target-list">
-      <xsl:apply-templates select="columns/column[@name = $pk-column]" mode="list"/>
-      <xsl:value-of select="concat(', ', $valid-from)"/>
-      <xsl:value-of select="concat(', ', $valid-to,', ')"/>
-      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
-    </xsl:variable>
-
-    <xsl:variable name="update-list">
-      <xsl:apply-templates select="columns/column[@name != $pk-column]" mode="list"/>
-    </xsl:variable>
-
-    <xsl:element name="triggers">
-      <xsl:element name="trigger">
-        <xsl:attribute name="table-name">
-          <xsl:value-of select="$table-name"/>
-        </xsl:attribute>
-        <xsl:attribute name="trigger-name">
-          <xsl:value-of select="concat($table-name,'_trg')"/>
-        </xsl:attribute>
-        <xsl:attribute name="function-name">
-          <xsl:value-of select="$function-name"/>
-        </xsl:attribute>
-        <xsl:if test="count(columns/column[@name = $valid-from]) != 0">
-          <xsl:message terminate="yes">
-            <xsl:value-of select="concat('Table: ',$name,' has column ',$valid-from)"/>
-          </xsl:message>
-        </xsl:if>
-        <xsl:element name="definition">
-          <xsl:attribute name="action">
-            <xsl:value-of select="'update'"/>
-          </xsl:attribute>
-          <xsl:attribute name="level">
-            <xsl:value-of select="'row'"/>
-          </xsl:attribute>
-          <xsl:attribute name="timing">
-            <xsl:value-of select="'after'"/>
-          </xsl:attribute>
-          <xsl:element name="statement">
-            <xsl:value-of select="concat('execute function ',$schema,'.',$function-name,'()')"/>
-          </xsl:element>
-          <xsl:element name="column-list">
-            <xsl:value-of select="$update-list"/>
-          </xsl:element>
-        </xsl:element>
-        <xsl:element name="function">
-          <xsl:value-of select="concat('create or replace function ',$schema,'.',$function-name,'()',$nl)"/>
-          <xsl:value-of select="concat(' returns trigger',$nl)"/>
-          <xsl:value-of select="concat(' language plpgsql',$nl)"/>
-          <xsl:value-of select="concat('as $function$',$nl)"/>
-          <xsl:value-of select="concat('  begin',$nl)"/>
-          <xsl:value-of select="concat('    insert into ',$hist-schema,'.',$table-name,$nl)"/>
-          <xsl:value-of select="concat('      (',$target-list,')',$nl)"/>
-          <xsl:value-of select="concat('      select ',$source-list,$nl)"/>
-          <xsl:value-of select="concat('        from ',$dim-schema,'.',$table-name,' as t',$nl)"/>
-          <xsl:value-of select="concat('       where t.',$pk-column,' = old.',$pk-column,';',$nl)"/>
-          <xsl:value-of select="concat('  return new;',$nl)"/>
-          <xsl:value-of select="concat('  end;',$nl)"/>
-          <xsl:value-of select="concat('$function$','')"/>
-        </xsl:element>
-      </xsl:element>
-    </xsl:element>
-  </xsl:template>
-
-
-  <xsl:template match="column" mode="list">
-    <xsl:param name="prefix"/>
-    <xsl:variable name="column-name" select="@name"/>
-    <xsl:variable name="delim" select="fcn:if-then-else(position(),'=',last(),'',', ')"/>
-    <xsl:value-of select="concat($prefix,$column-name,$delim)"/>
-  </xsl:template>
-  
-    <xsl:template match="references">
+  <xsl:template match="references">
     <xsl:element name="references">
       <xsl:apply-templates select="reference"/>
     </xsl:element>
@@ -838,4 +769,106 @@
   </xsl:template>
 
 
+  <xsl:template name="metacolumn">
+    <xsl:param name="name"/>
+    <xsl:param name="type"/>
+    <xsl:element name="column">
+      <xsl:attribute name="name">
+        <xsl:value-of select="$name"/>
+      </xsl:attribute>
+      <xsl:attribute name="type">
+        <xsl:value-of select="$type"/>
+      </xsl:attribute>
+      <xsl:attribute name="nullable">
+        <xsl:value-of select="'NO'"/>
+      </xsl:attribute>
+      <xsl:attribute name="auto">
+        <xsl:value-of select="'NO'"/>
+      </xsl:attribute>
+      <xsl:attribute name="action">
+        <xsl:value-of select="'create'"/>
+      </xsl:attribute>
+    </xsl:element>
+  </xsl:template>
+
+  
+  <xsl:template name="metapk">
+    <xsl:param name="name"/>
+    <xsl:param name="key"/>
+    <xsl:element name="primary">
+      <xsl:attribute name="name">
+        <xsl:value-of select="$name"/>
+      </xsl:attribute>
+      <xsl:element name="key">
+        <xsl:value-of select="$key"/>
+      </xsl:element>
+    </xsl:element>
+  </xsl:template>
+
+  
+  <xsl:template name="metainsert">
+    <xsl:param name="project"/>
+    <xsl:param name="version"/>
+    <xsl:element name="insert">
+      <xsl:attribute name="schema">
+        <xsl:value-of select="$base-schema"/>
+      </xsl:attribute>
+      <xsl:attribute name="table">
+        <xsl:value-of select="'metadata'"/>
+      </xsl:attribute>
+      <xsl:element name="project">
+        <xsl:value-of select="$project"/>
+      </xsl:element>
+      <xsl:element name="version">
+        <xsl:value-of select="$version"/>
+      </xsl:element>
+    </xsl:element>
+  </xsl:template>
+  
+
+  <xsl:template name="metadata">
+    <xsl:param name="project"/>
+    <xsl:param name="version"/>
+    <xsl:element name="metadata">
+      <xsl:element name="table">
+        <xsl:attribute name="name">
+          <xsl:value-of select="'metadata'"/>
+        </xsl:attribute>
+        <xsl:attribute name="schema">
+          <xsl:value-of select="$base-schema"/>
+        </xsl:attribute>
+        <xsl:attribute name="tablespace">
+          <xsl:value-of select="$base-schema"/>
+        </xsl:attribute>
+        <xsl:attribute name="auto">
+          <xsl:value-of select="'NO'"/>
+        </xsl:attribute>
+        <xsl:attribute name="action">
+          <xsl:value-of select="'create'"/>
+        </xsl:attribute>
+        <xsl:element name="columns">
+          <xsl:call-template name="metacolumn">
+            <xsl:with-param name="name" select="'project'"/>
+            <xsl:with-param name="type" select="'text_type'"/>
+          </xsl:call-template>
+          <xsl:call-template name="metacolumn">
+            <xsl:with-param name="name" select="'version'"/>
+            <xsl:with-param name="type" select="'count_type'"/>
+          </xsl:call-template>
+        </xsl:element>
+        <xsl:call-template name="metapk">
+          <xsl:with-param name="name" select="'pk_metadata'"/>
+          <xsl:with-param name="key" select="'version'"/>
+        </xsl:call-template>
+      </xsl:element>    
+      <xsl:call-template name="metainsert">
+        <xsl:with-param name="project" select="$project"/>
+        <xsl:with-param name="version" select="$version"/>
+      </xsl:call-template>
+      <xsl:element name="commit">
+      </xsl:element>
+    </xsl:element>
+  </xsl:template>
+  
+  
 </xsl:stylesheet>
