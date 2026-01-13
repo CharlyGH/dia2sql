@@ -230,9 +230,13 @@ if [[ -n "${pdf}" ]] ; then
     [[ "${ret}" != "0" ]] && error_exit "error in pdfunite" "" "${ret}"
 fi
 
+louttempli="${lout_cr_file}.li"
+louttempld="${lout_cr_file}.lout.ld"
+
 
 if [[ -z "${keep}" ]] ; then
-    for file in "${tempd}" "${templ}" "${templu}" "${tempdp}" "${templp}"  "${temps0}" "${temps1}" "${temps2}" ; do
+    for file in "${tempd}" "${templ}" "${templu}" "${tempdp}" "${templp}"  "${temps0}" \
+                "${temps1}" "${temps2}" "${louttempli}" "${louttempld}" ; do
         if [[ -f "${file}" ]] ; then
             [[ -n "${verbose}" ]] && echo "rm  ${file}"
             rm  "${file}"
