@@ -175,13 +175,15 @@
     </xsl:apply-templates>
   </xsl:template>
   
-  
 
   <xsl:template match="table">
     <xsl:param name="kind"/>
     <xsl:variable name="table" select="@name" />
-    
-    <xsl:value-of select="concat('T#',$table,$nl)"/>
+    <xsl:variable name="schema" select="@schema" />
+    <xsl:variable name="reference">
+      <xsl:apply-templates select="document($xmldoc)//reference/source[@schema = $schema and @table = $table]"/>
+    </xsl:variable>
+    <xsl:value-of select="concat('T#',$table,'#',$reference,$nl)"/>
     <xsl:apply-templates select="columns/column">
       <xsl:with-param name="kind" select="$kind"/>
       <xsl:with-param name="schema" select="@schema"/>
@@ -191,6 +193,14 @@
   </xsl:template>
 
 
+  <xsl:template match="source">
+    <xsl:value-of select="../target/@table"/>
+    <xsl:if test="position() != last()">
+      <xsl:value-of select="':'"/>
+    </xsl:if>
+  </xsl:template>
+
+  
   <xsl:template match="column">
     <xsl:param name="kind"/>
     <xsl:param name="schema" />
@@ -220,7 +230,25 @@
         </xsl:if>
       </xsl:for-each>
     </xsl:variable>
-    <xsl:value-of select="concat('C#',$column,'#',$type,'#',$default,'#',$constraint,'#',$reference,$nl)"/>
+
+    <xsl:variable name="primary">
+      <xsl:for-each select="../../primary/key">
+        <xsl:if test="text() = $column">
+          <xsl:value-of select="'P'"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:variable>
+
+    <xsl:variable name="unique">
+      <xsl:for-each select="../../unique/key">
+        <xsl:if test="text() = $column">
+          <xsl:value-of select="'U'"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:variable>
+
+    <xsl:value-of select="concat('C#',$column,'#',$type,'#',$default,'#',$constraint,'#',$primary,$unique,
+                          '#',$reference,$nl)"/>
   </xsl:template>
 
   
