@@ -4,11 +4,16 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:exslt="http://exslt.org/common"
                 xmlns:fcn="http://exslt.org/functions"
-                extension-element-prefixes="fcn">
+                xmlns:dyn="http://exslt.org/dynamic"
+                extension-element-prefixes="fcn dyn">
 
   <xsl:output method="text" omit-xml-declaration="yes" indent="no"/>
 
   <xsl:param name="debug"/>
+  
+  <xsl:param name="hist-schema"/>
+  
+  <xsl:param name="proc-hist-schema"/>
   
   <xsl:variable name="space">
     <xsl:text>                    </xsl:text>
@@ -38,7 +43,7 @@
 
   <xsl:variable name="shape-plain">
     <xsl:text>shape = "plain"</xsl:text>
-  </xsl:variable>
+ </xsl:variable>
 
   <xsl:variable name="table-header">
     <xsl:text>label=&lt;&lt;table border="1" cellborder="0" cellspacing="2" cellpadding="2"&gt;</xsl:text>
@@ -102,18 +107,74 @@
 
   <xsl:variable name="dim-schema" select="/model/schemas/schema[position() = 1]/@name"/>
   
-  
+
   <xsl:include href="functions.xslt"/>
 
+  
+  <xsl:template name="get-references">
+    <xsl:param name="filter"/>
+    <xsl:for-each select="//table[dyn:evaluate($filter)]">
+      <xsl:variable name="table" select="@name"/>
+      <xsl:variable name="schema" select="@schema"/>
+      <xsl:for-each select="//source[@schema = $schema and @table = $table]">
+        <xsl:value-of select="concat('[',../@name,']')"/>  
+      </xsl:for-each>
+    </xsl:for-each>
+  </xsl:template>
+
+  
   <xsl:template match="model">
 
+    <xsl:variable name="hist-message">
+      <xsl:choose>
+        <xsl:when test="$proc-hist-schema = 'only'">
+          <xsl:value-of select="', nur Historisierung'"/>
+        </xsl:when>
+        <xsl:when test="$proc-hist-schema = 'no'">
+          <xsl:value-of select="', ohne Historisierung'"/>
+        </xsl:when>
+        <xsl:when test="$proc-hist-schema = 'all'">
+          <xsl:value-of select="''"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:message terminate="yes">
+            <xsl:value-of select="concat('invalid value [',$proc-hist-schema,'] for proc-hist-schema',$nl)"/>
+          </xsl:message>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="filter">
+      <xsl:choose>
+        <xsl:when test="$proc-hist-schema = 'only'">
+          <xsl:value-of select="'@schema = $hist-schema'"/>
+        </xsl:when>
+        <xsl:when test="$proc-hist-schema = 'no'">
+            <xsl:value-of select="'@schema != $hist-schema'"/>
+        </xsl:when>
+        <xsl:when test="$proc-hist-schema = 'all'">
+          <xsl:value-of select="'1 = 1'"/>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="has-references">
+      <xsl:call-template name="get-references">
+        <xsl:with-param name="filter" select="$filter"/>
+      </xsl:call-template>
+    </xsl:variable>
+
     <xsl:value-of select="concat('digraph ',fcn:format-name(@project),' {',$nl)"/>
-    <xsl:value-of select="concat($tab,'fontname = ',$dq,'sans-serif',$dq,$nl,$nl)"/>
+
+    <xsl:value-of select="concat($tab,'orientation = ',$dq,'landscape',$dq,$nl)"/>
+    <xsl:value-of select="concat($tab,'page        = ',$dq,'8,5',$dq,$nl)"/>
+    <xsl:value-of select="concat($tab,'fontname    = ',$dq,'sans-serif',$dq,$nl,$nl)"/>
 
     <xsl:value-of select="concat($tab,'node [fontname = ',$dq,'sans-serif',$dq,']',$nl)"/>
     <xsl:value-of select="concat($tab,'edge [fontname = ',$dq,'sans-serif',$dq,']',$nl,$nl)"/>
 
-    <xsl:variable name="label" select="concat('Datenmodell ',fcn:format-name(@project),' (Version ',@version,')')"/>
+    <xsl:variable name="label"
+                  select="concat('Datenmodell ',fcn:format-name(@project),' (Version ',@version,$hist-message,')')"/>
     <xsl:value-of select="concat($tab,'graph [',$nl)"/>
     <xsl:value-of select="concat($tab,$tab,'fontsize = ',$dq,'24',$dq,$nl)"/>
     <xsl:value-of select="concat($tab,$tab,'rankdir  = ',$dq,'LR',$dq,$nl)"/>
@@ -122,7 +183,7 @@
     <xsl:value-of select="concat($tab,$tab,'splines  = ',$dq,'true',$dq,$nl)"/>
     <xsl:value-of select="concat($tab,']',$nl,$nl)"/>
 
-    <xsl:apply-templates select="//table"/>
+    <xsl:apply-templates select="//table[dyn:evaluate($filter)]"/>
 
     <xsl:value-of select="concat('}',$nl,$nl)"/>
 
@@ -130,6 +191,7 @@
 
   
   <xsl:template match="table">
+    <xsl:variable name="pos" select="position()"/>
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="table" select="@name" />
     <xsl:variable name="unique">
@@ -145,6 +207,30 @@
       </xsl:for-each>
     </xsl:variable>
     <xsl:variable name="table-name" select="concat(fcn:format-name($schema),'.',fcn:format-name($table))" />
+
+    <xsl:variable name="delim">
+      <xsl:if test="$pos mod 2 = 0 and $proc-hist-schema = 'only'">
+        <xsl:variable name="prev-schema">
+          <xsl:for-each select="//table[@schema = $hist-schema]">
+            <xsl:if test="position() = $pos - 1">
+              <xsl:value-of select="@schema"/>
+            </xsl:if>
+          </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="prev-table">
+          <xsl:for-each select="//table[@schema = $hist-schema]">
+            <xsl:if test="position() = $pos - 1">
+              <xsl:value-of select="@name"/>
+            </xsl:if>
+          </xsl:for-each>
+        </xsl:variable>
+        
+        <xsl:value-of select="concat('    ',$dq,fcn:format-name($prev-schema),'.',fcn:format-name($prev-table),$dq,' -&gt; ',
+                              $dq,fcn:format-name($schema),'.',fcn:format-name($table),$dq,
+                              ' [style=invis]',$nl,$nl)"/>
+      </xsl:if>
+    </xsl:variable>
+
 
     <xsl:value-of select="concat($tab,$dq,$table-name,$dq,' [',$nl)"/>
     <xsl:value-of select="concat($tab,$tab,$shape-plain,$nl)"/>
@@ -166,6 +252,7 @@
     <xsl:value-of select="concat($normal-tab,'&lt;/table&gt;&gt;',$nl)"/>
     <xsl:value-of select="concat($tab,']',$nl,$nl)"/>
 
+    <xsl:value-of select="$delim"/>
     <xsl:apply-templates select="//reference/source[@schema = $schema and @table = $table]/.."/>
 
   </xsl:template>
