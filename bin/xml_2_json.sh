@@ -8,10 +8,11 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 
 
-USAGE="usage: ${ME}  -i inputfile [-o outputfile] [-c] [-v]"
+USAGE="usage: ${ME}  -i inputfile [-o outputfile] [-c] [-k] [-v]"
 HELP="${USAGE}
     -c check         check json syntax of output file
     -i inputfile     name of input file
+    -k keep          keep, do not delete temp files
     -o outputfile    name of output file, default is inputfile with xml replaced by json
     -p projectfile   configuration file for historization, default is ${PROJECT_FILE}
     -v verbose       show all steps of execution
@@ -19,6 +20,7 @@ HELP="${USAGE}
 
 check=""
 inputfile=""
+keep=""
 outputfile=""
 projectfile="${FULL_PROJECT_FILE}"
 verbose=""
@@ -69,8 +71,17 @@ name="${name##*/}"
 [[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" ""  1
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found"  ""  1
 
+tempprj="${FULL_TEMP_DIR}/${name}.prj.xml"
+
+[[ -n "${verbose}" ]] && echo "${BIN_DIR}/create_config.sh ${verbose_option} -i ${inputfile} -p ${projectfile} -o ${tempprj}"
+${BIN_DIR}/create_config.sh ${verbose_option} -i "${inputfile}" -p "${projectfile}" -o "${tempprj}"
+ret="$?"
+[[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" 1
+
+
+
 xslt_params="--path ${DTD_DIR}"
-xslt_params="${xslt_params} --stringparam projectfile ${projectfile}"
+xslt_params="${xslt_params} --stringparam configfile ${tempprj}"
 
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_JSON} ${inputfile} ${outputfile}"
 xsltproc ${xslt_params} "${XML_2_JSON}" "${inputfile}" > "${outputfile}"
@@ -88,5 +99,10 @@ fi
 [[ "${ret}" != "0" ]] && error_exit "syntax error in generated json file ${outputfile}" "" "${ret}"
 
 #cat "${output}"
+
+if [[ -z "${keep}" ]] ; then
+    [[ -f "${tempprj}" ]] && rm "${tempprj}"
+fi
+
 
 exit "0"

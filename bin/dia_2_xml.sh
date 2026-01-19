@@ -131,7 +131,7 @@ if [[ -n "${check}" ]] ; then
     [[ "${ret}" != "0" ]] && error_exit "error in script check_rules.sh" "" 1
 fi
 
-xslt_params="--stringparam projectconfig ${tempprj}"
+xslt_params="--stringparam configfile ${tempprj}"
 xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 

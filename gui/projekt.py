@@ -41,6 +41,10 @@ class Projekt(object):
             return self.data[key]
 
 
+    def get_config_value(self,config):
+        return self.data["config"][config]
+
+
     def get_schema_list(self):
         return self.data["schemas"]
 

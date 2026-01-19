@@ -126,6 +126,8 @@ if [[ -n "${check}" ]] ; then
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" 1
 
+
+    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verbose_option} -a -i ${inputfile} -p ${tempprj} -o ${tempchk}" 
     ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -p "${tempprj}" -o "${tempchk}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" 1
@@ -135,7 +137,7 @@ fi
 
 #set -x
 
-xslt_params="--stringparam projectconfig ${tempprj}"
+xslt_params="--stringparam configfile ${tempprj}"
 [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
 [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
 xslt_params="${xslt_params}  --path ${DTD_DIR}"

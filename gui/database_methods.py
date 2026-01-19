@@ -130,7 +130,9 @@ def get_sql_update(schema_name,table_name,column_list,value_list):
     res_strg = ""
     set_delim = ""
     where_delim = ""
+    type_delim = ""
     res_delim = ""
+    value_delim = ""
     val_idx = 1
     for idx in range(lis_len):
         auto = column_list[idx]["auto"]
@@ -139,17 +141,20 @@ def get_sql_update(schema_name,table_name,column_list,value_list):
         typ = column_list[idx]["type"]
         #print ("idx=", idx, ",  name=", name,",  auto=",auto)
         txt = value_list[idx].get()
-        if auto:
-            new_strg = name + " = current_date"
-        else:
-            new_strg = name + " = " + "$" + val_idx
         res_strg = res_strg + res_delim + name
-        type_strg = type_strg + res_delim + typ
-        value_strg = value_strg + set_delim + format(txt,typ)
         res_delim = ", "
+
+        if auto:
+            continue
+
+        new_strg = name + " = " + "$" + str(val_idx)
+        type_strg = type_strg + type_delim + typ
+        type_delim = ", "
+        value_strg = value_strg + value_delim + format(txt,typ)
+        value_delim = ", "
         
         if is_pk:
-            where_strg = where_strg + where_delim + "$" + str(val_idx)
+            where_strg = where_strg + where_delim + name + " = $" + str(val_idx)
             where_delim = " and "
         else:
             set_strg = set_strg + set_delim + new_strg
@@ -163,7 +168,83 @@ def get_sql_update(schema_name,table_name,column_list,value_list):
     return statement, arglist
 
 
+def get_delete_action(schema_name,table_name):
+    projekt = pr.Projekt.get_instance()
+    ref_count = projekt.get_table_info(schema_name, table_name, "ref-count")
+    kind = projekt.get_table_info(schema_name, table_name, "type")
+    valid_to = projekt.get_config_value("valid-to")
+    error = ""
+    action = ""
+    if kind == "fact":
+        if ref_count > 0:
+            error = "Cannot delete data in referenced fact table"
+        else:
+            action = "physical"
+    elif kind == "dimension":
+            action = "logical"
+    elif kind == "history":
+            error = "Cannot delete historical data"
+    else:
+            error = "Unknown table kind " + kind
+
+    return error, action, valid_to    
+
+
+
 def get_sql_delete(schema_name,table_name,column_list,value_list):
+    error, action, valid_to = get_delete_action(schema_name,table_name)
+
+    if error != "":
+        raise Exception(error)
+    elif action == "physical":
+        return get_sql_physical_delete(schema_name,table_name,column_list,value_list)
+    elif action ==  "logical":
+        return get_sql_logical_delete(schema_name,table_name,column_list,value_list,valid_to)
+    else:
+        raise Exception("Unknown action " + action)
+
+
+def get_sql_logical_delete(schema_name,table_name,column_list,value_list,valid_to):
+    lis_len = len(column_list)
+    set_strg = valid_to + " = current_date - 1"
+    value_strg = ""
+    where_strg = ""
+    type_strg = ""
+    res_strg = ""
+    value_delim = ""
+    where_delim = ""
+    type_delim = ""
+    res_delim = ""
+    val_idx = 1
+
+    for idx in range(lis_len):
+        is_pk = column_list[idx]["ispk"]
+        name = column_list[idx]["name"]
+        typ = column_list[idx]["type"]
+        #print ("idx=", idx, ",  name=", name,",  auto=",auto)
+        txt = value_list[idx].get()
+        res_strg = res_strg + res_delim + name
+        res_delim = ", "
+        value_strg = value_strg + value_delim + format(txt,typ)
+        value_delim = ", "
+
+
+        type_strg = type_strg + type_delim + typ
+        type_delim = ", "
+        
+        if is_pk:
+            where_strg = where_strg + where_delim + name + " = $" + str(val_idx)
+            where_delim = " and "
+        val_idx = val_idx + 1
+    statement = "prepare update_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "update " + schema_name + "." + table_name + " set "
+    statement = statement + set_strg + " where " + where_strg
+    statement = statement + " returning " + res_strg
+    arglist = "execute update_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
+
+
+def get_sql_physical_delete(schema_name,table_name,column_list,value_list):
     lis_len = len(column_list)
     where_strg = ""
     res_strg = ""
@@ -182,7 +263,7 @@ def get_sql_delete(schema_name,table_name,column_list,value_list):
         value_strg = value_strg + res_delim + format(txt,typ)
         res_delim = ", "
         if is_pk:
-            where_strg = where_strg + where_delim + "$" + str(val_idx)
+            where_strg = where_strg + where_delim + name + " = $" + str(val_idx)
             where_delim = " and "
         else:
             pass
@@ -191,7 +272,7 @@ def get_sql_delete(schema_name,table_name,column_list,value_list):
     statement = statement + "delete from " + schema_name + "." + table_name 
     statement = statement + " where " + where_strg
     statement = statement + " returning " + res_strg
-    arglist = "execute update_" + table_name + "(" + value_strg + ")"
+    arglist = "execute delete_" + table_name + "(" + value_strg + ")"
     return statement, arglist
 
 
@@ -234,13 +315,24 @@ def get_sql_search(schema_name,table_name,column_list,value_list):
             where_delim = " and "
             type_delim = ", "
             val_idx = val_idx + 1
-    statement = "prepare select_" + table_name + " (" + type_strg + ") as "
+    
+    if type_strg == "":
+        statement = "prepare select_" + table_name + " as "
+    else:
+        statement = "prepare select_" + table_name + " (" + type_strg + ") as "
+        
+
     statement = statement + "select " + name_strg + " from " + schema_name + "." + table_name
     if where_strg != "":
         statement = statement + " where " + where_strg
     if order_strg != "":
         statement = statement + " order by " + order_strg
-    arglist = "execute select_" + table_name + "(" + value_strg + ")"
+
+
+    if type_strg == "":
+        arglist = "execute select_" + table_name
+    else:
+        arglist = "execute select_" + table_name + "(" + value_strg + ")"
         
     return statement, arglist
 
@@ -319,8 +411,9 @@ def set_sql_controll_result(action, contr, result_list):
         for idx in range(lis_len):
             contr.datamask.value_list[idx].set(result[idx])
     elif action == "delete":
-        ##TODO value_list leeren?
-        pass
+        lis_len = len(contr.datamask.value_list)
+        for idx in range(lis_len):
+            contr.datamask.value_list[idx].set(result[idx])
     elif action == "search":
         set_mask_query_result(result_list, contr.datamask, None, True)
     elif action == "clear":

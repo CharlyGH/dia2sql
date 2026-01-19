@@ -91,7 +91,8 @@ select  concat('trigger',
                             and af.function_name = trg.function_name
  where trg.trigger_user    = '{user}'
    and trg.trigger_schema  = '{schema}'
-   and trg.event_table     = '{table}';
+   and trg.event_table     = '{table}'
+ order by line;
 
 select 'end';
 

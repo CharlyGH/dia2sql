@@ -32,7 +32,7 @@
       #      4.3 it should have a valid_to field of date_type
     -->
   
-  <xsl:param name="projectconfig"/>
+  <xsl:param name="configfile"/>
 
   <xsl:param name="historisation"/>
   
@@ -130,14 +130,15 @@
   </fcn:function>
   
   
+  <xsl:variable name="config" select="document($configfile)/config"/>
 
-  <xsl:variable name="base-schema" select="document($projectconfig)/config/schemaconf[@name = 'base']/@value"/>
-  <xsl:variable name="dim-schema"  select="document($projectconfig)/config/schemaconf[@name = 'dim' ]/@value"/>
-  <xsl:variable name="fact-schema" select="document($projectconfig)/config/schemaconf[@name = 'fact']/@value"/>
-  <xsl:variable name="hist-schema" select="document($projectconfig)/config/schemaconf[@name = 'hist']/@value"/>
+  <xsl:variable name="base-schema" select="exslt:node-set($config)/schemaconf[@name = 'base']/@value"/>
+  <xsl:variable name="dim-schema"  select="exslt:node-set($config)/schemaconf[@name = 'dim']/@value"/>
+  <xsl:variable name="fact-schema" select="exslt:node-set($config)/schemaconf[@name = 'fact']/@value"/>
+  <xsl:variable name="hist-schema" select="exslt:node-set($config)/schemaconf[@name = 'hist']/@value"/>
 
-  <xsl:variable name="valid-from"  select="document($projectconfig)/config/columnconf[@name = 'valid-from']/@value"/>
-  <xsl:variable name="valid-to"    select="document($projectconfig)/config/columnconf[@name = 'valid-to'  ]/@value"/>
+  <xsl:variable name="valid-from"  select="exslt:node-set($config)/columnconf[@name = 'valid-from']/@value"/>
+  <xsl:variable name="valid-to"    select="exslt:node-set($config)/columnconf[@name = 'valid-to']/@value"/>
 
   
   <xsl:template match="model">

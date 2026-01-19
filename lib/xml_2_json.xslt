@@ -9,7 +9,7 @@
 
   <xsl:output method="text" omit-xml-declaration="yes" indent="no"/>
 
-  <xsl:param name="projectfile" />
+  <xsl:param name="configfile" />
   
 
   <xsl:variable name="gtab">
@@ -29,9 +29,13 @@
   </xsl:variable>
 
   
-  <xsl:variable name="basename" select="//model/@project"/>
 
-  <xsl:variable name="base-schema" select="fcn:get-project-value($projectfile,'base',$basename)"/>
+
+  <xsl:variable name="config" select="document($configfile)/config"/>
+
+  <xsl:variable name="base-schema" select="exslt:node-set($config)/schemaconf[@name = 'base']/@value"/>
+  <xsl:variable name="valid-from"  select="exslt:node-set($config)/columnconf[@name = 'valid-from']/@value"/>
+  <xsl:variable name="valid-to"    select="exslt:node-set($config)/columnconf[@name = 'valid-to']/@value"/>
   
   
   <xsl:include href="functions.xslt"/>
@@ -202,14 +206,20 @@
 
   
   <xsl:template match="model">
+    <xsl:variable name="nltab" select="concat($gtab,$gtab)" />
+    <xsl:value-of select="concat('{',$nl)"/>
+    <xsl:value-of select="concat($gtab,$dq,'config',$dq,': {',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'valid-from',$dq,': ',$dq,$valid-from,$dq,',',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'valid-to',  $dq,': ',$dq,$valid-to,$dq,$nl)"/>
+    <xsl:value-of select="concat($gtab,'},',$nl)"/>
     <xsl:apply-templates select="schemas"/>
+    <xsl:value-of select="concat('}',$nl,$nl)"/>
   </xsl:template>
 
 
   <xsl:template match="schemas">
 
     <xsl:variable name="nltab" select="concat($gtab,$gtab)" />
-    <xsl:value-of select="concat('{',$nl)"/>
     <xsl:value-of select="concat($gtab,$dq,'schemas',$dq,': [',$nl)"/>
     <xsl:apply-templates select="schema" mode="list">
       <xsl:with-param name="ltab" select="$nltab"/>
@@ -219,7 +229,6 @@
     <xsl:apply-templates select="schema" mode="detail">
       <xsl:with-param name="ltab" select="nltab"/>
     </xsl:apply-templates>
-    <xsl:value-of select="concat('}',$nl,$nl)"/>
   </xsl:template>
 
 
@@ -310,15 +319,16 @@
   <xsl:template match="table" mode="detail">
     <xsl:param name="schema"/>
     <xsl:param name="ltab"/>
-    <xsl:variable name="comment"       select="comment/text()"/>
-    <xsl:variable name="table"         select="@name" />
-    <xsl:variable name="auto"          select="fcn:json-boolean(@auto)" />
-    <xsl:variable name="nltab"         select="concat($ltab,$gtab)" />
-    <xsl:variable name="column-count"  select="count(columns/column)" />
-    <xsl:variable name="primary-count" select="count(primary/key)" />
-    <xsl:variable name="unique-count"  select="count(unique/key)" />
-    <xsl:variable name="foreign-count" select="count(//reference/source[@schema = $schema and @table = $table])" />
-    <xsl:variable name="delim"         select="fcn:get-delimiter(position(),last(),$comma)"/>
+    <xsl:variable name="comment"        select="comment/text()"/>
+    <xsl:variable name="table"          select="@name" />
+    <xsl:variable name="auto"           select="fcn:json-boolean(@auto)" />
+    <xsl:variable name="nltab"          select="concat($ltab,$gtab)" />
+    <xsl:variable name="column-count"   select="count(columns/column)" />
+    <xsl:variable name="primary-count"  select="count(primary/key)" />
+    <xsl:variable name="unique-count"   select="count(unique/key)" />
+    <xsl:variable name="foreign-count"  select="count(//reference/source[@schema = $schema and @table = $table])" />
+    <xsl:variable name="ref-count"      select="count(//reference/target[@schema = $schema and @table = $table])" />
+    <xsl:variable name="delim"          select="fcn:get-delimiter(position(),last(),$comma)"/>
     <xsl:variable name="table-kind">
       <xsl:choose>
         <xsl:when test="substring($schema,1,3) = 'dim'">
@@ -338,13 +348,13 @@
       </xsl:choose>
     </xsl:variable>
     
-    <xsl:value-of select="concat($ltab, $dq,$table,   $dq,': {',$nl)"/>
-    <xsl:value-of select="concat($nltab,$dq,'name',   $dq,': ',$dq,$table,     $dq,',',$nl)"/>
-    <xsl:value-of select="concat($nltab,$dq,'auto',   $dq,': ',    $auto,          ',',$nl)"/>
-    <xsl:value-of select="concat($nltab,$dq,'comment',$dq,': ',$dq,$comment,   $dq,',',$nl)"/>
-    <xsl:value-of select="concat($nltab,$dq,'type',   $dq,': ',$dq,$table-kind,$dq,',',$nl)"/>
-
-    <xsl:value-of select="concat($nltab,$dq,'column-count',$dq,': ',$column-count,',',$nl)"/>
+    <xsl:value-of select="concat($ltab, $dq,$table,         $dq,': {',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'name',         $dq,': ',$dq,$table,        $dq,',',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'auto',         $dq,': ',    $auto,             ',',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'comment',      $dq,': ',$dq,$comment,      $dq,',',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'type',         $dq,': ',$dq,$table-kind,   $dq,',',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'ref-count',    $dq,': ',    $ref-count,        ',',$nl)"/>
+    <xsl:value-of select="concat($nltab,$dq,'column-count', $dq,': ',    $column-count,     ',',$nl)"/>
 
     <xsl:apply-templates select="columns" mode="list">
       <xsl:with-param name="schema" select="$schema" />

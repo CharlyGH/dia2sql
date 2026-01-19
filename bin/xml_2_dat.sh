@@ -142,7 +142,7 @@ fi
 
 if [[ -n "${generate}" ]] ; then
 
-    xslt_params="--stringparam projectconfig ${tempprj}"
+    xslt_params="--stringparam configfile ${tempprj}"
     [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
     [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
     xslt_params="${xslt_params}  --path ${DTD_DIR}"
