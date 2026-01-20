@@ -23,15 +23,24 @@ import window_methods     as wm
 class ResultTable(win.Windows):
     def __init__(self, parent, title, result_list, target_idx, ispk, mask):
         win.Windows.__init__(self, parent, "ResultTable", title, self.get_size(600,600,700,80))
-        bgcolor = "#dfdfff"
+        bgcolor = "#ffffdf"
 
+        projekt = pr.Projekt.get_instance()
+        valid_to = projekt.get_config_value("valid-to")
+
+        
         rows   = len(result_list)
         offset = 5
         height = 1.0/(rows + offset)
         self.cols   = len(result_list[0])
         #print("cols=" + str(self.cols))
         columns = parent.columns
-
+        
+        for col in range(self.cols):
+            if columns[col]["name"] == valid_to:
+                valid_to_col = col
+                break;
+            
         self.geometry(self.get_size(180*self.cols+50,35*(rows + offset),300,120))
         self.ispk        = ispk
         self.schema_name = mask.schema_name
@@ -76,17 +85,29 @@ class ResultTable(win.Windows):
         for row in range(rows):
             value_list = list()
             line = result_list[row]
+           
             s_button = tk.Button(body,
                                  width=20,
                                  text="Auswahl", 
                                  command=ft.partial(self.select_line, row ))
             s_button.grid(row=row+1,column=0)
+
+            valid_to_val = str(line[valid_to_col])
+            if valid_to_val == "9999-12-31":
+                fgcolor = "#000000"
+                s_button.config(state=tk.NORMAL)
+            else:
+                fgcolor = "#ff3d3d"
+                s_button.config(state=tk.DISABLED)
+            print("row=", row, ", valid_to_val=", valid_to_val, ", fgcolor=", fgcolor)
+
             for col in range(self.cols):
                 value = tk.StringVar(body)
                 entry = tk.Entry(body, 
                                  width=20, 
                                  textvariable=value,
-                                 background=bgcolor)
+                                 background=bgcolor,
+                                 foreground=fgcolor)
                 entry.grid(row=row+1, column=col+1)
                 value.set(line[col])
                 entry.configure (state = "readonly")
