@@ -6,14 +6,14 @@ Created on Sun Aug 10 18:44:22 2025
 @author: gmd
 """
 
-import config as cfg
+import config             as cfg
 import projekt            as pr
 import tkinter.messagebox as mb
 import window_methods     as wm
 
 
     
-conf = cfg.Config()
+conf = cfg.Config.get_instance()
 debug = conf.get("debug")
 
 
@@ -342,7 +342,7 @@ def get_sql_search(schema_name,table_name,column_list,value_list):
 
 
 
-def get_sql_controll_command(action, schema_name, table_name, column_list, value_list):
+def get_sql_control_command(action, schema_name, table_name, column_list, value_list):
 
     if debug != "off":
         print ("get sql command for action " + action)
@@ -396,7 +396,7 @@ def get_sql_mask_command(idx, data, mask, refschema, reftable, reffield):
     return sql
 
 
-def set_sql_controll_result(action, contr, result_list):
+def set_sql_control_result(action, contr, result_list):
     if len(result_list) == 0:
         return
     

@@ -18,12 +18,14 @@ import windows            as win
 import projekt            as pr
 import database_methods   as dm
 import window_methods     as wm
+import config     as cnf
 
 
 class ResultTable(win.Windows):
     def __init__(self, parent, title, result_list, target_idx, ispk, mask):
         win.Windows.__init__(self, parent, "ResultTable", title, self.get_size(600,600,700,80))
-        bgcolor = "#ffffdf"
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("result.bg.color")
 
         projekt = pr.Projekt.get_instance()
         valid_to = projekt.get_config_value("valid-to")
@@ -94,10 +96,10 @@ class ResultTable(win.Windows):
 
             valid_to_val = str(line[valid_to_col])
             if valid_to_val == "9999-12-31":
-                fgcolor = "#000000"
+                fgcolor = config.get("result.valid.fg.color")
                 s_button.config(state=tk.NORMAL)
             else:
-                fgcolor = "#ff3d3d"
+                fgcolor = config.get("result.invalid.fg.color")
                 s_button.config(state=tk.DISABLED)
             print("row=", row, ", valid_to_val=", valid_to_val, ", fgcolor=", fgcolor)
 

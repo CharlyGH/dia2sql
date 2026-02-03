@@ -16,15 +16,18 @@ import tkinter.font as tf
 sys.path.append(op.dirname(op.realpath(__file__)))
 import database     as db
 import windows      as win
-import controll     as con
+import control      as con
 import datamask     as dm
 import projekt      as pr
+import config       as cnf
 
 
 class EditTable(win.Windows):
     def __init__(self, parent, title, schema_name, table_name):
         win.Windows.__init__(self, parent, "EditTable", title, self.get_size(800,600,700,80))
-        bgcolor = "#dfdfff"
+
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("edit.bg.color")
         
         data = db.Database()
 
@@ -58,12 +61,12 @@ class EditTable(win.Windows):
         mask.place(relx=0.0,rely=1*height,relheight=lis_len*height, relwidth=1.0)
         
 
-        contr = con.Controll(self, schema_name, table_name, data, background=bgcolor)
+        contr = con.Control(self, schema_name, table_name, data, background=bgcolor)
         contr.place(relx=0.0,rely=(lis_len +  offset - 3)*height,relheight=2*height, relwidth=1.0)
 
-        mask.controll  = contr
+        mask.control  = contr
         contr.datamask = mask
-        self.controll  = contr
+        self.control  = contr
         self.datamask  = mask
 
         foot = tk.Frame(self, background=bgcolor)
@@ -75,11 +78,11 @@ class EditTable(win.Windows):
 
     def disable_all_buttons(self):
         self.e_button.config(state=tk.DISABLED)
-        self.controll.disable_all_buttons()
+        self.control.disable_all_buttons()
         self.datamask.disable_all_buttons()
         
         
     def enable_all_buttons(self):
         self.e_button.config(state=tk.NORMAL)
-        self.controll.enable_all_buttons()
+        self.control.enable_all_buttons()
         self.datamask.enable_all_buttons()

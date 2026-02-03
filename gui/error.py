@@ -8,20 +8,23 @@ Created on Sat Aug  2 09:48:26 2025
 
 #https://www.pythontutorial.net/tkinter/tkinter-combobox/
 
-import tkinter as tk
+import tkinter    as tk
 import sys
-import os.path as op
+import os.path    as op
 
 sys.path.append(op.dirname(op.realpath(__file__)))
-import windows as win
+import windows    as win
+import config     as cnf
 
 
 
 class Error(win.Windows):
     def __init__(self, parent, title, e_param):
-        bgcolor = "#ffdfdf"
-        height = 1.0/2.0
         win.Windows.__init__(self, parent, "Error", title, self.get_size(400,200,400,200))
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("error.bg.color")
+
+        height = 1.0/2.0
     
         head = tk.Frame(self, background=bgcolor)
         head.place(relx=0.0,rely=0*height,relheight=height, relwidth=1.0)

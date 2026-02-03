@@ -17,7 +17,7 @@ import database_methods  as dm
 
 class Database():
     def __init__(self):
-        conf = cnf.Config()
+        conf = cnf.Config.get_instance()
         self.run_mode  = conf.get("run.mode")
         self.debug     = conf.get("debug")
         self.conn_strg = conf.get("conn_strg")
@@ -94,10 +94,10 @@ class Database():
         return result
 
 
-    def execute_controll_command(self, action, contr):
+    def execute_control_command(self, action, contr):
         chk = dm.check_input(action, contr.column_list, contr.datamask.value_list)
         if chk == "OK":
-            sql, arglist = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, 
+            sql, arglist = dm.get_sql_control_command(action, contr.schema_name, contr.table_name, 
                                                        contr.column_list, contr.datamask.value_list)
             if self.run_mode == "dry":
                 if self.debug == "write" or self.debug == "all":
@@ -105,34 +105,34 @@ class Database():
                 self.status = action + ":" + self.run_mode
                 self.result_tuples = list()
                 self.result_tuples.append(0)
-                dm.set_sql_controll_result(action, contr, self.result_tuples)
+                dm.set_sql_control_result(action, contr, self.result_tuples)
             else:
                 self.execute_db_command(sql, arglist)
                 self.status = action + ":" + self.status 
-                dm.set_sql_controll_result(action, contr, self.result_tuples)
+                dm.set_sql_control_result(action, contr, self.result_tuples)
         else:
             self.status = action + ":" + chk
     
 
-    def execute_controll_query(self, action, contr):
-        sql, arglist = dm.get_sql_controll_command(action, contr.schema_name, contr.table_name, 
+    def execute_control_query(self, action, contr):
+        sql, arglist = dm.get_sql_control_command(action, contr.schema_name, contr.table_name, 
                                                    contr.column_list, contr.datamask.value_list)
         self.execute_db_query(sql, arglist)
         self.status = action + ":" + self.status 
-        dm.set_sql_controll_result(action, contr, self.result_tuples)
+        dm.set_sql_control_result(action, contr, self.result_tuples)
 
 
-    def execute_controll_other(self, action, contr):
+    def execute_control_other(self, action, contr):
         self.result_tuples = list()
         self.result_tuples.append(0)
-        dm.set_sql_controll_result(action, contr, self.result_tuples)
+        dm.set_sql_control_result(action, contr, self.result_tuples)
 
 
     def execute_mask_query(self, idx, ispk, mask, refschema, reftable, reffield):
         sql = dm.get_sql_mask_command(idx, self, mask, refschema, reftable, reffield)
         self.execute_db_query(sql, None)
         self.status = "read:" + self.status 
-        mask.controll.message.set(self.status)
+        mask.control.message.set(self.status)
         dm.set_mask_query_result(self.result_tuples, mask, idx, ispk)
 
 

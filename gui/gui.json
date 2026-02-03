@@ -21,5 +21,19 @@
         { "run.mode"  : "normal" },
         { "run.mode"  : "dry"    }
     ],
-    "run.mode"               : "normal"
+    "run.mode"                 : "normal",
+    "control.bg.color"         : "#ffffdf",
+    "data.bg.color"            : "#dfdfff",
+    "entry.ref.pk.bg.color"    : "#bfdfff",
+    "entry.ref.bg.color"       : "#dfffdf",
+    "entry.pk.bg.color"        : "#ffdfdf",
+    "entry.bg.color"           : "#ffffdf",
+    "edit.bg.color"            : "#dfdfff",
+    "error.bg.color"           : "#ffdfdf",
+    "main.bg.color"            : "#dfffff",
+    "result.bg.color"          : "#ffffdf",
+    "select.bg.color"          : "#dfffff",
+    "result.valid.fg.color"    : "#000000",
+    "result.invalid.fg.color"  : "#ff3d3d",
+    "report.bg.color"          : "#dfffff"
 }

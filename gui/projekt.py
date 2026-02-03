@@ -210,7 +210,7 @@ class Projekt(object):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        filename = "data/test.json"        
+        filename = "test/test.json"        
     else:
         filename = sys.argv[1]
 

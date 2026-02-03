@@ -9,20 +9,38 @@ Created on Fri Aug  8 15:14:38 2025
 import json
 import os.path       as op
 
+
 class Config():
-    def __init__(self, filename=op.dirname(op.realpath(__file__)) + "/gui.json"):
-        with open(filename) as stream:
-            self.config = json.load(stream)            
+    instance = None
+    data     = None
+    root_dir = op.dirname(op.dirname(op.realpath(__file__)))
+
+
+    def __init__(self):
+        raise RuntimeError('Call get_instance() instead')
+
+    @classmethod
+    def get_instance(cls, filename="gui/gui.json"):
+        if cls.instance is None:
+            cls.gtab = "   "
+            cls.nl   = "\n"
+            cls.instance = cls.__new__(cls)
+            with open(cls.root_dir + "/" + filename) as stream:
+                cls.data = json.load(stream)            
+            # Put any initialization here.
+        return cls.instance
+
+
 
     def show_item(self, key):
-        print (key + "= " + str(self.config[key]))
+        print (key + "= " + str(self.data[key]))
 
     def get(self, key):
-        return self.config[key]
+        return self.data[key]
 
 
 if __name__ == "__main__":
-    config = Config()
+    config = Config.get_instance("gui/gui.json")
     config.show_item("db_uri")   
     config.show_item("debug")
 

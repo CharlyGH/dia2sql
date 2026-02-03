@@ -40,7 +40,7 @@ def get_window(parent, name,
             state = window.state
             window.destroy()
     elif name == "SelectTable":
-        window = stb.SelectTable(parent, title, param_1, param_2)
+        window = stb.SelectTable(parent, title, param_1)
         if window.is_valid():
             win.Windows.window_dict.update({name: window})
             parent.disable_all_buttons()
@@ -65,7 +65,7 @@ def get_window(parent, name,
             state = window.state
             window.destroy()
     elif name == "Report":
-        window = rep.Report(parent, title, param_1, param_2)
+        window = rep.Report(parent, title, param_1)
         if window.is_valid():
             win.Windows.window_dict.update({name: window})
             parent.disable_all_buttons()

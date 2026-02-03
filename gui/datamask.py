@@ -16,18 +16,19 @@ import sys
 import os.path            as op
 
 sys.path.append(op.dirname(op.realpath(__file__)))
-import config             as cf
 import window_methods     as wm
 import projekt            as pr
 import selectbox          as sb
+import config             as cnf
 
 
 class DataMask(tk.Frame):
     def __init__(self, win, data, schema_name, table_name, **kwargs):
         tk.Frame.__init__(self, win, **kwargs)
-        self.conf = cf.Config()
         
-        bgcolor = "#dfdfff"
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("data.bg.color")
+
         projekt = pr.Projekt.get_instance()
 
         #print ("datamask.init: schema_name=" , schema_name, ",  table_name=", table_name)
@@ -49,8 +50,8 @@ class DataMask(tk.Frame):
             #print("datamask.init: field=", field)
             var_type    = self.column_list[idx]["type"]
             #print("datamask.init: var_type=", var_type)
-            col_size    = self.conf.get(var_type + ".width")
-            descr_size  = self.conf.get("text.width")
+            col_size    = config.get(var_type + ".width")
+            descr_size  = config.get("text.width")
             lbl_txt     = self.column_list[idx]["comment"]
             ispk        = self.column_list[idx]["ispk"]
             isfk        = self.column_list[idx]["isfk"]
@@ -82,16 +83,15 @@ class DataMask(tk.Frame):
             label_list.append(label)
         
             if refcomment != None:
-                entry_bgcolor = "#dfffff"
                 if ispk:
-                    entry_bgcolor = "#bfdfff"
+                    entry_bgcolor = config.get("entry.ref.pk.bg.color")
                 else:
-                    entry_bgcolor = "#dfffdf"
+                    entry_bgcolor = config.get("entry.ref.bg.color")
             else:
                 if ispk:
-                    entry_bgcolor = "#ffdfdf"
+                    entry_bgcolor = config.get("entry.pk.bg.color")
                 else:
-                    entry_bgcolor = "#ffffdf"
+                    entry_bgcolor = config.get("entry.bg.color")
         
             self.value_list.append(tk.StringVar(body))
             self.descr_list.append(tk.StringVar(body))

@@ -18,15 +18,18 @@ import windows           as win
 import window_methods    as wm
 import projekt           as pr
 import selectbox         as sb
+import config            as cnf
 
 
 class SelectTable(win.Windows):
     
-    def __init__(self, parent, title, schema_name, table_name):
-        bgcolor = "#dfffff"
-        height = 1.0/4.0
-
+    def __init__(self, parent, title, schema_name):
         win.Windows.__init__(self, parent, "SelectTable", title, self.get_size(600,300,400,40))
+
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("select.bg.color")
+
+        height = 1.0/4.0
     
         projekt = pr.Projekt.get_instance()
         comment = projekt.get_schema_info(schema_name, "comment")

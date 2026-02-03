@@ -427,12 +427,12 @@
     <xsl:variable name="src-table"  select="@table"/>
     <xsl:variable name="tgt-schema" select="../target/@schema"/>
     <xsl:variable name="tgt-table"  select="../target/@table"/>
-    <xsl:variable name="key"        select="../foreign/key/text()"/>
+    <xsl:variable name="ref-name"   select="../@name"/>
     <xsl:variable name="delim" select="fcn:get-delimiter(position(),last(),$comma)"/>
     <xsl:apply-templates select="//table[@schema = $tgt-schema and @name = $tgt-table]" mode="reference">
-      <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-      <xsl:with-param name="delim" select="$delim"/>
-      <xsl:with-param name="key"   select="$key"/>
+      <xsl:with-param name="ltab"     select="concat($ltab,$gtab)"/>
+      <xsl:with-param name="delim"    select="$delim"/>
+      <xsl:with-param name="ref-name" select="$ref-name"/>
     </xsl:apply-templates>
   </xsl:template>
 
@@ -440,16 +440,31 @@
   <xsl:template match="table" mode="reference">
     <xsl:param name="ltab"/>
     <xsl:param name="delim"/>
-    <xsl:param name="key"/>
+    <xsl:param name="ref-name"/>
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="table"  select="@name"/>
     <xsl:variable name="foreign-count"  select="count(//reference/source[@schema = $schema and @table = $table])" />
+    <xsl:variable name="unique-count"  select="count(unique)" />
     
     <xsl:variable name="nltab" select="concat($ltab,$gtab)" />
     <xsl:value-of select="concat($ltab,'{',$nl)"/>
     <xsl:value-of select="concat($nltab,$dq,'name',  $dq,': ',$dq,$table  ,$dq,',',$nl)"/>
     <xsl:value-of select="concat($nltab,$dq,'schema',$dq,': ',$dq,$schema,$dq,',',$nl)"/>
-    <xsl:value-of select="concat($nltab,$dq,'key',   $dq,': ',$dq,$key,$dq,fcn:if-not-0($foreign-count,','),$nl)"/>
+
+    <xsl:value-of select="concat($nltab,$dq,'key',  $dq,': [',$nl)"/>
+    <xsl:apply-templates select="//reference[@name = $ref-name]/foreign/key" mode="reference">
+      <xsl:with-param name="ltab"     select="concat($nltab,$gtab)"/>
+    </xsl:apply-templates>
+    <xsl:value-of select="concat($nltab,']',fcn:if-then-else($unique-count + $foreign-count,'=','0','',','),$nl)"/>
+
+    <xsl:if test="$unique-count != 0">
+      <xsl:value-of select="concat($nltab,$dq,'unique',  $dq,': [',$nl)"/>
+      <xsl:apply-templates select="unique/key" mode="reference">
+        <xsl:with-param name="ltab"     select="concat($nltab,$gtab)"/>
+      </xsl:apply-templates>
+      <xsl:value-of select="concat($nltab,']',fcn:if-not-0($foreign-count,','),$nl)"/>
+    </xsl:if>
+    
     <xsl:if test="$foreign-count != 0">
       <xsl:value-of select="concat($nltab,$dq,'reference',  $dq,': [',$nl)"/>
       <xsl:apply-templates select="//source[@schema = $schema and @table = $table]">
@@ -457,8 +472,14 @@
       </xsl:apply-templates>
       <xsl:value-of select="concat($nltab,']',$nl)"/>
     </xsl:if>
-    
     <xsl:value-of select="concat($ltab,'}',$delim,$nl)"/>
+  </xsl:template>
+
+  
+  <xsl:template match="key" mode="reference">
+    <xsl:param name="ltab"/>
+    <xsl:variable name="key" select="text()"/>
+    <xsl:value-of select="concat($ltab,$dq,$key,$dq,fcn:get-delimiter(position(),last(),','),$nl)"/>
   </xsl:template>
 
 

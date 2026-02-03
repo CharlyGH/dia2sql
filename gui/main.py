@@ -18,11 +18,14 @@ import windows           as win
 import window_methods    as wm
 import projekt           as pr
 import selectbox         as sb
+import config            as cnf
 
 
 class Main(win.Windows):
     def __init__(self, parent, title):
-        bgcolor = "#dfffff"
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("main.bg.color")
+
         height = 1.0/4.0
         win.Windows.__init__(self, parent, "Main", title, self.get_size(600,300,100,0))
 
@@ -62,7 +65,8 @@ class Main(win.Windows):
         self.m_button = tk.Button(body, 
                                   text="Report", 
                                   command=lambda: wm.get_window(self,
-                                                           "Report"))
+                                                           "Report",
+                                                           select.get_selected_value()))
         self.m_button.pack(side="left", padx=10, pady=10)
         
 
