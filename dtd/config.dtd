@@ -1,0 +1,20 @@
+<!ENTITY % BOOL    "YES|NO">
+
+<!ELEMENT config (columnconf+,schemaconf+,sequenceconf+,tablespaceconf)>
+
+<!ELEMENT columnconf             EMPTY>
+<!ATTLIST columnconf      name   CDATA    #REQUIRED
+                          value  CDATA    #REQUIRED
+                          auto   (%BOOL;) #REQUIRED>
+
+<!ELEMENT schemaconf             EMPTY>
+<!ATTLIST schemaconf      name   CDATA    #REQUIRED
+                          value  CDATA    #REQUIRED
+                          auto   (%BOOL;) #REQUIRED>
+
+<!ELEMENT sequenceconf           EMPTY>
+<!ATTLIST sequenceconf    name   CDATA    #REQUIRED
+                          value  CDATA    #REQUIRED>
+
+<!ELEMENT tablespaceconf         EMPTY>
+<!ATTLIST tablespaceconf  path   CDATA    #REQUIRED>

@@ -1,0 +1,14 @@
+data/*.xml
+data/*.lout.li
+out/*.sql
+out/*.json
+pdf/*.pdf
+temp/*
+test/*
+!pdf/dia2sql.pdf
+user.txt
+test.sh
+*~
+gui/__pycache__/
+gui/connect.json
+

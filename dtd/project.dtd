@@ -1,0 +1,6 @@
+<!ELEMENT project (item+)>
+
+<!ELEMENT item       EMPTY>
+<!ATTLIST item name  CDATA #REQUIRED
+               value CDATA #REQUIRED
+               info  CDATA #IMPLIED>

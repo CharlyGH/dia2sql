@@ -1,0 +1,155 @@
+<!ENTITY % BOOL          "YES|NO">
+<!ENTITY % DDL-ACTION    "create|alter">
+<!ENTITY % FIELD         "primary|valid-from|valid-to|other">
+<!ENTITY % DML-ACTION    "insert|update">
+<!ENTITY % LEVEL         "row|statement">
+<!ENTITY % TIMING         "before|after">
+
+<!ELEMENT delta (tablespaces?,schemas?,domains?,sequences?,tables?,references?,functions?,informations?,metadata?)>
+<!ATTLIST delta  project      NMTOKEN  #REQUIRED
+                 old-version  CDATA  #REQUIRED
+                 new-version  CDATA  #REQUIRED>
+
+<!ELEMENT tablespaces (tablespace+)>
+
+<!ELEMENT tablespace (location?,comment?)>
+<!ATTLIST tablespace  name    NMTOKEN       #REQUIRED
+                      action  (%DDL-ACTION;)  #REQUIRED>
+
+
+<!ELEMENT schemas (schema+)>
+
+<!ELEMENT schema (comment?)>
+<!ATTLIST schema name       NMTOKEN         #REQUIRED
+                 auto       (%BOOL;)        #REQUIRED
+                 action     (%DDL-ACTION;)  #REQUIRED>
+
+<!ELEMENT domains (domain+)>
+
+<!ELEMENT domain (size?,constraint?,default?,comment?)>
+<!ATTLIST domain name      NMTOKEN        #REQUIRED
+                 schema    NMTOKEN        #REQUIRED
+                 type      CDATA          #REQUIRED
+                 nullable  (%BOOL;)       #REQUIRED
+                 action    (%DDL-ACTION;) #REQUIRED>
+
+<!ELEMENT sequences (sequence+)>
+
+<!ELEMENT sequence (config?,comment?)>
+<!ATTLIST sequence name    NMTOKEN         #REQUIRED
+                   schema  NMTOKEN         #REQUIRED
+                   type    CDATA           #REQUIRED
+                   action  (%DDL-ACTION;)  #REQUIRED>
+
+<!ELEMENT tables (table+)>
+
+<!ELEMENT table (columns?,unique?,primary?,triggers?,comment?)>
+<!ATTLIST table name        NMTOKEN        #REQUIRED
+                schema      NMTOKEN        #REQUIRED
+                tablespace  NMTOKEN        #REQUIRED
+                auto        (%BOOL;)       #REQUIRED
+                action      (%DDL-ACTION;) #REQUIRED>
+
+<!ELEMENT location (#PCDATA)>
+
+<!ELEMENT comment (#PCDATA)>
+
+<!ELEMENT config EMPTY>
+<!ATTLIST config start        CDATA #REQUIRED
+                 min          CDATA #REQUIRED
+                 max          CDATA #REQUIRED
+                 increment    CDATA #REQUIRED
+                 cycle        CDATA #REQUIRED>
+
+<!ELEMENT default (#PCDATA)>
+
+<!ELEMENT constraint (value+)>
+<!ATTLIST constraint name     NMTOKEN    #REQUIRED
+                     type     (any)      #REQUIRED>
+
+<!ELEMENT size (#PCDATA)>
+
+<!ELEMENT value (#PCDATA)>
+
+<!ELEMENT columns (column+)>
+
+<!ELEMENT column (size?,default?,comment?)>
+<!ATTLIST column name     NMTOKEN        #REQUIRED
+                 type     CDATA          #REQUIRED
+                 nullable (%BOOL;)       #REQUIRED
+                 auto     (%BOOL;)       #REQUIRED
+                 action   (%DDL-ACTION;) #REQUIRED>
+
+<!ELEMENT primary (key+)>
+<!ATTLIST primary name NMTOKEN #REQUIRED>
+
+<!ELEMENT unique (key+)>
+<!ATTLIST unique name NMTOKEN #REQUIRED>
+
+<!ELEMENT key (#PCDATA)>
+
+<!ELEMENT references (reference+)>
+
+<!ELEMENT reference (source,target,foreign)>
+<!ATTLIST reference name     NMTOKEN       #REQUIRED
+                    action   (%DDL-ACTION;)  #REQUIRED>
+
+<!ELEMENT source EMPTY>
+<!ATTLIST source schema NMTOKEN   #REQUIRED
+                 table  NMTOKEN   #REQUIRED>
+
+<!ELEMENT target EMPTY>
+<!ATTLIST target schema NMTOKEN   #REQUIRED
+                 table  NMTOKEN   #REQUIRED>
+
+<!ELEMENT foreign (key+)>
+
+
+<!ELEMENT triggers  (trigger+)>
+
+<!ELEMENT trigger  (definition)>
+<!ATTLIST trigger name     NMTOKEN #REQUIRED>
+
+<!ELEMENT definition  (call,fields)>
+<!ATTLIST definition  action     (%DML-ACTION;)  #REQUIRED
+                      level      (%LEVEL;)       #REQUIRED
+                      timing     (%TIMING;)      #REQUIRED
+                      language   NMTOKEN         #REQUIRED>
+
+<!ELEMENT call  EMPTY>
+<!ATTLIST call  schema     NMTOKEN   #REQUIRED
+                name       NMTOKEN   #REQUIRED>
+
+<!ELEMENT fields  (field+)>
+
+<!ELEMENT field  EMPTY>
+<!ATTLIST field name NMTOKEN    #REQUIRED
+                type (%FIELD;)  #REQUIRED>
+
+<!ELEMENT functions (function+)>
+
+<!ELEMENT function (text)> 
+<!ATTLIST function  name       NMTOKEN    #REQUIRED
+                    schema     NMTOKEN    #REQUIRED
+                    table      NMTOKEN    #REQUIRED>
+
+<!ELEMENT text  (#PCDATA)>
+<!ATTLIST text   language  NMTOKEN  #REQUIRED>
+
+<!ELEMENT informations (information*)>
+
+<!ELEMENT information (comment)>
+<!ATTLIST information type    CDATA  #REQUIRED
+                      name    NMTOKEN  #REQUIRED
+                      schema  NMTOKEN  #IMPLIED
+                      table   NMTOKEN  #IMPLIED>
+
+<!ELEMENT metadata (update,commit)>
+
+<!ELEMENT update (version)>
+<!ATTLIST update  schema  NMTOKEN  #REQUIRED
+                  table   NMTOKEN  #REQUIRED>
+
+<!ELEMENT version (#PCDATA)>
+
+<!ELEMENT commit EMPTY>

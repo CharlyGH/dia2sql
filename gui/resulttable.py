@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 16 09:19:27 2025
+
+@author: Charly
+"""
+
+import functools          as  ft
+
+import tkinter            as tk
+import sys
+import os.path            as op
+import tkinter.font       as tf
+
+sys.path.append(op.dirname(op.realpath(__file__)))
+import window             as win
+import project            as pr
+import database_methods   as dm
+import window_methods     as wm
+import config     as cnf
+
+
+class ResultTable(win.Window):
+    def __init__(self, parent, title, result_list, target_idx, ispk, mask):
+        win.Window.__init__(self, parent, "ResultTable", title, self.get_size(600,600,700,80))
+        config = cnf.Config.get_instance()
+        bgcolor = config.get("result.bg.color")
+        print ("ResultTable.init title=", title, ",  result_list=", result_list, 
+               ",  target_idx=", target_idx, ",  ispk=", ispk)
+
+        
+        rows   = len(result_list)
+        offset = 5
+        height = 1.0/(rows + offset)
+        self.cols   = len(result_list[0])
+        #print("cols=" + str(self.cols))
+        columns = parent.columns
+        
+        project = pr.Project.get_instance()
+
+        if target_idx == None:
+            ref_schema = mask.schema_name
+            ref_table  = mask.table_name
+            ref_comment = project.get_table_info(ref_schema, ref_table, "comment")
+        else:
+            ref_schema = mask.ref_schema_list[target_idx]
+            ref_table  = mask.ref_table_list[target_idx]
+            ref_comment = mask.ref_comment_list[target_idx]
+
+        print("ResultTable.init: ref_schema=",ref_schema,
+              ",  ref_table=",ref_table,"    comment=",ref_comment)
+
+
+        ref_table_type = project.get_table_info(ref_schema,ref_table,"type")
+
+        if ref_table_type == "dimension":
+            valid_to = project.get_config_value("valid-to")
+            for col in range(self.cols):
+                if columns[col]["name"] == valid_to:
+                    valid_to_col = col
+                    break;
+            
+        size = self.get_size(200*self.cols+200,35*(rows + offset),300,120)
+        print("ResultTable.init: cols=",self.cols,
+              "    size=",size,",   ref_table_type=",ref_table_type)
+        self.geometry(size)
+        self.ispk        = ispk
+        self.schema_name = mask.schema_name
+        self.table_name  = mask.table_name
+        self.target_idx  = target_idx
+        self.parent      = parent
+        self.project     = pr.Project.get_instance()
+        self.data        = mask.data
+
+        head = tk.Frame(self, background=bgcolor)
+        head.place(relx=0.0,rely=0*height,relheight=2*height, relwidth=1.0)
+
+        label_font = tf.Font(self, size=10, weight="bold")
+        label = tk.Label(head, 
+                         text="Inhalt der Tabelle " + ref_comment, 
+                         background=bgcolor)
+        label.config(font=label_font)
+        label.pack(padx=10, pady=10)
+
+
+        body = tk.Frame(self, background=bgcolor)
+        body.place(relx=0.0,rely=2*height,relheight=(rows+1)*height, relwidth=1.0)
+
+        label = tk.Label(body, 
+                         text="Select", 
+                         background=bgcolor)
+        label.config(font=label_font)
+        label.grid(row=0, column=0)
+
+        column_list = project.get_column_list(ref_schema,ref_table)
+        self.is_uk_list = list()
+        for col in range(self.cols):
+            ref_column = column_list[col]["name"]
+            isuk = project.get_column_info(ref_schema, ref_table, ref_column,"isuk")
+            self.is_uk_list.append(isuk)
+            label = tk.Label(body, 
+                             text=wm.format_label(ref_column), 
+                             background=bgcolor)
+            label.config(font=label_font)
+            label.grid(row=0, column=col+1)
+
+        self.value_table = list()
+        for row in range(rows):
+            value_list = list()
+            line = result_list[row]
+           
+            s_button = tk.Button(body,
+                                 width=20,
+                                 text="Auswahl", 
+                                 command=ft.partial(self.select_line, row ))
+            s_button.grid(row=row+1,column=0)
+
+            if ref_table_type == "dimension":
+                valid_to_val = str(line[valid_to_col])
+                if valid_to_val == "9999-12-31":
+                    fgcolor = config.get("result.valid.fg.color")
+                    s_button.config(state=tk.NORMAL)
+                else:
+                    fgcolor = config.get("result.invalid.fg.color")
+                    s_button.config(state=tk.DISABLED)
+                #print("row=", row, ", valid_to_val=", valid_to_val, ", fgcolor=", fgcolor)
+            else:
+                fgcolor = config.get("result.valid.fg.color")
+                s_button.config(state=tk.NORMAL)
+
+
+            for col in range(self.cols):
+                value = tk.StringVar(body)
+                entry = tk.Entry(body, 
+                                 width=20, 
+                                 textvariable=value,
+                                 background=bgcolor,
+                                 foreground=fgcolor)
+                entry.grid(row=row+1, column=col+1)
+                value.set(line[col])
+                entry.configure (state = "readonly")
+                value_list.append(value)
+            self.value_table.append(value_list)
+            
+
+        foot = tk.Frame(self, background=bgcolor)
+        foot.place(relx=0.0,rely=(rows+3)*height,relheight=2*height, relwidth=1.0)
+
+        self.e_button = tk.Button(foot, text="Ende", command=self.on_closing)
+        self.e_button.pack(side="right", padx=10, pady=10)
+        
+
+
+    def select_line (self, idx):
+        print ("ResultTable.select_line: idx=" + str(idx) + " was selected, ispk=" + str(self.ispk))
+        value_list = self.value_table[idx]
+        if self.ispk:
+            for col in range(self.cols):
+                #print ("root-table=" + self.table_name + ",  col=" + str(col) )
+                reftable = self.project.get_column_info(self.schema_name,
+                                                        self.table_name,
+                                                        col,"refname")
+                value = value_list[col].get()
+                if reftable != None:
+                    pk_name = self.project.get_reftable_info(self.schema_name,reftable,"primary","key")
+                    uk_name = self.project.get_reftable_info(self.schema_name,reftable,"unique","key")
+                    sql = dm.get_pk_info_sql(self.schema_name, reftable, pk_name, uk_name, value)
+                    descr = self.data.get_query_result_string(sql)
+                    print("pk_name=" + pk_name + ",  uk_name=" + uk_name + 
+                          ",  value=" + str(value) + ",  deescr=" + descr)
+                    self.parent.datamask.descr_list[col].set(descr)
+                self.parent.datamask.value_list[col].set(value)
+        else:
+            value = value_list[0].get()
+            descr = ""
+            delim = ""
+            list_len = len(value_list)
+            for idx in range(1, list_len):
+                if self.is_uk_list[idx]:
+                    descr = descr + delim + value_list[idx].get()
+                    if delim == "":
+                        delim = " | "
+            self.parent.datamask.value_list[self.target_idx].set(value)
+            self.parent.datamask.descr_list[self.target_idx].set(descr)
+        self.on_closing()
+
+
+

@@ -1,0 +1,56 @@
+{
+    "connect_info"     : "moved to separate file connect.json",
+    "db_uri"           : "postgresql://user:password@host:5432/database",
+    "conn_strg"        : "host=host port=5432 dbname=database user=user password=password target_session_attrs=read-write",
+    "debug_value-list" :
+    [
+        { "debug" : "off"     }, 
+        { "debug" : "read"    }, 
+        { "debug" : "write"   },
+        { "debug" : "all"     },
+        { "debug" : "verbose" }
+    ],
+    "debug"                  : "all",
+    "text.width"             :  50,
+    "integer.width"          :  10,
+    "bigint.width"           :  10,
+    "date.width"             :  10,
+    "double precision.width" :  10,
+    "character.width"        :  10,
+    "run.mode-list":
+    [
+        { "run.mode"  : "normal" },
+        { "run.mode"  : "dry"    }
+    ],
+    "run.mode"                 : "normal",
+    "control.bg.color"         : "#ffffdf",
+    "data.bg.color"            : "#dfdfff",
+    "entry.ref.pk.bg.color"    : "#bfdfff",
+    "entry.ref.bg.color"       : "#dfffdf",
+    "entry.pk.bg.color"        : "#ffdfdf",
+    "entry.bg.color"           : "#ffffdf",
+    "edit.bg.color"            : "#dfdfff",
+    "error.bg.color"           : "#ffdfdf",
+    "main.bg.color"            : "#dfffff",
+    "result.bg.color"          : "#ffffdf",
+    "select.bg.color"          : "#dfffff",
+    "result.valid.fg.color"    : "#000000",
+    "result.invalid.fg.color"  : "#ff3d3d",
+    "report.bg.color"          : "#dfffff",
+    "show.bg.color"            : "#dfffff",
+    "fmt.desc" : [
+        "red#Primärschlüssel",
+        "green#automatisch generiert",
+        "blue#Fremdschlüssel",
+        "black#sonstige"
+    ],
+    "lout.tab.color" : {
+        "red"     : "a",
+        "orange"  : "b",
+        "green"   : "c",
+        "cyan"    : "d",
+        "blue"    : "e",
+        "magenta" : "f",
+        "black"   : "g"}
+    }
+

@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul 30 20:50:15 2025
+
+@author: Charly
+"""
+
+import psycopg2    as pg
+import sys
+import os.path     as op
+
+sys.path.append(op.dirname(op.realpath(__file__)))
+import config            as cnf
+import project           as prj
+import database_methods  as dbm
+import getpass           as gtp
+import socket            as soc
+
+
+class Database():
+    def __init__(self):
+        project = prj.Project.get_instance()
+        project_name, version = project.get_model_info()
+        conf = cnf.Config.get_instance()
+        self.run_mode  = conf.get("run.mode")
+        self.debug     = conf.get("debug")
+        self.conn_strg = conf.get("conn_strg").replace("{HOST}",soc.gethostname()) \
+                                              .replace("{PROJECT}",project_name) \
+                                              .replace("{USER}",gtp.getuser())
+        self.status    = "init"
+
+
+
+    def execute_db_query (self, sql, arglist):
+        print("debug=",self.debug)
+        if self.debug == "read" or self.debug == "all" or self.debug == "verbose":
+            print("sql=[" + sql + "]")
+            print("arglist=[" + str(arglist) + "]")
+        with pg.connect(self.conn_strg) as conn:
+#            print ("datestyle=",conn.execute("show datestyle").fetchone()[0])
+            with conn.cursor() as curs:
+                curs.execute(sql)
+                if arglist != None:
+                    curs.execute(arglist)
+                self.meta          = curs.description
+                self.col_count     = len(self.meta)
+                self.row_count     = curs.rowcount
+                self.result_tuples = curs.fetchall()
+                self.status = "read:" + str(self.row_count) + ":" + str(self.col_count)
+        conn.close()
+        if self.debug == "read" or self.debug == "all" or self.debug == "verbose":
+            print("rows=[" + str(self.row_count) + "],  cols=[" + str(self.col_count) + "]")
+        if self.debug == "verbose":
+            for row in self.result_tuples:
+                print (row)
+
+
+    def execute_db_command (self, sql, arglist):
+        if self.debug == "write" or self.debug == "all":
+            print("sql=[" + sql + "]")
+            print("arglist=[" + str(arglist) + "]")
+        with pg.connect(self.conn_strg) as conn:
+            with conn.cursor() as curs:
+                curs.execute(sql)
+                if arglist != None:
+                    curs.execute(arglist)
+                self.meta          = curs.description
+                self.col_count     = len(self.meta)
+                self.row_count     = curs.rowcount
+                self.result_tuples = curs.fetchall()
+                self.status = "write:" + str(self.row_count)
+        conn.commit()
+        conn.close()
+        if self.debug == "write" or self.debug == "all":
+            print("rows=[" + str(self.row_count) + "],  cols=[" + str(self.col_count) + "]")
+
+
+    def get_query_result_dict_list(self):
+        result = list()
+        for line in self.result_tuples:
+            row = dict()
+            for col_idx in range(self.col_count):
+                name  = self.meta[col_idx].name
+                value = line[col_idx]
+                row.update({name:  value})
+            result.append(row)
+        return result
+
+
+    def get_query_result_pair_list(self):
+        result = list()
+        cols = self.col_count
+        if cols != 2:
+            print("Warning: result set has " + str(cols) + " columns")
+        if cols < 2:
+            raise ValueError("Error: result set has " + str(cols) + " columns")
+            self.data              = data
+        for line in self.result_tuples:
+            row = str(line[0]) + ": " + str(line[1])
+            result.append(row)
+        return result
+
+
+    def execute_control_command(self, action, contr):
+        chk = dbm.check_input(action, contr.column_list, contr.datamask.value_list)
+        if chk == "OK":
+            sql, arglist = dbm.get_sql_control_command(action, contr.schema_name, contr.table_name, 
+                                                       contr.column_list, contr.datamask.value_list)
+            if self.run_mode == "dry":
+                if self.debug == "write" or self.debug == "all":
+                    print(sql)
+                self.status = action + ":" + self.run_mode
+                self.result_tuples = list()
+                self.result_tuples.append(0)
+                dbm.set_sql_control_result(action, contr, self.result_tuples)
+            else:
+                self.execute_db_command(sql, arglist)
+                self.status = action + ":" + self.status 
+                dbm.set_sql_control_result(action, contr, self.result_tuples)
+        else:
+            self.status = action + ":" + chk
+    
+
+    def execute_control_query(self, action, contr):
+        sql, arglist = dbm.get_sql_control_command(action, contr.schema_name, contr.table_name, 
+                                                   contr.column_list, contr.datamask.value_list)
+        self.execute_db_query(sql, arglist)
+        self.status = action + ":" + self.status 
+        dbm.set_sql_control_result(action, contr, self.result_tuples)
+
+
+    def execute_control_other(self, action, contr):
+        self.result_tuples = list()
+        self.result_tuples.append(0)
+        dbm.set_sql_control_result(action, contr, self.result_tuples)
+
+
+    def execute_mask_query(self, idx, ispk, mask, refschema, reftable, reffield):
+        print("Database.execute_mask_query: idx=",idx,",  ispk=",ispk,
+              ",  refschema=",refschema,",  reftable=",reftable,",  reffield=",reffield)
+        sql = dbm.get_sql_mask_command(idx, self, mask, refschema, reftable, reffield)
+        self.execute_db_query(sql, None)
+        self.status = "read:" + self.status 
+        mask.control.message.set(self.status)
+        dbm.set_mask_query_result(self.result_tuples, mask, idx, ispk)
+
+
+    def get_status(self):
+        return self.status
+
+
+    def get_query_result_string(self, sql):
+        self.execute_db_query(sql)
+        return self.result_tuples[0][0]
+       
+
+if __name__ == "__main__":
+    data = Database()
+
+
+# =============================================================================
+#     data.execute_query(dbm.get_sql_schema_list())
+#     print (data.get_query_result_pair_list())
+#     
+#     data.execute_query(dbm.get_sql_table_list("firma"))
+#     print (data.get_query_result_pair_list())
+#     
+#     data.execute_query(dbm.get_sql_column_list("firma","kunde"))
+#     print (data.get_query_result_dict_list())
+#     
+# =============================================================================
+    
+    sql = "insert into test (name, descr) values ('fünf','fünfter')"
+    data.execute_command(sql)
+    print ("nach insert " + str(data.row_count))
+    
+    sql = "delete from test where id > 3"
+    data.execute_command(sql)
+    print ("nach insert " + str(data.row_count))
+    
+    

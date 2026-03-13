@@ -1,0 +1,6 @@
+<!ELEMENT list (data+)>
+
+<!ELEMENT data      EMPTY>
+<!ATTLIST data      schema   NMTOKEN    #REQUIRED
+                    table    NMTOKEN    #REQUIRED
+                    auto     CDATA      #REQUIRED>

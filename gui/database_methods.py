@@ -1,0 +1,636 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Aug 10 18:44:22 2025
+
+@author: Charly
+"""
+
+import config             as cfg
+import project            as pr
+import tkinter.messagebox as mb
+import window_methods     as wm
+
+
+    
+conf = cfg.Config.get_instance()
+debug = conf.get("debug")
+
+
+def format(txt, typ):
+    quote = "'"
+    cast  = "::"
+    if typ == "integer":
+        ret = txt
+    elif typ == "bigint":
+        ret = txt
+    elif typ == "double precision":
+        ret = txt
+    elif typ == "character":
+        ret = quote + txt + quote
+    elif typ == "text":
+        ret = quote + txt + quote
+    elif typ == "date":
+        ret = quote + txt + quote + cast + typ
+    else:
+        raise TypeError("Unbekannter Datentyp [" + typ + "]")     
+    return ret
+
+
+def get_field_comment(column_list, idx):
+    leng = len(column_list)
+    if idx >= leng:
+        raise ValueError("Index " + str(idx) + " ist größer als Länge der Liste " + str(leng))
+    col = column_list[idx]
+    result = col["comment"]
+    if result == None or result == "":
+        result = col["name"]
+    return result
+
+
+
+def get_primary_key_count(column_list):
+    pk_cnt = 0
+    for col in column_list:
+        if col["ispk"]:
+            pk_cnt = pk_cnt + 1
+    return pk_cnt
+
+
+def is_primary_key(column_list, idx):
+    leng = len(column_list)
+    if idx >= leng:
+        raise ValueError("Index " + str(idx) + " ist größer als Länge der Liste " + str(leng))
+    col = column_list[idx]
+    return col["ispk"]
+
+
+def is_auto(column_list, idx):
+    leng = len(column_list)
+    if idx >= leng:
+        raise ValueError("Index " + str(idx) + " ist größer als Länge der Liste " + str(leng))
+    col = column_list[idx]
+    return col["auto"]
+
+
+def is_nullable(column_list, idx):
+    leng = len(column_list)
+    if idx >= leng:
+        raise ValueError("Index " + str(idx) + " ist größer als Länge der Liste " + str(leng))
+    col = column_list[idx]
+    return col["nullable"]
+
+
+def is_dimension(column_list):
+    pk_cnt = get_primary_key_count(column_list)
+    return pk_cnt == 1
+
+
+def get_sql_insert(schema_name,table_name,column_list,value_list):
+    is_dim = is_dimension(column_list)
+    lis_len = len(column_list)
+    name_strg = ""
+    value_strg = ""
+    prep_value_strg = ""
+    type_strg = ""
+    requ_delim = ""
+    res_strg = ""
+    res_delim = ""
+    val_idx = 1
+    for idx in range(lis_len):
+        is_pk = column_list[idx]["ispk"]
+        auto = column_list[idx]["auto"]
+        name = column_list[idx]["name"]
+        typ = column_list[idx]["type"]
+        txt = value_list[idx].get()
+        res_strg = res_strg + res_delim + name
+        res_delim = ", "
+        if (is_pk and is_dim) or auto:
+            continue
+        type_strg = type_strg + requ_delim + typ
+        name_strg = name_strg + requ_delim + name
+        value_strg = value_strg + requ_delim + format(txt,typ)
+        prep_value_strg = prep_value_strg + requ_delim + "$" + str(val_idx) 
+        val_idx = val_idx + 1
+        requ_delim = ", "
+    statement = "prepare insert_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "insert into " + schema_name + "." + table_name + " ("
+    statement = statement + name_strg + ") values (" + prep_value_strg 
+    statement = statement + ") returning " + res_strg
+    arglist = "execute insert_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
+
+
+def get_sql_update(schema_name,table_name,column_list,value_list):
+    lis_len = len(column_list)
+    set_strg = ""
+    where_strg = ""
+    type_strg = ""
+    value_strg = ""
+    res_strg = ""
+    set_delim = ""
+    where_delim = ""
+    type_delim = ""
+    res_delim = ""
+    value_delim = ""
+    val_idx = 1
+    for idx in range(lis_len):
+        auto = column_list[idx]["auto"]
+        is_pk = column_list[idx]["ispk"]
+        name = column_list[idx]["name"]
+        typ = column_list[idx]["type"]
+        #print ("idx=", idx, ",  name=", name,",  auto=",auto)
+        txt = value_list[idx].get()
+        res_strg = res_strg + res_delim + name
+        res_delim = ", "
+
+        if auto:
+            continue
+
+        new_strg = name + " = " + "$" + str(val_idx)
+        type_strg = type_strg + type_delim + typ
+        type_delim = ", "
+        value_strg = value_strg + value_delim + format(txt,typ)
+        value_delim = ", "
+        
+        if is_pk:
+            where_strg = where_strg + where_delim + name + " = $" + str(val_idx)
+            where_delim = " and "
+        else:
+            set_strg = set_strg + set_delim + new_strg
+            set_delim = ", "
+        val_idx = val_idx + 1
+    statement = "prepare update_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "update " + schema_name + "." + table_name + " set "
+    statement = statement + set_strg + " where " + where_strg
+    statement = statement + " returning " + res_strg
+    arglist = "execute update_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
+
+
+def get_delete_action(schema_name,table_name):
+    project = pr.Project.get_instance()
+    ref_count = project.get_table_info(schema_name, table_name, "ref-count")
+    kind = project.get_table_info(schema_name, table_name, "type")
+    valid_to = project.get_config_value("valid-to")
+    error = ""
+    action = ""
+    if kind == "fact":
+        if ref_count > 0:
+            error = "Cannot delete data in referenced fact table"
+        else:
+            action = "physical"
+    elif kind == "dimension":
+            action = "logical"
+    elif kind == "history":
+            error = "Cannot delete historical data"
+    else:
+            error = "Unknown table kind " + kind
+
+    return error, action, valid_to    
+
+
+
+def get_sql_delete(schema_name,table_name,column_list,value_list):
+    error, action, valid_to = get_delete_action(schema_name,table_name)
+
+    if error != "":
+        raise Exception(error)
+    elif action == "physical":
+        return get_sql_physical_delete(schema_name,table_name,column_list,value_list)
+    elif action ==  "logical":
+        return get_sql_logical_delete(schema_name,table_name,column_list,value_list,valid_to)
+    else:
+        raise Exception("Unknown action " + action)
+
+
+def get_sql_logical_delete(schema_name,table_name,column_list,value_list,valid_to):
+    lis_len = len(column_list)
+    set_strg = valid_to + " = current_date - 1"
+    value_strg = ""
+    where_strg = ""
+    type_strg = ""
+    res_strg = ""
+    value_delim = ""
+    where_delim = ""
+    type_delim = ""
+    res_delim = ""
+    val_idx = 1
+
+    for idx in range(lis_len):
+        is_pk = column_list[idx]["ispk"]
+        name = column_list[idx]["name"]
+        typ = column_list[idx]["type"]
+        #print ("idx=", idx, ",  name=", name,",  auto=",auto)
+        txt = value_list[idx].get()
+        res_strg = res_strg + res_delim + name
+        res_delim = ", "
+        value_strg = value_strg + value_delim + format(txt,typ)
+        value_delim = ", "
+
+
+        type_strg = type_strg + type_delim + typ
+        type_delim = ", "
+        
+        if is_pk:
+            where_strg = where_strg + where_delim + name + " = $" + str(val_idx)
+            where_delim = " and "
+        val_idx = val_idx + 1
+    statement = "prepare update_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "update " + schema_name + "." + table_name + " set "
+    statement = statement + set_strg + " where " + where_strg
+    statement = statement + " returning " + res_strg
+    arglist = "execute update_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
+
+
+def get_sql_physical_delete(schema_name,table_name,column_list,value_list):
+    lis_len = len(column_list)
+    where_strg = ""
+    res_strg = ""
+    where_delim = ""
+    type_strg = ""
+    value_strg = ""
+    res_delim = ""
+    val_idx = 1
+    for idx in range(lis_len):
+        is_pk = column_list[idx]["ispk"]
+        name = column_list[idx]["name"]
+        typ = column_list[idx]["type"]
+        txt = value_list[idx].get()
+        res_strg = res_strg + res_delim + name
+        type_strg = type_strg + res_delim + typ
+        value_strg = value_strg + res_delim + format(txt,typ)
+        res_delim = ", "
+        if is_pk:
+            where_strg = where_strg + where_delim + name + " = $" + str(val_idx)
+            where_delim = " and "
+        else:
+            pass
+        val_idx = val_idx + 1
+    statement = "prepare delete_" + table_name + " (" + type_strg + ") as "
+    statement = statement + "delete from " + schema_name + "." + table_name 
+    statement = statement + " where " + where_strg
+    statement = statement + " returning " + res_strg
+    arglist = "execute delete_" + table_name + "(" + value_strg + ")"
+    return statement, arglist
+
+
+
+def get_sql_search(schema_name,table_name,column_list,value_list):
+    lis_len = len(column_list)
+    name_strg = ""
+    where_strg = ""
+    order_strg = ""
+    type_strg = ""
+    name_delim = ""
+    where_delim = ""
+    order_delim = ""
+    type_delim = ""
+    value_strg = ""
+    val_idx = 1
+    for idx in range(lis_len):
+        name = column_list[idx]["name"]
+        typ  = column_list[idx]["type"]
+        isuk = column_list[idx]["isuk"]
+        auto = column_list[idx]["auto"]
+        ispk = column_list[idx]["ispk"]
+        txt = value_list[idx].get()
+        if "'" in txt:
+            txt = txt.replace("'","")
+        if "%" in txt:
+            op = " like "
+        else:
+            op = " = "
+        new_strg = name + op + "$" + str(val_idx)
+        name_strg = name_strg + name_delim + name
+        name_delim = ", "
+        if isuk:
+            order_strg = order_strg + order_delim + name
+            order_delim = ", "
+        if txt != "" and not auto and not ispk:
+            type_strg = type_strg + type_delim + typ
+            value_strg = value_strg + type_delim + format(txt,typ)
+            where_strg = where_strg + where_delim + new_strg
+            where_delim = " and "
+            type_delim = ", "
+            val_idx = val_idx + 1
+    
+    if type_strg == "":
+        statement = "prepare select_" + table_name + " as "
+    else:
+        statement = "prepare select_" + table_name + " (" + type_strg + ") as "
+        
+
+    statement = statement + "select " + name_strg + " from " + schema_name + "." + table_name
+    if where_strg != "":
+        statement = statement + " where " + where_strg
+    if order_strg != "":
+        statement = statement + " order by " + order_strg
+
+
+    if type_strg == "":
+        arglist = "execute select_" + table_name
+    else:
+        arglist = "execute select_" + table_name + "(" + value_strg + ")"
+        
+    return statement, arglist
+
+
+
+
+
+
+
+def get_sql_control_command(action, schema_name, table_name, column_list, value_list):
+
+    if debug != "off":
+        print ("get sql command for action " + action)
+        
+    if action == "insert":
+        statement, arglist = get_sql_insert(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
+    elif action == "update":
+        statement, arglist = get_sql_update(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
+    elif action == "delete":
+        statement, arglist = get_sql_delete(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
+    elif action == "search":
+        statement, arglist = get_sql_search(schema_name, 
+                                            table_name,
+                                            column_list,
+                                            value_list)
+    elif action == "clear":
+        statement, arglist = None, None
+    else:
+        raise ValueError("Unbekannte Aktion [" + action + "]")
+    return statement, arglist
+
+
+def get_sql_mask_command(idx, data, mask, refschema, reftable, reffield):
+    #print ("idx=" + str(idx) + ",  table=" + mask.table_name + ",  reffield=" + reffield)
+
+    project = pr.Project.get_instance()
+    if reftable == None:
+        ref_column_list = mask.column_list
+        table_name = mask.table_name
+    else:
+        ref_column_list = project.get_column_list(refschema, reftable)
+        table_name = reftable
+
+    field_strg = ""
+    delim = ""
+    for col in ref_column_list:
+        field = col['name']
+        field_strg = field_strg + delim + field
+        delim = ", "
+
+    sql = "select " + field_strg + " from " + refschema + "." + table_name
+    return sql
+
+
+def set_sql_control_result(action, contr, result_list):
+    if len(result_list) == 0:
+        return
+    
+    result = result_list[0]
+    
+    if action == "insert":
+        lis_len = len(contr.datamask.value_list)
+        for idx in range(lis_len):
+            contr.datamask.value_list[idx].set(result[idx])
+    elif action == "update":
+        lis_len = len(contr.datamask.value_list)
+        for idx in range(lis_len):
+            contr.datamask.value_list[idx].set(result[idx])
+    elif action == "delete":
+        lis_len = len(contr.datamask.value_list)
+        for idx in range(lis_len):
+            contr.datamask.value_list[idx].set(result[idx])
+    elif action == "search":
+        set_mask_query_result(result_list, contr.datamask, None, True)
+    elif action == "clear":
+        contr.datamask.clear_data()
+    else:
+        raise ValueError("Unbekannte Aktion [" + action + "]")
+        
+
+
+def set_mask_query_result(result_list, mask, idx, ispk):
+    rows = len(result_list)
+    
+    if rows == 0: 
+        mb.showwarning("Hinweis","Keine Daten gefunden",master=mask.win)
+    else:
+        mask.result_window = wm.get_window(mask.win,"ResultTable",result_list,idx,ispk,mask)
+
+
+
+def check_input(action, column_list, value_list):
+    result = "OK"
+    leng = len(column_list)
+    if action == "insert":
+        for idx in range(leng):
+            val = value_list[idx].get()
+            name = get_field_comment(column_list, idx)
+            ispk = is_primary_key(column_list, idx)
+            auto = is_auto(column_list, idx)
+            isnable = is_nullable(column_list, idx)
+            if ispk and val != None and val != "":
+                result = "Primärschlüssel muss beim Einfügen leer sein"
+                break
+            if not ispk and not isnable and not auto and (val == None or val == ""):
+                result = "Feld [" + name + "] darf beim Einfügen nicht leer sein"
+                break
+    elif action == "update":
+        for idx in range(leng):
+            val = value_list[idx].get()
+            name = get_field_comment(column_list, idx)
+            ispk = is_primary_key(column_list, idx)
+            isnable = is_nullable(column_list, idx)
+            if ispk and (val == None or val == ""):
+                result = "Primärschlüssel darf beim Ändern nicht leer sein"
+                break
+            if not ispk and not isnable and (val == None or val == ""):
+                result = "Feld [" + name + "] darf beim Ändern nicht leer sein"
+                break
+    elif action == "delete":
+       for idx in range(leng):
+           val = value_list[idx].get()
+           ispk = is_primary_key(column_list, idx)
+           if ispk and (val == None or val == ""):
+               result = "Primärschlüssel darf beim Löschen nicht leer sein"
+               break
+    else:
+        raise ValueError("Unbekannte Aktion [" + action + "]")
+    #print ("check_input: idx=" + str(idx) + " val=[" + str(val) + "],  result=" + result)
+    return result
+
+
+def get_pk_info_sql(schema, table, pk_name, uk_name, value):
+    sql = "select " + uk_name + " from " + schema + "." + table 
+    sql = sql + " where " + pk_name + " = " + str(value)
+    return sql
+
+
+def get_report_query_sql(schema, table, project):
+    print("database_methods.get_report_query_sql: ", schema, table)
+    cols      = project.get_column_list(schema,table)
+    fld_list  = "       "
+    delim     = ""
+    col_fmt   = list()
+    col_hdr   = list()
+    alias     = project.get_alias(table)
+
+    schema_list, table_list, key_list, unique_list_list, palias_list = project.get_reference_list(schema,table)
+
+    
+    for col in cols:
+        name = col["name"]
+        auto = col["auto"]
+        ispk = col["ispk"]
+        isfk = col["isfk"]
+        isuk = col["isuk"]
+        dtyp = col["type"]
+        desc = col["comment"]
+        if auto or ispk or isfk:
+            continue
+        print ("name=",name,"    dtyp=",dtyp)
+        
+        if dtyp == "date":
+            fld = "to_char(" + alias + "." + name + ",'DD.MM.YYYY')"
+        else:
+            fld = alias + "." + name
+        
+        fld_list = fld_list + delim + fld + " as " + alias + "_" + name 
+        if delim == "":
+            delim = ", "
+        if isuk:
+            col_fmt.append("B")
+        else:
+            col_fmt.append("N")
+        col_hdr.append(desc)
+
+    from_list = schema + "." + table + " " + alias + "\n"
+    
+    if schema_list == None:
+        llen = 0
+        fld_list = fld_list + "\n"
+    else:
+        llen = len(schema_list)
+        fld_list = fld_list + delim + "\n       "
+
+    for lidx in range(llen):
+        lschema = schema_list[lidx]
+        ltable = table_list[lidx]
+        lalias = project.get_alias(ltable)
+        lkey = key_list[lidx]
+        unique_list = unique_list_list[lidx]
+        palias = palias_list[lidx]
+        if unique_list != None:
+            ulen = len(unique_list)
+            for uidx in range(ulen):
+                lname = unique_list[uidx]
+                lauto = project.get_column_info(lschema, ltable, lname, "auto")
+                ltype = project.get_column_info(lschema, ltable, lname, "type")
+                if lauto:
+                    continue
+                print ("lname=",lname,"    ltype=",ltype)
+                if ltype == "date":
+                    lfld = "to_char(" + lalias + "." + lname + ",'DD.MM.YYYY')"
+                else:
+                    lfld = lalias + "." + lname
+                if (uidx == ulen - 1) and (lidx == llen - 1):
+                    delim = ""
+                fld_list = fld_list + lfld + " as " + lalias + "_" + lname + delim
+                lcomment = project.get_column_info(lschema,ltable,lname,"comment")
+                col_hdr.append(lcomment)
+                col_fmt.append("N")
+        fld_list = fld_list + "\n"
+        if lidx < llen - 1:
+            fld_list = fld_list + "       "
+        from_list = from_list + "  join " + lschema + "." + ltable + " " + lalias + "\n"
+        from_list = from_list + "    on " + lalias + "." + lkey + " = " + palias + "." + lkey + "\n"
+
+    sql = "select " + "\n" + fld_list + "  from " +  from_list
+    #print("sql=[" + sql + "]")
+    return sql, col_fmt, col_hdr
+
+
+def get_docu_query_sql(schema, table, project):
+    print("database_methods.get_docu_query_sql: ", schema, table)
+    config_list = project.get_config_list()
+    sql = "with auto_cols as (" + "   \n"
+    list_len = len(config_list)
+    for idx in range(list_len):
+        fld = config_list[idx]
+        if idx > 0:
+            sql = sql + "    union" + "\n"
+        sql = sql + "    select '" + fld + "' as column_name," + "\n"
+        sql = sql + "           'YES'         as auto_column" + "\n"
+    sql = sql + "   )" + "\n"
+    sql = sql + "select atc.column_name, " + "\n" 
+    sql = sql + "       atc.domain_name,  " + "\n" 
+    sql = sql + "       atc.data_type,  " + "\n" 
+    sql = sql + "       coalesce(atc.default_value,'-') default_value,  " + "\n" 
+    sql = sql + "       atc.column_comment,  " + "\n" 
+    sql = sql + "       atc.is_nullable, " + "\n" 
+    sql = sql + "       coalesce(ac.auto_column,'NO') is_auto,  " + "\n" 
+    sql = sql + "       atc.is_pk, " + "\n" 
+    sql = sql + "       case when afkc.ref_schema_name is null " + "\n" 
+    sql = sql + "       	     then 'NO' " + "\n" 
+    sql = sql + "            else 'YES' " + "\n" 
+    sql = sql + "       end is_fk, " + "\n" 
+    sql = sql + "       coalesce(afkc.ref_schema_name,'-') ref_schema_name, " + "\n" 
+    sql = sql + "       coalesce(afkc.ref_table_name,'-') ref_table_name, " + "\n" 
+    sql = sql + "       coalesce(afkc.ref_column_name,'-') ref_column_name, " + "\n" 
+    sql = sql + "       case when atc.is_pk = 'YES'  " + "\n"
+    sql = sql + "             and afkc.ref_schema_name is null     then 'red' " + "\n"
+    sql = sql + "            when atc.is_pk = 'YES'  " + "\n"
+    sql = sql + "             and afkc.ref_schema_name is not null then 'magenta' " + "\n"
+    sql = sql + "            when atc.is_pk = 'NO'   " + "\n"
+    sql = sql + "             and afkc.ref_schema_name is not null then 'blue' " + "\n"
+    sql = sql + "            when ac.auto_column = 'YES'  " + "\n"
+    sql = sql + "                                                  then 'green'  " + "\n"
+    sql = sql + "                                                  else 'black' " + "\n"
+    sql = sql + "       end color " + "\n"
+    sql = sql + "  from dba.all_table_columns as atc      " + "\n"
+    sql = sql + "  left join auto_cols as ac  " + "\n" 
+    sql = sql + "    on ac.column_name = atc.column_name  " + "\n" 
+    sql = sql + "  left join dba.all_foreign_key_columns as afkc " + "\n" 
+    sql = sql + "    on afkc.schema_name = atc.schema_name  " + "\n" 
+    sql = sql + "   and afkc.table_name  = atc.table_name " + "\n" 
+    sql = sql + "   and afkc.column_name = atc.column_name  " + "\n" 
+    sql = sql + " where atc.schema_name = '" + schema + "' " + "\n" 
+    sql = sql + "   and atc.table_name  = '" + table + "' " + "\n" 
+    sql = sql + " order by atc.position "
+    
+    col_fmt = list()
+    col_hdr = ["Feld",
+               "Domäne",
+               "Datentyp",
+               "Standardwert",
+               "Kommentar",
+               "leer",
+               "auto",
+               "PK",
+               "FK",
+               "Ref-Schema",
+               "Ref-Tabelle",
+               "Ref-Feld"]
+    for idx in range(len(col_hdr)):
+        col_fmt.append("N")
+
+    return sql, col_fmt, col_hdr
+
+
+
+
+

@@ -1,0 +1,29 @@
+<!ENTITY % types "boolean|integer|float|string|dict|list">
+
+<!ELEMENT json (dict)>
+
+
+<!ELEMENT dict ((dict-element|dict-item)+)>
+
+
+<!ELEMENT list ((list-element|list-item)+)>
+
+
+<!ELEMENT dict-element ((list|dict)+)>
+<!ATTLIST dict-element name CDATA     #REQUIRED
+                       type (%types;) #REQUIRED>
+
+
+<!ELEMENT list-element ((dict|list)+)>
+<!ATTLIST list-element index CDATA     #REQUIRED
+                       type  (%types;) #REQUIRED>
+
+
+<!ELEMENT dict-item (#PCDATA)>
+<!ATTLIST dict-item name  CDATA     #REQUIRED
+                    type  (%types;) #REQUIRED>
+
+
+<!ELEMENT list-item (#PCDATA)>
+<!ATTLIST list-item index CDATA      #REQUIRED
+                    type  (%types;) #REQUIRED>
