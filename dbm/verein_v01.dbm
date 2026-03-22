@@ -1,0 +1,1209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+ Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="1.2.3" use-changelog="false" max-obj-count="25"
+	 gen-disabled-objs-code="false" show-sys-schemas-rects="true"
+	 last-position="0,0" last-zoom="1" scene-rect="0,0,4953.96,1076.8"
+	 default-schema="public" default-owner="postgres"
+	 layers="Default layer"
+	 active-layers="0"
+	 layer-name-colors="#000000"
+	 layer-rect-colors="#b4b4b4"
+	 show-layer-names="false" show-layer-rects="false">
+<role name="gmd"
+ superuser="true"
+ createdb="true"
+ createrole="true"
+ inherit="true"
+ login="true"
+ password="********">
+</role>
+
+<tablespace name="base_verein" directory="'/var/lib/postgresql/18/base_verein'">
+	<role name="gmd"/>
+</tablespace>
+
+<tablespace name="const_verein" directory="'/var/lib/postgresql/18/const_verein'">
+	<role name="gmd"/>
+</tablespace>
+
+<tablespace name="dim_verein" directory="'/var/lib/postgresql/18/dim_verein'">
+	<role name="gmd"/>
+</tablespace>
+
+<tablespace name="fakt_verein" directory="'/var/lib/postgresql/18/fakt_verein'">
+	<role name="gmd"/>
+</tablespace>
+
+<tablespace name="hist_verein" directory="'/var/lib/postgresql/18/hist_verein'">
+	<role name="gmd"/>
+</tablespace>
+
+<database name="verein" encoding="UTF8" lc-collate="de_DE.UTF-8" lc-ctype="de_DE.UTF-8" is-template="false" allow-conns="true">
+	<role name="gmd"/>
+	<tablespace name="pg_default"/>
+	<comment> <![CDATA[version 1]]> </comment>
+</database>
+
+<schema name="public" layers="0" rect-visible="true" fill-color="#e1e1e1" name-color="#000000" sql-disabled="true">
+</schema>
+
+<schema name="base_verein" layers="0" rect-visible="true" fill-color="#309386" name-color="#000000">
+	<role name="gmd"/>
+	<comment> <![CDATA[Schema für Base-Daten]]> </comment>
+</schema>
+
+<schema name="const_verein" layers="0" rect-visible="true" fill-color="#3d2fd3" name-color="#000000">
+	<role name="gmd"/>
+	<comment> <![CDATA[Schema für Const-Daten]]> </comment>
+</schema>
+
+<schema name="dim_verein" layers="0" rect-visible="true" fill-color="#41ec30" name-color="#000000">
+	<role name="gmd"/>
+	<comment> <![CDATA[Schema für Dim-Daten]]> </comment>
+</schema>
+
+<schema name="fakt_verein" layers="0" rect-visible="true" fill-color="#040a90" name-color="#000000">
+	<role name="gmd"/>
+	<comment> <![CDATA[Schema für Fact-Daten]]> </comment>
+</schema>
+
+<schema name="hist_verein" layers="0" rect-visible="true" fill-color="#be8186" name-color="#000000">
+	<role name="gmd"/>
+	<comment> <![CDATA[Schema für Hist-Daten]]> </comment>
+</schema>
+
+<domain name="amount_type" not-null="false" default-value="0.0">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Betragstyp]]> </comment>
+	<type name="double precision" length="2"/>
+</domain>
+
+<domain name="count_type" not-null="false">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Anzahl]]> </comment>
+	<type name="integer" length="2" precision="0"/>
+</domain>
+
+<domain name="date_type" not-null="false" default-value="'01.01.1900'::date">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Datum]]> </comment>
+	<type name="date" length="1" precision="0"/>
+</domain>
+
+<domain name="id_type" not-null="true" default-value="0">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Schlüssel in PK und FK]]> </comment>
+	<type name="integer" length="2" precision="0"/>
+</domain>
+
+<domain name="text_type" not-null="false" default-value="''::text">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Text beliebiger Länge]]> </comment>
+	<type name="text" length="1"/>
+</domain>
+
+<sequence name="seq_adresse_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Adresse]]> </comment>
+</sequence>
+
+<sequence name="seq_ereignis_art_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Ereignis_Art]]> </comment>
+</sequence>
+
+<sequence name="seq_funktion_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Funktion]]> </comment>
+</sequence>
+
+<sequence name="seq_grad_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Guertel_Grad]]> </comment>
+</sequence>
+
+<sequence name="seq_mitgliedschaft_art_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Mitgliedschaft_Art]]> </comment>
+</sequence>
+
+<sequence name="seq_mitgliedschaft_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Mitgliedschaft]]> </comment>
+</sequence>
+
+<sequence name="seq_person_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Person]]> </comment>
+</sequence>
+
+<sequence name="seq_rolle_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Rolle]]> </comment>
+</sequence>
+
+<sequence name="seq_rollen_art_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Rollen_Art]]> </comment>
+</sequence>
+
+<sequence name="seq_status_art_id" cycle="false" start="1" increment="1" min-value="1" max-value="2147483647" cache="1">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<comment> <![CDATA[Sequence für PK der Tabelle Status_Art]]> </comment>
+</sequence>
+
+<table name="ereignis_art" layers="0" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="const_verein"/>
+	<role name="gmd"/>
+	<tablespace name="const_verein"/>
+	<comment> <![CDATA[Art des Ereignisses]]> </comment>
+	<position x="440" y="60"/>
+	<column name="ereignis_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="ereignis_bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Art des Ereignisses]]> </comment>
+	</column>
+	<constraint name="pk_ereignis_art" type="pk-constr" table="const_verein.ereignis_art">
+		<tablespace name="const_verein"/>
+		<columns names="ereignis_art_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_ereignis_art" type="uq-constr" table="const_verein.ereignis_art">
+		<tablespace name="const_verein"/>
+		<columns names="ereignis_bezeichnung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="guertel_grad" layers="0" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="const_verein"/>
+	<role name="gmd"/>
+	<tablespace name="const_verein"/>
+	<comment> <![CDATA[Grad des Gürtels]]> </comment>
+	<position x="920" y="60"/>
+	<column name="grad_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Grad des Gürtels]]> </comment>
+	</column>
+	<constraint name="pk_guertel_grad" type="pk-constr" table="const_verein.guertel_grad">
+		<tablespace name="const_verein"/>
+		<columns names="grad_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_guertel_grad" type="uq-constr" table="const_verein.guertel_grad">
+		<tablespace name="const_verein"/>
+		<columns names="bezeichnung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="mitgliedschaft_art" layers="0" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="const_verein"/>
+	<role name="gmd"/>
+	<tablespace name="const_verein"/>
+	<comment> <![CDATA[Art der Mitgliedschaft]]> </comment>
+	<position x="1340" y="60"/>
+	<column name="mitgliedschaft_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="mitgliedschaft_bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Art der Mitgliedschaft]]> </comment>
+	</column>
+	<constraint name="pk_mitgliedschaft_art" type="pk-constr" table="const_verein.mitgliedschaft_art">
+		<tablespace name="const_verein"/>
+		<columns names="mitgliedschaft_art_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_mitgliedschaft_art" type="uq-constr" table="const_verein.mitgliedschaft_art">
+		<tablespace name="const_verein"/>
+		<columns names="mitgliedschaft_bezeichnung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="rollen_art" layers="0" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="const_verein"/>
+	<role name="gmd"/>
+	<tablespace name="const_verein"/>
+	<comment> <![CDATA[Art der Rolle]]> </comment>
+	<position x="1860" y="60"/>
+	<column name="rollen_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="rollen_bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Art der Rolle]]> </comment>
+	</column>
+	<constraint name="pk_rollen_art" type="pk-constr" table="const_verein.rollen_art">
+		<tablespace name="const_verein"/>
+		<columns names="rollen_art_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_rollen_art" type="uq-constr" table="const_verein.rollen_art">
+		<tablespace name="const_verein"/>
+		<columns names="rollen_bezeichnung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="status_art" layers="0" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="const_verein"/>
+	<role name="gmd"/>
+	<tablespace name="const_verein"/>
+	<comment> <![CDATA[Art des Status]]> </comment>
+	<position x="2320" y="60"/>
+	<column name="status_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="status_bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Art des Status]]> </comment>
+	</column>
+	<constraint name="pk_status_art" type="pk-constr" table="const_verein.status_art">
+		<tablespace name="const_verein"/>
+		<columns names="status_art_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_status_art" type="uq-constr" table="const_verein.status_art">
+		<tablespace name="const_verein"/>
+		<columns names="status_bezeichnung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="adresse" layers="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<tablespace name="dim_verein"/>
+	<comment> <![CDATA[Adressen]]> </comment>
+	<position x="2800" y="60"/>
+	<column name="adresse_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[Technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-ab]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-bis]]> </comment>
+	</column>
+	<column name="plz" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Postleitzahl]]> </comment>
+	</column>
+	<column name="stadt" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Wohnort]]> </comment>
+	</column>
+	<column name="strasse" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Strasse]]> </comment>
+	</column>
+	<column name="haus_nr" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Hausnummer]]> </comment>
+	</column>
+	<column name="postergaenzung">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Postergänzung]]> </comment>
+	</column>
+	<constraint name="pk_adresse" type="pk-constr" table="dim_verein.adresse">
+		<tablespace name="dim_verein"/>
+		<columns names="adresse_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_adresse" type="uq-constr" table="dim_verein.adresse">
+		<tablespace name="dim_verein"/>
+		<columns names="plz,stadt,strasse,haus_nr,postergaenzung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<function name="adresse_trg_fun"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="trigger" length="0"/>
+	</return-type>
+	<definition> <![CDATA[  begin
+        insert into hist_verein.adresse
+          (adresse_id,gueltig_ab,gueltig_bis,plz,stadt,strasse,haus_nr,postergaenzung)
+        select new.adresse_id, new.gueltig_ab, new.gueltig_bis, new.plz, new.stadt, new.strasse, new.haus_nr, new.postergaenzung
+        on conflict on constraint pk_adresse
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           plz = excluded.plz, stadt = excluded.stadt, strasse = excluded.strasse, haus_nr = excluded.haus_nr, postergaenzung = excluded.postergaenzung;
+        return new;
+  end;]]> </definition>
+</function>
+
+<trigger name="adresse_ins_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="true" del-event="false" upd-event="false" trunc-event="false"
+	 table="dim_verein.adresse">
+		<function signature="dim_verein.adresse_trg_fun()"/>
+</trigger>
+
+<trigger name="adresse_upd_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="false" del-event="false" upd-event="true" trunc-event="false"
+	 table="dim_verein.adresse">
+		<function signature="dim_verein.adresse_trg_fun()"/>
+</trigger>
+
+<table name="funktion" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<tablespace name="dim_verein"/>
+	<comment> <![CDATA[Funktionen]]> </comment>
+	<position x="3260" y="60"/>
+	<column name="funktion_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-ab]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-bis]]> </comment>
+	</column>
+	<column name="person_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="rolle_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="start_date" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Beginndatum]]> </comment>
+	</column>
+	<constraint name="pk_funktion" type="pk-constr" table="dim_verein.funktion">
+		<tablespace name="dim_verein"/>
+		<columns names="funktion_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<function name="funktion_trg_fun"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="trigger" length="0"/>
+	</return-type>
+	<definition> <![CDATA[  begin
+        insert into hist_verein.funktion
+          (funktion_id,gueltig_ab,gueltig_bis,person_id,rolle_id,start_date)
+        select new.funktion_id, new.gueltig_ab, new.gueltig_bis, new.person_id, new.rolle_id, new.start_date
+        on conflict on constraint pk_funktion
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           person_id = excluded.person_id, rolle_id = excluded.rolle_id, start_date = excluded.start_date;
+        return new;
+  end;]]> </definition>
+</function>
+
+<trigger name="funktion_ins_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="true" del-event="false" upd-event="false" trunc-event="false"
+	 table="dim_verein.funktion">
+		<function signature="dim_verein.funktion_trg_fun()"/>
+</trigger>
+
+<trigger name="funktion_upd_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="false" del-event="false" upd-event="true" trunc-event="false"
+	 table="dim_verein.funktion">
+		<function signature="dim_verein.funktion_trg_fun()"/>
+</trigger>
+
+<table name="mitgliedschaft" layers="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<tablespace name="dim_verein"/>
+	<comment> <![CDATA[Mitgliedschaften]]> </comment>
+	<position x="3660" y="60"/>
+	<column name="mitgliedschaft_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-ab]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-bis]]> </comment>
+	</column>
+	<column name="mitgliedschaft_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[Mitgliedschaftsart]]> </comment>
+	</column>
+	<column name="adresse_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="name" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Name]]> </comment>
+	</column>
+	<column name="start_datum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Beginndatum]]> </comment>
+	</column>
+	<column name="beitrag" not-null="true">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Mitgliedsbeitrag]]> </comment>
+	</column>
+	<constraint name="pk_mitgliedschaft" type="pk-constr" table="dim_verein.mitgliedschaft">
+		<tablespace name="dim_verein"/>
+		<columns names="mitgliedschaft_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_mitgliedschaft" type="uq-constr" table="dim_verein.mitgliedschaft">
+		<tablespace name="dim_verein"/>
+		<columns names="name" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<function name="mitgliedschaft_trg_fun"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="trigger" length="0"/>
+	</return-type>
+	<definition> <![CDATA[  begin
+        insert into hist_verein.mitgliedschaft
+          (mitgliedschaft_id,gueltig_ab,gueltig_bis,mitgliedschaft_art_id,adresse_id,name,start_datum,beitrag)
+        select new.mitgliedschaft_id, new.gueltig_ab, new.gueltig_bis, new.mitgliedschaft_art_id, new.adresse_id, new.name, new.start_datum, new.beitrag
+        on conflict on constraint pk_mitgliedschaft
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           mitgliedschaft_art_id = excluded.mitgliedschaft_art_id, adresse_id = excluded.adresse_id, name = excluded.name, start_datum = excluded.start_datum, beitrag = excluded.beitrag;
+        return new;
+  end;]]> </definition>
+</function>
+
+<trigger name="mitgliedschaft_ins_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="true" del-event="false" upd-event="false" trunc-event="false"
+	 table="dim_verein.mitgliedschaft">
+		<function signature="dim_verein.mitgliedschaft_trg_fun()"/>
+</trigger>
+
+<trigger name="mitgliedschaft_upd_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="false" del-event="false" upd-event="true" trunc-event="false"
+	 table="dim_verein.mitgliedschaft">
+		<function signature="dim_verein.mitgliedschaft_trg_fun()"/>
+</trigger>
+
+<table name="person" layers="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<tablespace name="dim_verein"/>
+	<comment> <![CDATA[Personen]]> </comment>
+	<position x="4140" y="60"/>
+	<column name="person_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-ab]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-bis]]> </comment>
+	</column>
+	<column name="mitgliedschaft_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="status_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="nachname" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Nachname]]> </comment>
+	</column>
+	<column name="vorname" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Vorname]]> </comment>
+	</column>
+	<column name="geburtsdatum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Geburtsdatum]]> </comment>
+	</column>
+	<constraint name="pk_person" type="pk-constr" table="dim_verein.person">
+		<tablespace name="dim_verein"/>
+		<columns names="person_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_person" type="uq-constr" table="dim_verein.person">
+		<tablespace name="dim_verein"/>
+		<columns names="nachname,vorname,geburtsdatum" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<function name="person_trg_fun"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="trigger" length="0"/>
+	</return-type>
+	<definition> <![CDATA[  begin
+        insert into hist_verein.person
+          (person_id,gueltig_ab,gueltig_bis,mitgliedschaft_id,status_art_id,nachname,vorname,geburtsdatum)
+        select new.person_id, new.gueltig_ab, new.gueltig_bis, new.mitgliedschaft_id, new.status_art_id, new.nachname, new.vorname, new.geburtsdatum
+        on conflict on constraint pk_person
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           mitgliedschaft_id = excluded.mitgliedschaft_id, status_art_id = excluded.status_art_id, nachname = excluded.nachname, vorname = excluded.vorname, geburtsdatum = excluded.geburtsdatum;
+        return new;
+  end;]]> </definition>
+</function>
+
+<trigger name="person_ins_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="true" del-event="false" upd-event="false" trunc-event="false"
+	 table="dim_verein.person">
+		<function signature="dim_verein.person_trg_fun()"/>
+</trigger>
+
+<trigger name="person_upd_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="false" del-event="false" upd-event="true" trunc-event="false"
+	 table="dim_verein.person">
+		<function signature="dim_verein.person_trg_fun()"/>
+</trigger>
+
+<table name="rolle" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<tablespace name="dim_verein"/>
+	<comment> <![CDATA[Rollen]]> </comment>
+	<position x="4580" y="60"/>
+	<column name="rolle_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-ab]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[gueltig-bis]]> </comment>
+	</column>
+	<column name="bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Rollenbezeichnung]]> </comment>
+	</column>
+	<column name="rollen_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="entgelt">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Monatsentgelt]]> </comment>
+	</column>
+	<constraint name="pk_rolle" type="pk-constr" table="dim_verein.rolle">
+		<tablespace name="dim_verein"/>
+		<columns names="rolle_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="uk_rolle" type="uq-constr" table="dim_verein.rolle">
+		<tablespace name="dim_verein"/>
+		<columns names="bezeichnung" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<function name="rolle_trg_fun"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="dim_verein"/>
+	<role name="gmd"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="trigger" length="0"/>
+	</return-type>
+	<definition> <![CDATA[  begin
+        insert into hist_verein.rolle
+          (rolle_id,gueltig_ab,gueltig_bis,bezeichnung,rollen_art_id,entgelt)
+        select new.rolle_id, new.gueltig_ab, new.gueltig_bis, new.bezeichnung, new.rollen_art_id, new.entgelt
+        on conflict on constraint pk_rolle
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           bezeichnung = excluded.bezeichnung, rollen_art_id = excluded.rollen_art_id, entgelt = excluded.entgelt;
+        return new;
+  end;]]> </definition>
+</function>
+
+<trigger name="rolle_ins_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="true" del-event="false" upd-event="false" trunc-event="false"
+	 table="dim_verein.rolle">
+		<function signature="dim_verein.rolle_trg_fun()"/>
+</trigger>
+
+<trigger name="rolle_upd_trg" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="false" del-event="false" upd-event="true" trunc-event="false"
+	 table="dim_verein.rolle">
+		<function signature="dim_verein.rolle_trg_fun()"/>
+</trigger>
+
+<table name="ausgaben" layers="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="fakt_verein"/>
+	<role name="gmd"/>
+	<tablespace name="fakt_verein"/>
+	<comment> <![CDATA[Ausgaben]]> </comment>
+	<position x="60" y="500"/>
+	<column name="ereignis_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="buchungsdatum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Buchungsdatum]]> </comment>
+	</column>
+	<column name="betrag" not-null="true">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Beitragsbetrag]]> </comment>
+	</column>
+	<constraint name="pk_ausgaben" type="pk-constr" table="fakt_verein.ausgaben">
+		<tablespace name="fakt_verein"/>
+		<columns names="ereignis_id,buchungsdatum" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="beitrag" layers="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="fakt_verein"/>
+	<role name="gmd"/>
+	<tablespace name="fakt_verein"/>
+	<comment> <![CDATA[Mitgliedsbeiträge]]> </comment>
+	<position x="500" y="500"/>
+	<column name="buchungsdatum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Buchungsdatum]]> </comment>
+	</column>
+	<column name="mitgliedschaft_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="betrag" not-null="true">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Beitragsbetrag]]> </comment>
+	</column>
+	<constraint name="pk_beitrag" type="pk-constr" table="fakt_verein.beitrag">
+		<tablespace name="fakt_verein"/>
+		<columns names="buchungsdatum,mitgliedschaft_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="entgelt" layers="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="fakt_verein"/>
+	<role name="gmd"/>
+	<tablespace name="fakt_verein"/>
+	<comment> <![CDATA[Entgelte]]> </comment>
+	<position x="980" y="500"/>
+	<column name="funktion_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="buchungsdatum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Buchungsdatum]]> </comment>
+	</column>
+	<column name="betrag" not-null="true">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Entgeltbetrag]]> </comment>
+	</column>
+	<constraint name="pk_entgelt" type="pk-constr" table="fakt_verein.entgelt">
+		<tablespace name="fakt_verein"/>
+		<columns names="funktion_id,buchungsdatum" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="ereignis" layers="0" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="fakt_verein"/>
+	<role name="gmd"/>
+	<tablespace name="fakt_verein"/>
+	<comment> <![CDATA[Ereignisse]]> </comment>
+	<position x="1440" y="500"/>
+	<column name="ereignis_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Bezeichnung]]> </comment>
+	</column>
+	<column name="datum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Ereignisdatum]]> </comment>
+	</column>
+	<column name="ereignis_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<constraint name="pk_ereignis" type="pk-constr" table="fakt_verein.ereignis">
+		<tablespace name="fakt_verein"/>
+		<columns names="ereignis_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="pruefung" layers="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="fakt_verein"/>
+	<role name="gmd"/>
+	<tablespace name="fakt_verein"/>
+	<comment> <![CDATA[Gürtelprüfungen]]> </comment>
+	<position x="1840" y="500"/>
+	<column name="person_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="pruefungsdatum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Prüfungsdatum]]> </comment>
+	</column>
+	<column name="grad_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[Gürtelgrad]]> </comment>
+	</column>
+	<constraint name="pk_pruefung" type="pk-constr" table="fakt_verein.pruefung">
+		<tablespace name="fakt_verein"/>
+		<columns names="person_id,pruefungsdatum" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="adresse" layers="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="hist_verein"/>
+	<role name="gmd"/>
+	<tablespace name="hist_verein"/>
+	<comment> <![CDATA[Adressen]]> </comment>
+	<position x="2300" y="500"/>
+	<column name="adresse_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[Technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_ab-Datum]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_bis-Datum]]> </comment>
+	</column>
+	<column name="plz" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Postleitzahl]]> </comment>
+	</column>
+	<column name="stadt" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Wohnort]]> </comment>
+	</column>
+	<column name="strasse" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Strasse]]> </comment>
+	</column>
+	<column name="haus_nr" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Hausnummer]]> </comment>
+	</column>
+	<column name="postergaenzung">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Postergänzung]]> </comment>
+	</column>
+	<constraint name="pk_adresse" type="pk-constr" table="hist_verein.adresse">
+		<tablespace name="hist_verein"/>
+		<columns names="adresse_id,gueltig_ab" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="funktion" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="hist_verein"/>
+	<role name="gmd"/>
+	<tablespace name="hist_verein"/>
+	<comment> <![CDATA[Funktionen]]> </comment>
+	<position x="2740" y="500"/>
+	<column name="funktion_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_ab-Datum]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_bis-Datum]]> </comment>
+	</column>
+	<column name="person_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="rolle_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="start_date" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Beginndatum]]> </comment>
+	</column>
+	<constraint name="pk_funktion" type="pk-constr" table="hist_verein.funktion">
+		<tablespace name="hist_verein"/>
+		<columns names="funktion_id,gueltig_ab" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="mitgliedschaft" layers="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="hist_verein"/>
+	<role name="gmd"/>
+	<tablespace name="hist_verein"/>
+	<comment> <![CDATA[Mitgliedschaften]]> </comment>
+	<position x="3140" y="500"/>
+	<column name="mitgliedschaft_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_ab-Datum]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_bis-Datum]]> </comment>
+	</column>
+	<column name="mitgliedschaft_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[Mitgliedschaftsart]]> </comment>
+	</column>
+	<column name="adresse_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="name" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Name]]> </comment>
+	</column>
+	<column name="start_datum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Beginndatum]]> </comment>
+	</column>
+	<column name="beitrag" not-null="true">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Mitgliedsbeitrag]]> </comment>
+	</column>
+	<constraint name="pk_mitgliedschaft" type="pk-constr" table="hist_verein.mitgliedschaft">
+		<tablespace name="hist_verein"/>
+		<columns names="mitgliedschaft_id,gueltig_ab" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="person" layers="0" collapse-mode="2" max-obj-count="9" z-value="0">
+	<schema name="hist_verein"/>
+	<role name="gmd"/>
+	<tablespace name="hist_verein"/>
+	<comment> <![CDATA[Personen]]> </comment>
+	<position x="3620" y="500"/>
+	<column name="person_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_ab-Datum]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_bis-Datum]]> </comment>
+	</column>
+	<column name="mitgliedschaft_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="status_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="nachname" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Nachname]]> </comment>
+	</column>
+	<column name="vorname" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Vorname]]> </comment>
+	</column>
+	<column name="geburtsdatum" not-null="true">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[Geburtsdatum]]> </comment>
+	</column>
+	<constraint name="pk_person" type="pk-constr" table="hist_verein.person">
+		<tablespace name="hist_verein"/>
+		<columns names="person_id,gueltig_ab" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="rolle" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="hist_verein"/>
+	<role name="gmd"/>
+	<tablespace name="hist_verein"/>
+	<comment> <![CDATA[Rollen]]> </comment>
+	<position x="4040" y="500"/>
+	<column name="rolle_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="gueltig_ab" not-null="true" default-value="CURRENT_DATE">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_ab-Datum]]> </comment>
+	</column>
+	<column name="gueltig_bis" not-null="true" default-value="'9999-12-31'::date">
+		<type name="base_verein.date_type" length="0"/>
+		<comment> <![CDATA[automatisch erzeugtes gueltig_bis-Datum]]> </comment>
+	</column>
+	<column name="bezeichnung" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+		<comment> <![CDATA[Rollenbezeichnung]]> </comment>
+	</column>
+	<column name="rollen_art_id" not-null="true">
+		<type name="base_verein.id_type" length="0"/>
+		<comment> <![CDATA[technische Id]]> </comment>
+	</column>
+	<column name="entgelt">
+		<type name="base_verein.amount_type" length="0"/>
+		<comment> <![CDATA[Monatsentgelt]]> </comment>
+	</column>
+	<constraint name="pk_rolle" type="pk-constr" table="hist_verein.rolle">
+		<tablespace name="hist_verein"/>
+		<columns names="rolle_id,gueltig_ab" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="metadata" layers="0" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="base_verein"/>
+	<role name="gmd"/>
+	<tablespace name="base_verein"/>
+	<position x="60" y="60"/>
+	<column name="project" not-null="true">
+		<type name="base_verein.text_type" length="0"/>
+	</column>
+	<column name="version" not-null="true">
+		<type name="base_verein.count_type" length="0"/>
+	</column>
+	<constraint name="pk_metadata" type="pk-constr" table="base_verein.metadata">
+		<tablespace name="base_verein"/>
+		<columns names="version" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<constraint name="fk_funktion_person" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.person" table="dim_verein.funktion">
+	<columns names="person_id" ref-type="src-columns"/>
+	<columns names="person_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_funktion_rolle" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.rolle" table="dim_verein.funktion">
+	<columns names="rolle_id" ref-type="src-columns"/>
+	<columns names="rolle_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_mitgliedschaft_mitgliedschaft_art" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="const_verein.mitgliedschaft_art" table="dim_verein.mitgliedschaft">
+	<columns names="mitgliedschaft_art_id" ref-type="src-columns"/>
+	<columns names="mitgliedschaft_art_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_mitgliedschaft_adresse" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.adresse" table="dim_verein.mitgliedschaft">
+	<columns names="adresse_id" ref-type="src-columns"/>
+	<columns names="adresse_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_person_status_art" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="const_verein.status_art" table="dim_verein.person">
+	<columns names="status_art_id" ref-type="src-columns"/>
+	<columns names="status_art_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_person_mitgliedschaft" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.mitgliedschaft" table="dim_verein.person">
+	<columns names="mitgliedschaft_id" ref-type="src-columns"/>
+	<columns names="mitgliedschaft_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_rolle_rollen_art" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="const_verein.rollen_art" table="dim_verein.rolle">
+	<columns names="rollen_art_id" ref-type="src-columns"/>
+	<columns names="rollen_art_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_ausgaben_ereignis" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fakt_verein.ereignis" table="fakt_verein.ausgaben">
+	<columns names="ereignis_id" ref-type="src-columns"/>
+	<columns names="ereignis_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_beitrag_mitgliedschaft" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.mitgliedschaft" table="fakt_verein.beitrag">
+	<columns names="mitgliedschaft_id" ref-type="src-columns"/>
+	<columns names="mitgliedschaft_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_entgelt_funktion" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.funktion" table="fakt_verein.entgelt">
+	<columns names="funktion_id" ref-type="src-columns"/>
+	<columns names="funktion_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_ereignis_ereignis_art" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="const_verein.ereignis_art" table="fakt_verein.ereignis">
+	<columns names="ereignis_art_id" ref-type="src-columns"/>
+	<columns names="ereignis_art_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_pruefung_guertel_grad" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="const_verein.guertel_grad" table="fakt_verein.pruefung">
+	<columns names="grad_id" ref-type="src-columns"/>
+	<columns names="grad_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_pruefung_person" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="dim_verein.person" table="fakt_verein.pruefung">
+	<columns names="person_id" ref-type="src-columns"/>
+	<columns names="person_id" ref-type="dst-columns"/>
+</constraint>
+
+<relationship name="rel_funktion_person" type="relfk" layers="0"
+	 custom-color="#b64c75"
+	 src-table="dim_verein.funktion"
+	 dst-table="dim_verein.person" reference-fk="fk_funktion_person"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_funktion_rolle" type="relfk" layers="0"
+	 custom-color="#4a4163"
+	 src-table="dim_verein.funktion"
+	 dst-table="dim_verein.rolle" reference-fk="fk_funktion_rolle"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_mitgliedschaft_mitgliedschaft_art" type="relfk" layers="0"
+	 custom-color="#6e3019"
+	 src-table="dim_verein.mitgliedschaft"
+	 dst-table="const_verein.mitgliedschaft_art" reference-fk="fk_mitgliedschaft_mitgliedschaft_art"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_mitgliedschaft_adresse" type="relfk" layers="0"
+	 custom-color="#fe2238"
+	 src-table="dim_verein.mitgliedschaft"
+	 dst-table="dim_verein.adresse" reference-fk="fk_mitgliedschaft_adresse"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_person_status_art" type="relfk" layers="0"
+	 custom-color="#4e1aed"
+	 src-table="dim_verein.person"
+	 dst-table="const_verein.status_art" reference-fk="fk_person_status_art"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_person_mitgliedschaft" type="relfk" layers="0"
+	 custom-color="#df589a"
+	 src-table="dim_verein.person"
+	 dst-table="dim_verein.mitgliedschaft" reference-fk="fk_person_mitgliedschaft"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_rolle_rollen_art" type="relfk" layers="0"
+	 custom-color="#4533a5"
+	 src-table="dim_verein.rolle"
+	 dst-table="const_verein.rollen_art" reference-fk="fk_rolle_rollen_art"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_ausgaben_ereignis" type="relfk" layers="0"
+	 custom-color="#111f46"
+	 src-table="fakt_verein.ausgaben"
+	 dst-table="fakt_verein.ereignis" reference-fk="fk_ausgaben_ereignis"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_beitrag_mitgliedschaft" type="relfk" layers="0"
+	 custom-color="#17cc7e"
+	 src-table="fakt_verein.beitrag"
+	 dst-table="dim_verein.mitgliedschaft" reference-fk="fk_beitrag_mitgliedschaft"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_entgelt_funktion" type="relfk" layers="0"
+	 custom-color="#fcb0a1"
+	 src-table="fakt_verein.entgelt"
+	 dst-table="dim_verein.funktion" reference-fk="fk_entgelt_funktion"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_ereignis_ereignis_art" type="relfk" layers="0"
+	 custom-color="#4b1f29"
+	 src-table="fakt_verein.ereignis"
+	 dst-table="const_verein.ereignis_art" reference-fk="fk_ereignis_ereignis_art"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_pruefung_guertel_grad" type="relfk" layers="0"
+	 custom-color="#57c09d"
+	 src-table="fakt_verein.pruefung"
+	 dst-table="const_verein.guertel_grad" reference-fk="fk_pruefung_guertel_grad"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_pruefung_person" type="relfk" layers="0"
+	 custom-color="#cf2255"
+	 src-table="fakt_verein.pruefung"
+	 dst-table="dim_verein.person" reference-fk="fk_pruefung_person"
+	 src-required="false" dst-required="true"/>
+
+</dbmodel>

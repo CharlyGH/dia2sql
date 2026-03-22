@@ -1,11 +1,12 @@
 dia2sql
-A tool to create sql code from a dia database diagram
+A tool to create sql code from a dia database diagram or pgmodeler model
 Status: alpha, still contains a lot of bugs
 
 The following external resources are used:
-standard linux tools like bash, gawk, xsltproc, xmllint, python, iconv, evince, ...
+standard linux tools like dia, bash, gawk, xsltproc, xmllint, python, iconv, evince, ...
 
 external programs
+pgmodeler   https://pgmodeler.io/
 postgresql  https://www.postgresql.org/
 lout        http://jeffreykingston.id.au/lout/
 dot         https://graphviz.org/
