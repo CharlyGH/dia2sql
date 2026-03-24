@@ -8,12 +8,14 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 
 source "${BIN_DIR}/utils.lib.sh"
 
-USAGE="usage: ${ME} -i inputfile -o outputfile -p projectconfig [-a] [-c] [-k] [-t] [-v]"
+USAGE="usage: ${ME} -i inputfile -o outputfile -p projectconfig [-a] [-c] [-h] [-k] [-t] [-v]"
 HELP="${USAGE}
-    -a auto         generate historization fields and tables in output file
-    -i inputfile    name of input file, default is basename.dia in ${DATA_DIR}
-    -k keep         keep tempfiles, dop not delete at end
-    -o outputfile   name of output file, default is <<inputfile>>.chk
+    -a auto         check hist tables
+    -h help         print this help message
+    -i inputfile    name of input file
+    -k keep         keep tempfiles, do not delete at end
+    -o outputfile   name of output file
+    -p configfile   name of the config file
     -v verbose      list all steps of execution
 "
 

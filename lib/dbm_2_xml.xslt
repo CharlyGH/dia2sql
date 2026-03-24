@@ -183,7 +183,15 @@
       <xsl:value-of select="$value"/>
     </fcn:result>
   </fcn:function>
+
   
+  <fcn:function name="fcn:get-function-name">
+    <xsl:param name="full-name"/>
+    <fcn:result>
+      <xsl:value-of select="substring-before(substring-after($full-name,'.'),'()')"/>
+    </fcn:result>
+  </fcn:function>
+
   
   <xsl:variable name="config" select="document($configfile)/config"/>
 
@@ -615,10 +623,13 @@
     </xsl:element>
   </xsl:template>
 
+  
   <xsl:template match="function">
     <xsl:variable name="name"       select="@name"/>
     <xsl:variable name="schema"     select="schema/@name"/>
-    <xsl:variable name="table"      select="substring-before(@name,'_trg_fun')"/>
+    <xsl:variable name="table"
+                  select="substring-after(//trigger[fcn:get-function-name(function/@signature) = $name]/@table,'.')"/>
+
     <xsl:variable name="language"   select="language/@name"/>
     <xsl:variable name="definition" select="substring-before(substring-after(definition,'  begin'),'  return new;')"/>
     <xsl:element name="function">

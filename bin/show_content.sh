@@ -18,7 +18,7 @@ HELP="${USAGE}
     -c column       show levels schema/table/column
     -f function     show level schema/function
     -h help         print this help text
-    -i inputfile    filename
+    -i inputfile    input file name
     -r reference    show references
     -s schema       show level schema
     -t table        show levels schema/table

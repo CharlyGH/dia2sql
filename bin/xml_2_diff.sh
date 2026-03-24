@@ -13,7 +13,7 @@ HELP="${USAGE}
     -c check             check syntax of output file
     -h help              print this help message
     -i oldfile,newfile   names of input files, old file name and new file name separated with ,
-    -o outfile           name of output file, default is ....
+    -o outfile           name of output file, default is project_old_new.xml
     -p projectfile       configuration file for historization, default is ${PROJECT_FILE}
     -v verbose           show all steps of execution
 "

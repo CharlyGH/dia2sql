@@ -9,10 +9,11 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 
 
-USAGE="usage: ${ME} -i inputfile [-a] [-c] [-k] [-v]"
+USAGE="usage: ${ME} -i inputfile [-a] [-c] [-h] [-k] [-v]"
 HELP="${USAGE}
     -a auto          generate historization fields and tables in output file
     -c check         validate generated file
+    -h help          print this help text
     -i inputfile     name of input file
     -k keep          keep tempfiles, dop not delete at end
     -o outputfile    name of output file, default: inputfile with dia replaced by xml

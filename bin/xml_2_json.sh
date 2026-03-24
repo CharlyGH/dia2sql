@@ -8,9 +8,10 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 
 
-USAGE="usage: ${ME}  -i inputfile [-o outputfile] [-c] [-k] [-v]"
+USAGE="usage: ${ME}  -i inputfile [-o outputfile] [-c] [-h] [-k] [-v]"
 HELP="${USAGE}
     -c check         check json syntax of output file
+    -h help          print this help text
     -i inputfile     name of input file
     -k keep          keep, do not delete temp files
     -o outputfile    name of output file, default is inputfile with xml replaced by json

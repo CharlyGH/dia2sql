@@ -1,0 +1,1289 @@
+#LyX 2.4 created this file. For more info see https://www.lyx.org/
+\lyxformat 620
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children no
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1.5cm
+\topmargin 1.5cm
+\rightmargin 1.5cm
+\bottommargin 2.5cm
+\headheight 1.5cm
+\headsep 1.5cm
+\footskip 1.5cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tablestyle default
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content true
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Dia2SQL
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+Dia2SQL is a collection of shell scripts that takes a data model in a dia file an generates
+\end_layout
+
+\begin_layout Itemize
+SQL scripts to create all tables of the model
+\end_layout
+
+\begin_layout Itemize
+Documentation for the model in PDF or SVG format
+\end_layout
+
+\begin_layout Itemize
+Data masks to manually enter data with the help of Python/tkinter
+\end_layout
+
+\begin_layout Itemize
+Simple standard reports in PDF formats
+\end_layout
+
+\begin_layout Standard
+The tables of the model are divided up into five schemes
+\end_layout
+
+\begin_layout Itemize
+Base schema
+\begin_inset Newline newline
+\end_inset
+
+Contains 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+the special table metadata 
+\end_layout
+
+\begin_layout Itemize
+all domains
+\end_layout
+
+\begin_layout Itemize
+all sequences
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Const schema
+\begin_inset Newline newline
+\end_inset
+
+Contains small static dimension tables like gender,
+ data type,
+ etc.
+\end_layout
+
+\begin_layout Itemize
+Dim schema
+\begin_inset Newline newline
+\end_inset
+
+Contains dynamic dimension tables like customer,
+ product,
+ region
+\begin_inset Newline newline
+\end_inset
+
+These are automatically archived when changes are made.
+\end_layout
+
+\begin_layout Itemize
+Fact schema
+\begin_inset Newline newline
+\end_inset
+
+Contains fact data like transactions
+\end_layout
+
+\begin_layout Itemize
+Hist schema
+\begin_inset Newline newline
+\end_inset
+
+Contains the archived data from the dim schema
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename dia2sql.png
+	lyxscale 200
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace 3cm
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Special tables
+\end_layout
+
+\begin_layout Standard
+The dia model contains two special tables Domains and MetaData.
+ These are no real tables but contain meta data for the model.
+\end_layout
+
+\begin_layout Subsection
+Domains
+\end_layout
+
+\begin_layout Standard
+This meta table contains the domains that are use in the model.
+ All columns of all real tables should use domains for data types.
+ These domains are defined in this meta table.
+\end_layout
+
+\begin_layout Subsection
+MetaData
+\end_layout
+
+\begin_layout Standard
+This meta table contains
+\end_layout
+
+\begin_layout Itemize
+The project name
+\end_layout
+
+\begin_layout Itemize
+The project version number
+\end_layout
+
+\begin_layout Itemize
+The assignment of tables to schemes
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Shell Scripts
+\end_layout
+
+\begin_layout Subsection
+Convert Dia to XML
+\end_layout
+
+\begin_layout Standard
+This script converts the Dia file into the XML standard file format
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/dia_2_xml.sh -h 
+\end_layout
+
+\begin_layout Plain Layout
+
+usage:
+ dia_2_xml.sh -i inputfile [-a] [-c] [-h] [-k] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -a auto          generate historization fields and tables in output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check         validate generated file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help          print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile     name of input file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep          keep tempfiles,
+ dop not delete at end
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile    name of output file,
+ default:
+ inputfile with dia replaced by xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose       list all steps of execution
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The option -a (auto) adds valid-from and valid-to fields to all tables in the dim-schema and creates a copy all tables in the dim-schema into the hist schema.
+ The -c (check) option checks a bunch of rules for the generated tables.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the dia diagram file to convert to the standard xml format.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Convert XML to SQL
+\end_layout
+
+\begin_layout Standard
+This script converts the XML standard format into SQL format for PostgreSQL
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/xml_2_db.sh -h 
+\end_layout
+
+\begin_layout Plain Layout
+
+usage:
+ xml_2_db.sh -i inputfile [-r reffiles] [-d database] [-u user] [-o outputfile] [-p projectfile] [-c] [-e] [-h] [-k] [-r] [-v] [-y]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check         check the xml file before generating sql code
+\end_layout
+
+\begin_layout Plain Layout
+
+    -d database      database,
+ default is project name
+\end_layout
+
+\begin_layout Plain Layout
+
+    -e execute       execute generated sql script
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help          print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile     filename to process
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep          keep,
+ do not delete temp files
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile    output filename,
+ default is input file name with xml replaced by sql
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p projectfile   configuration file for historization,
+ default is xml/project.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -r reffiles      referencefiles:
+ oldfile,newfile
+\end_layout
+
+\begin_layout Plain Layout
+
+    -u user          dabase user,
+ default is ${USER}
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose       show all execution steps
+\end_layout
+
+\begin_layout Plain Layout
+
+    -y yes           answer yes to all questions 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -c (check) option checks a bunch of rules before trying to create sql code.
+ The -d (database) option takes the name of the PostgrSQL database,
+ default is the name of the project.
+ The -e (execute) option executes the generated SQL script in the PostgrSQL database.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the dia diagram file to convert to the standard xml format.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -p projectfile gives the name of the project file,
+ default is xml/project.xml.
+ The -r (reffiles) is needed,
+ when the input file contains a diff between old and new version.
+ The both files names oldfile and new file contain the complete old and new models in XML format.
+ The -u (user) option gives an alternativ user for the PostgrSQL database,
+ default is the Linux user name.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+ The -y (yes) option is used in conjuction with the -e (execute) option and forces the execution of the SQL script without asking for confirmation.
+\end_layout
+
+\begin_layout Subsection
+Compare two model versions
+\end_layout
+
+\begin_layout Standard
+This script takes two versions of a model in XML format and creates a delta between them in XML format.
+ This delta file can then be converted to SQL format to migrate the old version of the model to the new version.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/xml_2_diff.sh -h 
+\end_layout
+
+\begin_layout Plain Layout
+
+usage:
+ xml_2_diff.sh -i oldinputfile,newinputfile [-o outputfile] [-c] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check             check syntax of output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help              print this help message
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i oldfile,newfile   names of input files,
+ old file name and new file name separated with ,
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outfile           name of output file,
+ default is project_old_new.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p projectfile       configuration file for historization,
+ default is xml/project.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose           show all steps of execution 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -c (check) option checks a bunch of rules for the generated diff file.
+ The -h (help) option displays the help text.
+ The -i oldfile,newfile option supplied the names of the old and the new model file.
+ The optional -o outfile option suppiled a name for the generated diff file,
+ the default name is build from the input files:
+ name_v01.xml and name_v02.xml results in name_v01_v02.xml.
+ The -p projectfile gives the name of the project file,
+ default is xml/project.xml.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Create Test Data
+\end_layout
+
+\begin_layout Standard
+This script generates a SQl script with insert statements for all tables to load some test data into the tables.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/xml_2_dat.sh -h 
+\end_layout
+
+\begin_layout Plain Layout
+
+usage:
+ xml_2_dat.sh -i inputfile [-d database] [-u user] [-o outputfile] [-l lines] [-p projectfile] [-c] [-D] {-e|-g} [-h] [-k] [-r] [-v] [-y]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check         check the xml file before generating sql code
+\end_layout
+
+\begin_layout Plain Layout
+
+    -d database      database,
+ default is projectname
+\end_layout
+
+\begin_layout Plain Layout
+
+    -D delete        delete all existing rows with truncate table
+\end_layout
+
+\begin_layout Plain Layout
+
+    -e execute       execute generated sql script
+\end_layout
+
+\begin_layout Plain Layout
+
+    -g generate      generate sql scripts with insert statements
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help          print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile     filename to process
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep          keep,
+ do not delete temp files
+\end_layout
+
+\begin_layout Plain Layout
+
+    -l lines         lines to insert,
+ default is 1
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile    output filename,
+ default is input file name with xml replaced by sql or dat.sql
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p projectfile   configuration file for historization,
+ default is xml/project.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -u user          dabase user,
+ default is ${USER}
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose       show all execution steps
+\end_layout
+
+\begin_layout Plain Layout
+
+    -y yes           answer yes to all questions 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -c (check) option checks a bunch of rules before generating the SQL script.
+ The -d (database) option takes the name of the PostgrSQL database,
+ default is the name of the project.
+ The -D (delete) option writes truncate table statements at the top of the SQL script and deletes all existing data.
+ The -e (execute) option executes the generated SQL script in the PostgrSQL database.
+ The -g (generate) option only generates the SQL script.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the xml file with the model info.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -l lines option creates the supplied number of lines for dim and const tables and lines^n lines for the fact tables that reference n dim tables.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -p projectfile gives the name of the project file,
+ default is xml/project.xml.
+ The -u (user) option gives an alternativ user for the PostgrSQL database,
+ default is the Linux user name.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+ The -y (yes) option is used in conjuction with the -e (execute) option and forces the execution of the SQL script without asking for confirmation.
+\end_layout
+
+\begin_layout Subsection
+Create JSON File for Data Masks and Reports
+\end_layout
+
+\begin_layout Standard
+This script creates a JSON file that controls the data masks and standard reports.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/xml_2_json.sh -h usage:
+ xml_2_json.sh  -i inputfile [-o outputfile] [-c] [-h] [-k] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check         check json syntax of output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help          print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile     name of input file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep          keep,
+ do not delete temp files
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile    name of output file,
+ default is inputfile with xml replaced by json
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p projectfile   configuration file for historization,
+ default is xml/project.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose       show all steps of execution 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -c (check) option checks a bunch of rules before generating the SQL script.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the xml file with the model info.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -p projectfile gives the name of the project file,
+ default is xml/project.xml.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Create Documentation
+\end_layout
+
+\begin_layout Standard
+This script creates documentation in PDF or SVG format
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/xml_2_out.sh -h usage:
+ xml_2_out.sh -i inputfile [-o outputfile] {-d | -l | -p | -s} [-c] [-D] [-h] [-k] [-r repeat] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -D debug       debug mode
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check       check generated dot or lout file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -d dot         create dot docu
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help        print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile   name of input file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep        keep temp files,
+ do not delete at end
+\end_layout
+
+\begin_layout Plain Layout
+
+    -l lout        create lout docu
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile  name of output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p pdf         create pdf docu,
+ implies dot and lout
+\end_layout
+
+\begin_layout Plain Layout
+
+    -r repeat      remoce lout index files an set repeat value
+\end_layout
+
+\begin_layout Plain Layout
+
+    -s svg         create svg docu,
+ implies dot
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose     show all steps of execution 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -D (debug) option insert debug output into the generated dot output file.
+ The -c (check) option checks a bunch of rules before generating the SQL script.
+ The -d (dot) option creates output in dot format,
+ that can be processed by graphviz.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the xml file with the model info.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -l (lout) option creates output in lout format,
+ that can be processed by lout.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -p (pdf) option creates output in PDF format using dot and lout temp files.
+ The -r repeat options supplied the number of iterations for lout.
+ The -s (svg) option creates documentation in SVG format with dot format as temp files.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Create XML model from database
+\end_layout
+
+\begin_layout Standard
+This script creates a model file in XML format from an existing database.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/db_2_xml.sh -h usage:
+ db_2_xml.sh -p project [-d database] [-u user] [-o outputfile] [-h] [-k] [-r] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check       validate generated file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -d database    database,
+ default is project
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help        print this help message
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep        keep,
+ do not delete temp files
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile  then name of the output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p project     the name of the project
+\end_layout
+
+\begin_layout Plain Layout
+
+    -u user        dabase user,
+ default is ${USER}
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose     verbose output,
+ show all executed steps 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -c (check) option checks a bunch of rules for the generated model file in XML format.
+ The -d (database) option takes the name of the PostgrSQL database,
+ default is the name of the project.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the xml file with the model info.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -p project gives the name of the project.
+ The -u (user) option gives an alternativ user for the PostgrSQL database,
+ default is the Linux user name.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+ 
+\end_layout
+
+\begin_layout Subsection
+Convert pgModeler to XML
+\end_layout
+
+\begin_layout Standard
+This script converts a model created by pgModeler to standard XML format
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/dbm_2_xml.sh -h usage:
+ dbm_2_xml.sh -i inputfile [-a] [-c] [-h] [-k] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -a auto          generate historization fields and tables in output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c check         validate generated file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help          print this help message
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile     name of input file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep          keep tempfiles,
+ dop not delete at end
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile    name of output file,
+ default:
+ inputfile with dia replaced by xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose       list all steps of execution 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The option -a (auto) adds valid-from and valid-to fields to all tables in the dim-schema and creates a copy all tables in the dim-schema into the hist schema.
+ The -c (check) option checks a bunch of rules for the generated tables.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the dia diagram file to convert to the standard xml format.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension dia replaced by xml.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Small Helper Shell Scripts
+\end_layout
+
+\begin_layout Subsection
+Check Rules
+\end_layout
+
+\begin_layout Standard
+This Script checks a bunch of rules for the XML file.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/check_rules.sh -h usage:
+ check_rules.sh -i inputfile -o outputfile -p projectconfig [-a] [-c] [-h] [-k] [-t] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -a auto         check hist tables
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help         print this help message
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile    name of input file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -k keep         keep tempfiles,
+ do not delete at end
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile   name of output file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p configfile   name of the config file
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose      list all steps of execution 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The option -a (auto) also checks the tables in the hist-schema.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the model file in XML format.
+ The -k (keep) options prevents the removal of the temp files at the end of the script.
+ The -o outputfile gives the name of the output file.
+ The -p projectfile gives the name of the project file.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Create Configuration File
+\end_layout
+
+\begin_layout Standard
+This script creates the project-specific configuration file
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/create_config.sh -h usage:
+ create_config.sh -i inputfile [-p projectfile] [-o outputfile] [-h] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help          print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile     name of the inputfile
+\end_layout
+
+\begin_layout Plain Layout
+
+    -o outputfile    name of output file,
+ default is name of input file with extension prj.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p projectfile   configuration file for historization,
+ default is xml/project.xml
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose       show all execution steps 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -h (help) option displays the help text.
+ The -i inputfile gives the name of the xml file with the model info.
+ The -o outputfile option accepts an alternative name of the output file,
+ default ist the same as inputfile with extension xml replaced by prj.xml.
+ The -p projectfile gives the name of the project file,
+ default is xml/project.xml.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Show model info
+\end_layout
+
+\begin_layout Standard
+This script displays various information from the model file
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/show_content.sh -h usage:
+ show_content.sh -i inputfile [-a] [-c] [-f] [-h] [-r] [-s] [-t] [-v]
+\end_layout
+
+\begin_layout Plain Layout
+
+    -a all          show levels schemas/tables/columns/domains/sequences
+\end_layout
+
+\begin_layout Plain Layout
+
+    -c column       show levels schema/table/column
+\end_layout
+
+\begin_layout Plain Layout
+
+    -f function     show level schema/function
+\end_layout
+
+\begin_layout Plain Layout
+
+    -h help         print this help text
+\end_layout
+
+\begin_layout Plain Layout
+
+    -i inputfile    input file name
+\end_layout
+
+\begin_layout Plain Layout
+
+    -r reference    show references
+\end_layout
+
+\begin_layout Plain Layout
+
+    -s schema       show level schema
+\end_layout
+
+\begin_layout Plain Layout
+
+    -t table        show levels schema/table
+\end_layout
+
+\begin_layout Plain Layout
+
+    -v verbose      show all execution steps 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The -a (all) option shows all levels of information.
+ The -c (column) option shows levels schema/table/column.
+ The -f (function) option shows levels schema/functions.
+ The -h (help) option displays the help text.
+ The -i inputfile gives the name of the xml file with the model info.
+ The -r (reference) option shows references.
+ The -s (schema) option only shows level schema.
+ The -t (table) option shows level schema/table.
+ The -v (verbose) options shows all called xslt and awk helper scripts with their arguments.
+\end_layout
+
+\begin_layout Subsection
+Path Variables
+\end_layout
+
+\begin_layout Standard
+This script sets environment variables for all relevant directories as absolute path and as relative path.
+ The name of the script directory must be supplied in variable BIN_DIR.
+ The variables are set for the following list of directories
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./bin/utils.lib.sh
+\end_layout
+
+\begin_layout Plain Layout
+
+bin_dir is undefined 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+bin
+\end_layout
+
+\begin_layout Itemize
+data
+\end_layout
+
+\begin_layout Itemize
+dia
+\end_layout
+
+\begin_layout Itemize
+dtd
+\end_layout
+
+\begin_layout Itemize
+lib
+\end_layout
+
+\begin_layout Itemize
+out
+\end_layout
+
+\begin_layout Itemize
+pdf
+\end_layout
+
+\begin_layout Itemize
+sql
+\end_layout
+
+\begin_layout Itemize
+temp
+\end_layout
+
+\begin_layout Itemize
+xml
+\end_layout
+
+\begin_layout Itemize
+dbm
+\end_layout
+
+\end_body
+\end_document

@@ -8,11 +8,12 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 
 
-USAGE="usage: ${ME} -i inputfile [-o outputfile] {-d | -l | -p | -s} [-c] [-D] [-k] [-r repeat] [-v]"
+USAGE="usage: ${ME} -i inputfile [-o outputfile] {-d | -l | -p | -s} [-c] [-D] [-h] [-k] [-r repeat] [-v]"
 HELP="${USAGE}
     -D debug       debug mode
     -c check       check generated dot or lout file
     -d dot         create dot docu
+    -h help        print this help text
     -i inputfile   name of input file
     -k keep        keep temp files, do not delete at end
     -l lout        create lout docu

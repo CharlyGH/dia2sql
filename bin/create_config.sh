@@ -13,7 +13,7 @@ USAGE="usage: ${ME} -i inputfile [-p projectfile] [-o outputfile] [-h] [-v] "
 HELP="${USAGE}
     -h help          print this help text
     -i inputfile     name of the inputfile
-    -o outputfile    name of output file
+    -o outputfile    name of output file, default is name of input file with extension prj.xml
     -p projectfile   configuration file for historization, default is ${PROJECT_FILE}
     -v verbose       show all execution steps
 "
@@ -57,6 +57,7 @@ done
 
 temp="${inputfile##*/}"
 temp="${temp%.*}"
+
 [[ -z "${outputfile}" ]] && outputfile="${TEMP_DIR}/${temp}.prj.xml"
 
 basename="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
