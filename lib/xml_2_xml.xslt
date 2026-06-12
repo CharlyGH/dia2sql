@@ -15,14 +15,20 @@
               doctype-system="model.dtd"
               />
 
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
 
   <xsl:include href="functions.xslt"/>
-  
-  <xsl:param name="configfile"/>
 
+  <xsl:variable name="project">
+    <xsl:value-of select="fcn:to-lower-case(/model/@project)"/>
+  </xsl:variable>
+
+  <xsl:variable name="version">
+    <xsl:value-of select="fcn:to-lower-case(/model/@version)"/>
+  </xsl:variable>
+
+  <xsl:include href="configuration.xslt"/>
+  
+ 
 
   <fcn:function name="fcn:set-list">
     <xsl:param name="column-list"/>
@@ -73,20 +79,20 @@
   </fcn:function>
 
   
-  <xsl:variable name="config" select="document($configfile)/config"/>
 
-  <xsl:variable name="base-schema"  select="exslt:node-set($config)/schemaconf[@name = 'base']/@value"/>
-  <xsl:variable name="const-schema" select="exslt:node-set($config)/schemaconf[@name = 'const']/@value"/>
-  <xsl:variable name="dim-schema"   select="exslt:node-set($config)/schemaconf[@name = 'dim']/@value"/>
-  <xsl:variable name="fact-schema"  select="exslt:node-set($config)/schemaconf[@name = 'fact']/@value"/>
-  <xsl:variable name="hist-schema"  select="exslt:node-set($config)/schemaconf[@name = 'hist']/@value"/>
+  <xsl:variable name="base-schema"  select="fcn:get-config-value('base')"/>
+  <xsl:variable name="const-schema" select="fcn:get-config-value('const')"/>
+  <xsl:variable name="dim-schema"   select="fcn:get-config-value('dim')"/>
+  <xsl:variable name="fact-schema"  select="fcn:get-config-value('fact')"/>
+  <xsl:variable name="hist-schema"  select="fcn:get-config-value('hist')"/>
 
-  <xsl:variable name="valid-from"  select="exslt:node-set($config)/columnconf[@name = 'valid-from']/@value"/>
-  <xsl:variable name="valid-to"    select="exslt:node-set($config)/columnconf[@name = 'valid-to']/@value"/>
+  <xsl:variable name="valid-from"  select="fcn:get-config-value('valid-from')"/>
+  <xsl:variable name="valid-to"    select="fcn:get-config-value('valid-to')"/>
 
   
 
   <xsl:template match="model">
+
     <xsl:variable name="project" select="@project"/>
     <xsl:variable name="version" select="@version"/>
     <xsl:element name="model">

@@ -2,6 +2,7 @@
 
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:dia="http://www.lysator.liu.se/~alla/dia/"
                 xmlns:exslt="http://exslt.org/common"
                 xmlns:fcn="http://exslt.org/functions"
                 xmlns:dyn="http://exslt.org/dynamic"

@@ -237,7 +237,7 @@ class Project(object):
         elif (type(arg) == type(list())):
             return "list"
         elif (type(arg) == type(dict())):
-            return "dict""reference"
+            return "dict"
         else:
             return "unknown"
 

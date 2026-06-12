@@ -15,7 +15,7 @@ HELP="${USAGE}
     -c check         validate generated file
     -h help          print this help text
     -i inputfile     name of input file
-    -k keep          keep tempfiles, dop not delete at end
+    -k keep          keep tempfiles, do not delete at end
     -o outputfile    name of output file, default: inputfile with dia replaced by xml
     -v verbose       list all steps of execution
 "
@@ -68,121 +68,72 @@ done
 [[ ! -r "${inputfile}" ]] && error_exit "cannot open input file ${inputfile}" ""  1
 
 
-DIA_2_STR_DAT="${LIB_DIR}/dia_2_str_dat.xslt"
-DAT_2_XML="${LIB_DIR}/dat_2_xml.awk"
-DAT_2_SRT="${LIB_DIR}/sort_dia_str_dat.awk"
-PROJECT_XML_2_DAT="${LIB_DIR}/project_dat.xslt"
+DIA_2_TMP="${LIB_DIR}/dia_2_tmp.xslt"
+TMP_2_XML="${LIB_DIR}/tmp_2_xml.xslt"
+CHECK_TMP="${LIB_DIR}/check_tmp.xslt"
 XML_2_XML="${LIB_DIR}/xml_2_xml.xslt"
+
 
 name="${inputfile%.*}"
 name="${name##*/}"
 
 [[ -z "${outputfile}" ]] && outputfile="${DATA_DIR}/${name}.xml"
 
-tempsi="${FULL_TEMP_DIR}/${name}.si.xml"
-tempsd="${TEMP_DIR}/${name}.str.dat"
-tempss="${TEMP_DIR}/${name}.str.srt"
-temppd="${TEMP_DIR}/${name}.prj.dat"
-tempprj="${FULL_DATA_DIR}/${name}.prj.xml"
-tempchk="${TEMP_DIR}/${name}.chk.dat"
-tempout="${TEMP_DIR}/${name}.out.xml"
+tempxml="${TEMP_DIR}/${name}.tmp.xml"
 tempqt="${TEMP_DIR}/${name}.qt.xml"
-tempchk="${TEMP_DIR}/${name}.chk.dat"
-templld="${TEMP_DIR}/${name}.lout.ld"
+tempsrt="${FULL_TEMP_DIR}/${name}.srt.xml"
+tempchk="${TEMP_DIR}/${name}.chk"
+tempout="${TEMP_DIR}/${name}.xml"
 
 [[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" "" 1
 
 
+xslt_params="--path ${DTD_DIR}"
+xslt_params="${xslt_params} --stringparam config-file ${FULL_PROJECT_FILE}"
 
-xslt_params="--stringparam schemainfo ${tempsi}"
-xslt_params="${xslt_params} --path ${DTD_DIR}"
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${DIA_2_STR_DAT} ${inputfile} ${tempsd}"
-xsltproc ${xslt_params} "${DIA_2_STR_DAT}" "${inputfile}" > "${tempsd}"
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${DIA_2_TMP} ${inputfile} ${tempxml}"
+xsltproc ${xslt_params} "${DIA_2_TMP}" "${inputfile}" > "${tempxml}"
 ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in script " "${DIA_2_STR_DAT}" ${ret}
+[[ "${ret}" != "0" ]] && error_exit "error in script ${DIA_2_TMP}" "" "${ret}"
+#cat "${tempxml}"
 
-
-CHECK_AWK="${LIB_DIR}/check_rules.awk"
-
-
-
-[[ -n "${verbose}" ]] && echo "awk -F'#' -f ${DAT_2_SRT} ${tempsd} ${tempss}"
-awk -F'#' -f "${DAT_2_SRT}" "${tempsd}" >"${tempss}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in script " "${DAT_2_SRT}" ${ret}
-
-basename="$(grep '^projekt#' "${tempss}" | cut -d'#' -f2 | tr '[:upper:]' '[:lower:]')"
-gen="$(grep '^version#' "${tempss}" | cut -d'#' -f2)"
-
-xslt_params="--stringparam basename ${basename}"
-xslt_params="${xslt_params} --stringparam projectfile ${FULL_PROJECT_FILE}"
-xslt_params="${xslt_params} --path ${DTD_DIR}"
-
-
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${PROJECT_XML_2_DAT} ${PROJECT_FILE} ${temppd}"
-xsltproc ${xslt_params} "${PROJECT_XML_2_DAT}" "${PROJECT_FILE}" >"${temppd}"
-
-valid_cols="$(cat "${temppd}" | grep '^columnconf' | cut -d'#' -f2 | tr '\n' ':')"
-valid_from="${valid_cols%%:*}"
-valid_to="${valid_cols#*:}"
-valid_to="${valid_to/:/}"
 
 if [[ -n "${check}" ]] ; then
-    awk_params="-v valid_from=${valid_from} -v valid_to=${valid_to}"
-    [[ -n "${verbose}" ]] && awk_params="${awk_params} -v verbose=${verbose}"
-    [[ -n "${verbose}" ]] && echo "awk -F'#' -f ${CHECK_AWK} ${awk_params} ${tempsd}" 
-    awk -F'#' -f "${CHECK_AWK}" ${awk_params} "${tempsd}" 
+    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempchk} ${CHECK_TMP} ${tempxml}"
+    xsltproc ${xslt_params} --output "${tempchk}" "${CHECK_TMP}" "${tempxml}"
     ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in script ${CHECK_AWK}" "" 1
+    [[ "${ret}" != "0" ]] && error_exit "error in script ${CHECK_TMP}" "" "${ret}"
+    [[ -n "${verbose}" ]] && cat "${tempchk}"
 fi
 
 
 
-
-[[ -n "${verbose}" ]] && echo "awk -F'#' -f ${DAT_2_XML} ${temppd} ${tempss} ${tempout}"
-awk -F'#' -f "${DAT_2_XML}" "${temppd}" "${tempss}" >"${tempout}"
-
-[[ -n "${verbose}" ]] && echo "${BIN_DIR}/create_config.sh ${verb_opt} -i ${tempout} -p ${projectfile} -o ${tempprj}"
-${BIN_DIR}/create_config.sh ${verb_opt} -i "${tempout}" -p "${projectfile}" -o "${tempprj}" 
+xslt_params="${xslt_params} --stringparam sort-file ${tempsrt}"
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempqt} ${TMP_2_XML} ${tempxml}"
+xsltproc ${xslt_params} --output "${tempqt}" "${TMP_2_XML}" "${tempxml}"
 ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
+#[[ "${ret}" == "0" ]] && cat "${tempqt}"
 
-if [[ -n "${check}" ]] ; then
+cat "${tempqt}" | tr '"' "'" > "${tempout}"
 
-    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verb_opt} -i ${tempout} -o ${tempchk} -p ${tempprj}" 
-    ${BIN_DIR}/check_rules.sh ${verb_opt} -i "${tempout}" -o "${tempchk}" -p "${tempprj}" 
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in script check_rules.sh" "" 1
-fi
-
-xslt_params="--stringparam configfile ${tempprj}"
-xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
 if [[ -n "${auto}" ]] ; then
-    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_XML} ${tempout} ${tempqt}"
-    xsltproc ${xslt_params} "${XML_2_XML}" "${tempout}" > "${tempqt}"
+    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempqt}" ${XML_2_XML} ${tempout} 
+    xsltproc ${xslt_params} --output "${tempqt}" "${XML_2_XML}" "${tempout}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${XML_2_XML}" "" "${ret}"
 
     [[ -n "${verbose}" ]] && echo "cat ${tempqt} ${outputfile}"
     cat "${tempqt}" | tr '"' "'"  > "${outputfile}"
     done="1"
-    if [[ -n "${check}" ]] ; then
-        [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verb_opt} -a -i ${outputfile} -o ${tempchk} -p ${tempprj}" 
-        "${BIN_DIR}/check_rules.sh" ${verb_opt} -a -i "${outputfile}" -o "${tempchk}" -p "${tempprj}" 
-        ret="$?"
-        [[ "${ret}" != "0" ]] && error_exit "error in script check_rules.sh" "" 1
-    fi
 else
     [[ -n "${verbose}" ]] && echo "cp ${tempout} ${outputfile}"
     cp "${tempout}" "${outputfile}" 
 fi
 
 if [[ -z "${keep}" ]] ; then
-    for file in "${tempsd}" "${tempss}" "${temppd}" "${tempchk}" "${tempout}" \
-                "${tempinfo}" "${tempqt}" "${tempprj}" "${tempchk}" \
-                "${templld}" "${tempsi}"; do
+    for file in "${tempxml}" "${tempqt}" "${tempchk}" "${tempout}" "${tempsrt}" ; do
         if [[ -f "${file}" ]] ; then
             [[ -n "${verbose}" ]] && echo "rm ${file}"
             rm "${file}"

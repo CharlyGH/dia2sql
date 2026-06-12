@@ -37,13 +37,9 @@
 
   <xsl:variable name="space-size" select="string-length($space)" />
 
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
-
   <xsl:variable name="shape-plain">
     <xsl:text>shape = "plain"</xsl:text>
- </xsl:variable>
+  </xsl:variable>
 
   <xsl:variable name="table-header">
     <xsl:text>label=&lt;&lt;table border="1" cellborder="0" cellspacing="2" cellpadding="2"&gt;</xsl:text>

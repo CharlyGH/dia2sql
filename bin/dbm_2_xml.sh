@@ -68,10 +68,10 @@ done
 [[ ! -r "${inputfile}" ]] && error_exit "cannot open input file ${inputfile}" ""  1
 
 
+DBM_2_DAT="${LIB_DIR}/dbm_2_dat.xslt"
 DBM_2_XML="${LIB_DIR}/dbm_2_xml.xslt"
 PROJECT_XML_2_DAT="${LIB_DIR}/project_dat.xslt"
 XML_2_XML="${LIB_DIR}/xml_2_xml.xslt"
-XSLT_CONFIG="${LIB_DIR}/create_config.xslt"
 
 name="${inputfile%.*}"
 name="${name##*/}"
@@ -82,45 +82,42 @@ tempprj="${FULL_DATA_DIR}/${name}.prj.xml"
 tempout="${TEMP_DIR}/${name}.out.xml"
 tempqt="${TEMP_DIR}/${name}.qt.xml"
 temppd="${TEMP_DIR}/${name}.prj.dat"
-
+tempchk="${TEMP_DIR}/${name}.chk.dat"
 
 [[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" "" 1
 
-project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "dbmodel/database/@name")"
+info=$(xsltproc ${xslt_params} "${DBM_2_DAT}" "${inputfile}" )
+ret="$?"
+[[ "${ret}" != "0" ]] && error_exit "error in script " "${DIA_2_TMP}" ${ret}
+project="${info%:*}"
+version="${info#*:}"
 
 xslt_params="--stringparam project ${project}"
-xslt_params="${xslt_params} --stringparam basename ${project}"
-xslt_params="${xslt_params} --stringparam projectfile ${projectfile}"
+xslt_params="${xslt_params} --stringparam config-file ${FULL_PROJECT_FILE}"
 xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
-#[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${PROJECT_XML_2_DAT} ${PROJECT_FILE} ${temppd}"
-#xsltproc ${xslt_params} "${PROJECT_XML_2_DAT}" "${PROJECT_FILE}" >"${temppd}"
-
-#[[ -n "${verbose}" ]] && echo "${BIN_DIR}/create_config.sh ${verb_opt} -i ${tempout} -p ${projectfile} -o ${tempprj}"
-#${BIN_DIR}/create_config.sh ${verb_opt} -i "${tempout}" -p "${projectfile}" -o "${tempprj}" 
-#ret="$?"
-#[[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
-
-
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XSLT_CONFIG} ${projectfile} ${tempprj}"
-xsltproc ${xslt_params} "${XSLT_CONFIG}" "${projectfile}" >"${tempprj}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in script ${XSLT_CONFIG}" "" 1
-
-xslt_params="${xslt_params} --stringparam configfile ${tempprj}"
-
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${DBM_2_XML} ${inputfile} ${tempout}"
-xsltproc ${xslt_params} "${DBM_2_XML}" "${inputfile}" > "${tempout}"
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${DBM_2_XML} ${inputfile} ${tempqt}"
+xsltproc ${xslt_params} "${DBM_2_XML}" "${inputfile}" > "${tempqt}"
 ret="$?"
 [[ "${ret}" != "0" ]] && error_exit "error in script " "${DBM_2_XML}" ${ret}
 
-
-cat "${tempout}" | tr '"' "'"  > "${tempqt}"
+[[ -n "${verbose}" ]] && echo "tr ${tempqt} ${tempout}"
+cat "${tempqt}" | tr '"' "'"  > "${tempout}"
 
 
 xslt_params="--stringparam configfile ${tempprj}"
 xslt_params="${xslt_params} --path ${DTD_DIR}"
+
+
+if [[ -n "${auto}" ]] ; then
+    dim_count="$(cat "${tempout}" | grep '<table ' | grep 'schema="dim' | wc -l)"
+    hist_count="$(cat "${tempout}" | grep '<table ' | grep 'schema="dim' | wc -l)"
+    [[ "${dim_count}" == "0" ]] && echo "no tables in dim schema, ignoring -a option" && auto=""
+    [[ "${dim_count}" != "0" && "${hist_count}" == "0" ]] && echo "adding tables in hist schema"
+    [[ "${dim_count}" == "${hist_count}" ]] && echo "tables in hist schema already exist, ignoring -a option" && auto=""
+    [[ "${dim_count}" != "${hist_count}" ]] && echo "different number of tables in dim and hist schema, aborting" && exit 0
+fi
 
 
 if [[ -n "${auto}" ]] ; then

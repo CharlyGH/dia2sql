@@ -13,20 +13,38 @@
 
   <xsl:param name="newfile"/>
 
-  <xsl:param name="configfile"/>
-
   <xsl:param name="filetype"/>
 
-  <xsl:variable name="config" select="document($configfile)/config"/>
+  <xsl:include href="functions.xslt"/>
 
-  <xsl:variable name="base-schema"  select="exslt:node-set($config)/schemaconf[@name = 'base']/@value"/>
-  <xsl:variable name="const-schema" select="exslt:node-set($config)/schemaconf[@name = 'const']/@value"/>
-  <xsl:variable name="dim-schema"   select="exslt:node-set($config)/schemaconf[@name = 'dim']/@value"/>
-  <xsl:variable name="fact-schema"  select="exslt:node-set($config)/schemaconf[@name = 'fact']/@value"/>
-  <xsl:variable name="hist-schema"  select="exslt:node-set($config)/schemaconf[@name = 'hist']/@value"/>
+  <xsl:variable name="project">
+    <xsl:choose>
+      <xsl:when test="$filetype = 'model'">
+        <xsl:value-of select="fcn:to-lower-case(/model/@project)"/>
+      </xsl:when>
+      <xsl:when test="$filetype = 'delta'">
+        <xsl:value-of select="fcn:to-lower-case(document($newfile)/model/@project)"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:message terminate="yes">
+          <xsl:value-of select="concat('undefined file type ',$filetype,$nl)"/>
+        </xsl:message>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
 
-  <xsl:variable name="valid-from"  select="exslt:node-set($config)/columnconf[@name = 'valid-from']/@value"/>
-  <xsl:variable name="valid-to"    select="exslt:node-set($config)/columnconf[@name = 'valid-to']/@value"/>
+  <xsl:include href="configuration.xslt"/>
+  
+
+
+  <xsl:variable name="base-schema"  select="fcn:get-config-value('base')"/>
+  <xsl:variable name="const-schema" select="fcn:get-config-value('const')"/>
+  <xsl:variable name="dim-schema"   select="fcn:get-config-value('dim')"/>
+  <xsl:variable name="fact-schema"  select="fcn:get-config-value('fact')"/>
+  <xsl:variable name="hist-schema"  select="fcn:get-config-value('hist')"/>
+
+  <xsl:variable name="valid-from"  select="fcn:get-config-value('valid-from')"/>
+  <xsl:variable name="valid-to"    select="fcn:get-config-value('valid-to')"/>
 
 
   
@@ -45,15 +63,8 @@
   
   <xsl:variable name="space-size" select="string-length($space)" />
 
-
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
-
   <xsl:param name="auto"/>
   
-  <xsl:include href="functions.xslt"/>
-
   
   <fcn:function name="fcn:format-column" >
     <xsl:param name="name" />
@@ -354,7 +365,35 @@
       <xsl:with-param name="schema" select="$schema" />
       <xsl:with-param name="table" select="$table" />
     </xsl:apply-templates>
+    <xsl:apply-templates select="columns/column[@action = 'create']" mode="update">
+      <xsl:with-param name="schema" select="$schema" />
+      <xsl:with-param name="table"  select="$table" />
+    </xsl:apply-templates>
     <xsl:value-of select="concat($nl,$nl)" />
+  </xsl:template>
+
+  
+  <xsl:template match="column" mode="update">
+    <xsl:param name="schema"/>
+    <xsl:param name="table"/>
+    <xsl:variable name="column" select="@name"/>
+    <xsl:apply-templates select="//reference/source[@schema = $schema and
+                                 @table = $table]/../foreign/key[text() = $column]/../.."
+                         mode="update"/>
+  </xsl:template>
+
+  
+  <xsl:template match="reference" mode="update">
+    <xsl:variable name="schema"     select="source/@schema"/>
+    <xsl:variable name="table"      select="source/@table"/>
+    <xsl:variable name="column"     select="foreign/key/text()"/>
+    <xsl:variable name="ref-schema" select="target/@schema"/>
+    <xsl:variable name="ref-table"  select="target/@table"/>
+    <xsl:variable name="tab"        select="substring($space,1,string-length($column))"/>    
+    <xsl:value-of select="concat('update ',$schema,'.',$table,$nl)"/>
+    <xsl:value-of select="concat('   set ',$column,' = (select min(r.',$column,')',$nl)"/>
+    <xsl:value-of select="concat('       ',$tab,   '      from ',$ref-schema,'.',$ref-table,' r)',$nl)"/>
+    <xsl:value-of select="concat(' where 1 = 1;',$nl,$nl)"/>
   </xsl:template>
 
   

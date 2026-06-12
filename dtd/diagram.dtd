@@ -1,0 +1,63 @@
+<!ENTITY % BOOLEAN    "true|false">
+
+<!ELEMENT  diagram     (metadata?,domains?,sequences?,tables?,references?)>
+<!ATTLIST  diagram     name        NMTOKEN       #REQUIRED>
+
+<!ELEMENT  metadata    (metaitem+)>
+
+<!ELEMENT  metaitem    (metadetail+)>
+<!ATTLIST  metaitem     name        NMTOKEN       #REQUIRED
+                        type        NMTOKEN       #REQUIRED>
+
+<!ELEMENT  metadetail   EMPTY>
+<!ATTLIST  metadetail   name        NMTOKEN       #REQUIRED>
+
+<!ELEMENT  domains     (domain+)>
+
+<!ELEMENT  domain      (default?,comment?)>
+<!ATTLIST  domain       name        NMTOKEN       #REQUIRED
+                        type        CDATA         #REQUIRED
+                        nullable   (%BOOLEAN;)    #REQUIRED>
+
+<!ELEMENT  default     (#PCDATA)>
+
+<!ELEMENT  comment     (#PCDATA)>
+
+<!ELEMENT  sequences   (sequence+)>
+
+<!ELEMENT  sequence     EMPTY>
+<!ATTLIST  sequence     schema      NMTOKEN       #REQUIRED
+                        table       NMTOKEN       #REQUIRED>
+
+<!ELEMENT  tables      (table+)>
+
+<!ELEMENT  table       (columns,unique?,primary,comment?)>
+<!ATTLIST  table        id          NMTOKEN       #REQUIRED
+                        name        NMTOKEN       #REQUIRED>
+
+<!ELEMENT  columns      (column+)>
+
+<!ELEMENT  column       (default?,comment?)>
+<!ATTLIST  column        name       NMTOKEN       #REQUIRED
+                         type       CDATA         #REQUIRED
+                         nullable  (%BOOLEAN;)    #REQUIRED>
+
+<!ELEMENT  unique       (key+)>
+
+<!ELEMENT  primary      (key+)>
+
+<!ELEMENT  key           EMPTY>
+<!ATTLIST  key           name       NMTOKEN       #REQUIRED>
+
+<!ELEMENT  references   (reference+)>
+
+<!ELEMENT  reference    (from,to)>
+
+<!ELEMENT  from          EMPTY>
+<!ATTLIST  from          id         NMTOKEN       #REQUIRED
+                         mult       CDATA         #REQUIRED>
+
+<!ELEMENT  to            EMPTY>
+<!ATTLIST  to            id         NMTOKEN       #REQUIRED
+                         mult       CDATA         #REQUIRED>
+

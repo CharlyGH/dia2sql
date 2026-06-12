@@ -13,10 +13,6 @@
 
   <xsl:param name="basename"/>
 
-   <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
- 
   <xsl:include href="functions.xslt"/>
 
 

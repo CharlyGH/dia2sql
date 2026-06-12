@@ -15,16 +15,13 @@
               doctype-system="delta.dtd"
               />
 
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
 
   <xsl:include href="functions.xslt"/>
 
-  <xsl:param name="oldfile"/>
+  <xsl:param name="old-file"/>
   
-  <xsl:param name="newfile"/>
-  
+  <xsl:param name="new-file"/>
+
 
   <fcn:function name="fcn:get-action">
     <xsl:param name="old-text"/>
@@ -61,13 +58,74 @@
       </xsl:choose>
     </fcn:result>
   </fcn:function>
+
+
+  <fcn:function name="fcn:create-file-name">
+    <xsl:param name="project"/>
+    <xsl:param name="version"/>
+    <xsl:variable name="version-strg" select="fcn:if-then-else($version,'&lt;',10,concat('0',$version),$version)"/>
+    <fcn:result>
+      <xsl:value-of select="concat($project,'_v',$version-strg,'.xml')"/>
+    </fcn:result>
+  </fcn:function>
+
+
+  <fcn:function name="fcn:get-file-name">
+    <xsl:param name="path"/>
+    <fcn:result>
+      <xsl:choose>
+        <xsl:when test="contains($path,'/')">
+          <xsl:value-of select="fcn:get-file-name(substring-after($path,'/'))"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$path"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </fcn:result>
+  </fcn:function>
+
+
+  
+
+  <xsl:template name="check-names">
+    <xsl:param name="old-project"/>
+    <xsl:param name="new-project"/>
+    <xsl:param name="old-version"/>
+    <xsl:param name="new-version"/>
+
+    <xsl:variable name="old-c-name" select="fcn:create-file-name($old-project,$old-version)"/>
+    <xsl:variable name="new-c-name" select="fcn:create-file-name($new-project,$new-version)"/>
+    <xsl:variable name="old-g-name" select="fcn:get-file-name($old-file)"/>
+    <xsl:variable name="new-g-name" select="fcn:get-file-name($new-file)"/>
+    
+    <xsl:if test="$old-c-name != $old-g-name">
+      <xsl:message terminate="yes">
+        <xsl:value-of select="concat('invalid old file name: [',$old-c-name,']!=[',$old-g-name,']',$nl)"/>
+      </xsl:message>
+    </xsl:if>
+    <xsl:if test="$new-c-name != $new-g-name">
+      <xsl:message terminate="yes">
+        <xsl:value-of select="concat('invalid new file name: [',$new-c-name,']!=[',$new-g-name,']',$nl)"/>
+      </xsl:message>
+    </xsl:if>
+  </xsl:template>
   
 
   <xsl:template match="delta">
-    <xsl:variable name="old-project" select="document($oldfile)/model/@project"/>
-    <xsl:variable name="new-project" select="document($newfile)/model/@project"/>
-    <xsl:variable name="old-version" select="document($oldfile)/model/@version"/>
-    <xsl:variable name="new-version" select="document($newfile)/model/@version"/>
+    <xsl:variable name="old-model" select="document($old-file)"/>
+    <xsl:variable name="new-model" select="document($new-file)"/>
+    <xsl:variable name="old-project" select="exslt:node-set($old-model)/model/@project"/>
+    <xsl:variable name="new-project" select="exslt:node-set($new-model)/model/@project"/>
+    <xsl:variable name="old-version" select="exslt:node-set($old-model)/model/@version"/>
+    <xsl:variable name="new-version" select="exslt:node-set($new-model)/model/@version"/>
+    
+    <xsl:call-template name="check-names">
+      <xsl:with-param name="old-project" select="$old-project"/>
+      <xsl:with-param name="new-project" select="$new-project"/>
+      <xsl:with-param name="old-version" select="$old-version"/>
+      <xsl:with-param name="new-version" select="$new-version"/>
+    </xsl:call-template>
+      
 
     <xsl:if test="$old-project != $new-project">
       <xsl:message terminate="yes">
@@ -92,92 +150,92 @@
       </xsl:attribute>
 
       <xsl:variable name="old-tablespaces">
-        <xsl:apply-templates select="document($oldfile)//tablespace" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//tablespace" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-tablespaces">
-        <xsl:apply-templates select="document($newfile)//tablespace" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//tablespace" mode="astext"/>
       </xsl:variable>
 
       <xsl:if test="$old-tablespaces != $new-tablespaces">
         <xsl:element name="tablespaces">
-          <xsl:apply-templates select="document($newfile)//tablespace" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//tablespace" mode="asxml"/>
         </xsl:element>
       </xsl:if>
     
       <xsl:variable name="old-schemas">
-        <xsl:apply-templates select="document($oldfile)//schema" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//schema" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-schemas">
-        <xsl:apply-templates select="document($newfile)//schema" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//schema" mode="astext"/>
       </xsl:variable>
       <xsl:if test="$old-schemas != $new-schemas">
         <xsl:element name="schemas">
-          <xsl:apply-templates select="document($newfile)//schema" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//schema" mode="asxml"/>
         </xsl:element>
       </xsl:if>
     
       <xsl:variable name="old-domains">
-        <xsl:apply-templates select="document($oldfile)//domain" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//domain" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-domains">
-        <xsl:apply-templates select="document($newfile)//domain" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//domain" mode="astext"/>
       </xsl:variable>
       <xsl:if test="$old-domains != $new-domains">
         <xsl:element name="domains">
-          <xsl:apply-templates select="document($newfile)//domain" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//domain" mode="asxml"/>
         </xsl:element>
       </xsl:if>
     
       <xsl:variable name="old-sequences">
-        <xsl:apply-templates select="document($oldfile)//sequence" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//sequence" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-sequences">
-        <xsl:apply-templates select="document($newfile)//sequence" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//sequence" mode="astext"/>
       </xsl:variable>
       <xsl:if test="$old-sequences != $new-sequences">
         <xsl:element name="sequences">
-          <xsl:apply-templates select="document($newfile)//sequence" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//sequence" mode="asxml"/>
         </xsl:element>
       </xsl:if>
     
       <xsl:variable name="old-tables">
-        <xsl:apply-templates select="document($oldfile)//table" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//table" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-tables">
-        <xsl:apply-templates select="document($newfile)//table" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//table" mode="astext"/>
       </xsl:variable>
       <xsl:if test="$old-tables != $new-tables">
         <xsl:element name="tables">
-          <xsl:apply-templates select="document($newfile)//table" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//table" mode="asxml"/>
         </xsl:element>
       </xsl:if>
 
       <xsl:variable name="old-references">
-        <xsl:apply-templates select="document($oldfile)//reference" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//reference" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-references">
-        <xsl:apply-templates select="document($newfile)//reference" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//reference" mode="astext"/>
       </xsl:variable>
       <xsl:if test="$old-references != $new-references">
         <xsl:element name="references">
-          <xsl:apply-templates select="document($newfile)//reference" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//reference" mode="asxml"/>
         </xsl:element>
       </xsl:if>
 
       <xsl:variable name="old-functions">
-        <xsl:apply-templates select="document($oldfile)//function" mode="astext"/>
+        <xsl:apply-templates select="document($old-file)//function" mode="astext"/>
       </xsl:variable>
       <xsl:variable name="new-functions">
-        <xsl:apply-templates select="document($newfile)//function" mode="astext"/>
+        <xsl:apply-templates select="document($new-file)//function" mode="astext"/>
       </xsl:variable>
       <xsl:if test="$old-functions != $new-functions">
         <xsl:element name="functions">
-          <xsl:apply-templates select="document($newfile)//function" mode="asxml"/>
+          <xsl:apply-templates select="document($new-file)//function" mode="asxml"/>
         </xsl:element>
       </xsl:if>
 
       <xsl:element name="informations">
-        <xsl:apply-templates select="document($newfile)/model" mode="comment"/>
+        <xsl:apply-templates select="document($new-file)/model" mode="comment"/>
       </xsl:element>
 
       <xsl:call-template name="metadata"/>
@@ -187,9 +245,9 @@
 
 
   <xsl:template name="metadata">
-    <xsl:variable name="schema"  select="document($newfile)//metadata/table/@schema"/>
-    <xsl:variable name="table"   select="document($newfile)//metadata/table/@name"/>
-    <xsl:variable name="version" select="document($newfile)//metadata/insert/version/text()"/>
+    <xsl:variable name="schema"  select="document($new-file)//metadata/table/@schema"/>
+    <xsl:variable name="table"   select="document($new-file)//metadata/table/@name"/>
+    <xsl:variable name="version" select="document($new-file)//metadata/insert/version/text()"/>
 
     <xsl:element name="metadata">
       <xsl:element name="update">
@@ -211,12 +269,12 @@
   <xsl:template match="tablespace" mode="asxml">
     <xsl:variable name="tablespace" select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//tablespace[@name = $tablespace])"/>
+                  select="count(document($old-file)//tablespace[@name = $tablespace])"/>
     <xsl:variable name="old-tablespace">
-      <xsl:apply-templates select="document($oldfile)//tablespace[@name = $tablespace]" mode="astext"/>
+      <xsl:apply-templates select="document($old-file)//tablespace[@name = $tablespace]" mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-tablespace">
-      <xsl:apply-templates select="document($newfile)//tablespace[@name = $tablespace]" mode="astext"/>
+      <xsl:apply-templates select="document($new-file)//tablespace[@name = $tablespace]" mode="astext"/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -234,7 +292,7 @@
   <xsl:template match="schema" mode="asxml">
     <xsl:variable name="schema" select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//schema[@name = $schema])"/>
+                  select="count(document($old-file)//schema[@name = $schema])"/>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
         <xsl:copy-of select="."/>
@@ -246,12 +304,12 @@
   <xsl:template match="domain" mode="asxml">
     <xsl:variable name="domain" select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//domain[@name = $domain])"/>
+                  select="count(document($old-file)//domain[@name = $domain])"/>
     <xsl:variable name="old-domain">
-      <xsl:apply-templates select="document($oldfile)//domain[@name = $domain]" mode="astext"/>
+      <xsl:apply-templates select="document($old-file)//domain[@name = $domain]" mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-domain">
-      <xsl:apply-templates select="document($newfile)//domain[@name = $domain]" mode="astext"/>
+      <xsl:apply-templates select="document($new-file)//domain[@name = $domain]" mode="astext"/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -275,23 +333,23 @@
             <xsl:value-of select="'alter'"/>
           </xsl:attribute>
           <xsl:variable name="new-size"
-                        select="document($newfile)//domain[@name = $domain]/size/text()"/>
+                        select="document($new-file)//domain[@name = $domain]/size/text()"/>
           <xsl:if test="string-length($new-size) != 0">
             <xsl:element name="size">
               <xsl:value-of select="$new-size"/>
             </xsl:element>
           </xsl:if>
           <xsl:variable name="new-default"
-                        select="document($newfile)//domain[@name = $domain]/default/text()"/>
+                        select="document($new-file)//domain[@name = $domain]/default/text()"/>
           <xsl:if test="string-length($new-default) != 0">
             <xsl:element name="default">
               <xsl:value-of select="$new-default"/>
             </xsl:element>
           </xsl:if>
           <xsl:variable name="new-constraint"
-                        select="document($newfile)//domain[@name = $domain]/constraint/node()"/>
+                        select="document($new-file)//domain[@name = $domain]/constraint/node()"/>
           <xsl:if test="string-length($new-constraint) != 0">
-            <xsl:copy-of select="document($newfile)//domain[@name = $domain]/constraint"/>
+            <xsl:copy-of select="document($new-file)//domain[@name = $domain]/constraint"/>
           </xsl:if>
         </xsl:element>
       </xsl:when>
@@ -302,12 +360,12 @@
   <xsl:template match="sequence" mode="asxml">
     <xsl:variable name="sequence" select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//sequence[@name = $sequence])"/>
+                  select="count(document($old-file)//sequence[@name = $sequence])"/>
     <xsl:variable name="old-sequence">
-      <xsl:apply-templates select="document($oldfile)//sequence[@name = $sequence]" mode="astext"/>
+      <xsl:apply-templates select="document($old-file)//sequence[@name = $sequence]" mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-sequence">
-      <xsl:apply-templates select="document($newfile)//sequence[@name = $sequence]" mode="astext"/>
+      <xsl:apply-templates select="document($new-file)//sequence[@name = $sequence]" mode="astext"/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -327,7 +385,7 @@
           <xsl:attribute name="action">
             <xsl:value-of select="'alter'"/>
           </xsl:attribute>
-          <xsl:copy-of select="document($newfile)//sequence[@name = $sequence]/config"/>
+          <xsl:copy-of select="document($new-file)//sequence[@name = $sequence]/config"/>
         </xsl:element>
       </xsl:when>
     </xsl:choose>
@@ -338,12 +396,12 @@
     <xsl:variable name="table"  select="@name"/>
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//table[@name = $table and @schema = $schema])"/>
+                  select="count(document($old-file)//table[@name = $table and @schema = $schema])"/>
     <xsl:variable name="old-table">
-      <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]" mode="astext"/>
+      <xsl:apply-templates select="document($old-file)//table[@name = $table and @schema = $schema]" mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-table">
-      <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]" mode="astext"/>
+      <xsl:apply-templates select="document($new-file)//table[@name = $table and @schema = $schema]" mode="astext"/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -368,11 +426,11 @@
           </xsl:attribute>
           <!-- columns -->
           <xsl:variable name="old-columns">
-            <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]//column"
+            <xsl:apply-templates select="document($old-file)//table[@name = $table and @schema = $schema]//column"
                                  mode="astext"/>
           </xsl:variable>
           <xsl:variable name="new-columns">
-            <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]//column"
+            <xsl:apply-templates select="document($new-file)//table[@name = $table and @schema = $schema]//column"
                                  mode="astext"/>
           </xsl:variable>
           <xsl:if test="$old-columns != $new-columns">
@@ -386,32 +444,32 @@
           </xsl:if>
           <!-- unique -->
           <xsl:variable name="old-unique">
-            <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]/unique"
+            <xsl:apply-templates select="document($old-file)//table[@name = $table and @schema = $schema]/unique"
                                  mode="astext"/>
           </xsl:variable>
           <xsl:variable name="new-unique">
-            <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]/unique"
+            <xsl:apply-templates select="document($new-file)//table[@name = $table and @schema = $schema]/unique"
                                  mode="astext"/>
           </xsl:variable>
           <xsl:if test="$old-unique != $new-unique">
-            <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/unique"/>
+            <xsl:copy-of select="document($new-file)//table[@name = $table and @schema = $schema]/unique"/>
           </xsl:if>
 
           <!-- primary -->
           <xsl:variable name="old-primary">
-            <xsl:apply-templates select="document($oldfile)//table[@name = $table and @schema = $schema]/primary"
+            <xsl:apply-templates select="document($old-file)//table[@name = $table and @schema = $schema]/primary"
                                  mode="astext"/>
           </xsl:variable>
           <xsl:variable name="new-primary">
-            <xsl:apply-templates select="document($newfile)//table[@name = $table and @schema = $schema]/primary"
+            <xsl:apply-templates select="document($new-file)//table[@name = $table and @schema = $schema]/primary"
                                  mode="astext"/>
           </xsl:variable>
           <xsl:if test="$old-primary != $new-primary">
-            <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/primary"/>
+            <xsl:copy-of select="document($new-file)//table[@name = $table and @schema = $schema]/primary"/>
           </xsl:if>
 
           <xsl:if test="$old-columns != $new-columns">
-            <xsl:copy-of select="document($newfile)//table[@name = $table and @schema = $schema]/triggers"/>
+            <xsl:copy-of select="document($new-file)//table[@name = $table and @schema = $schema]/triggers"/>
           </xsl:if>
 
         </xsl:element>
@@ -425,29 +483,29 @@
     <xsl:param name="schema"/>
     <xsl:variable name="column"  select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//table[@name = $table
+                  select="count(document($old-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $column])"/>
     <xsl:variable name="old-column">
-      <xsl:apply-templates select="document($oldfile)//table[@name = $table
+      <xsl:apply-templates select="document($old-file)//table[@name = $table
                                    and @schema = $schema]//column[@name = $column]"
                            mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-column">
-      <xsl:apply-templates select="document($newfile)//table[@name = $table
+      <xsl:apply-templates select="document($new-file)//table[@name = $table
                                    and @schema = $schema]//column[@name = $column]"
                            mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-size"
-                  select="document($newfile)//table[@name = $table
+                  select="document($new-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $column]/size/text()"/>
     <xsl:variable name="old-size"
-                  select="document($newfile)//table[@name = $table
+                  select="document($new-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $column]/size/text()"/>
     <xsl:variable name="new-default"
-                  select="document($newfile)//table[@name = $table
+                  select="document($new-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $column]/default/text()"/>
     <xsl:variable name="old-default"
-                  select="document($newfile)//table[@name = $table
+                  select="document($new-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $column]/default/text()"/>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -490,12 +548,12 @@
   <xsl:template match="reference" mode="asxml">
     <xsl:variable name="reference" select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//reference[@name = $reference])"/>
+                  select="count(document($old-file)//reference[@name = $reference])"/>
     <xsl:variable name="old-reference">
-      <xsl:apply-templates select="document($oldfile)//reference[@name = $reference]" mode="astext"/>
+      <xsl:apply-templates select="document($old-file)//reference[@name = $reference]" mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-reference">
-      <xsl:apply-templates select="document($newfile)//reference[@name = $reference]" mode="astext"/>
+      <xsl:apply-templates select="document($new-file)//reference[@name = $reference]" mode="astext"/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -509,9 +567,9 @@
           <xsl:attribute name="action">
             <xsl:value-of select="'alter'"/>
           </xsl:attribute>
-          <xsl:copy-of select="document($newfile)//reference[@name = $reference]/source"/>
-          <xsl:copy-of select="document($newfile)//reference[@name = $reference]/target"/>
-          <xsl:copy-of select="document($newfile)//reference[@name = $reference]/foreign"/>
+          <xsl:copy-of select="document($new-file)//reference[@name = $reference]/source"/>
+          <xsl:copy-of select="document($new-file)//reference[@name = $reference]/target"/>
+          <xsl:copy-of select="document($new-file)//reference[@name = $reference]/foreign"/>
         </xsl:element>
       </xsl:when>
     </xsl:choose>
@@ -523,12 +581,12 @@
   <xsl:template match="function" mode="asxml">
     <xsl:variable name="function" select="@name"/>
     <xsl:variable name="old-count"
-                  select="count(document($oldfile)//function[@name = $function])"/>
+                  select="count(document($old-file)//function[@name = $function])"/>
     <xsl:variable name="old-function">
-      <xsl:apply-templates select="document($oldfile)//function[@name = $function]" mode="astext"/>
+      <xsl:apply-templates select="document($old-file)//function[@name = $function]" mode="astext"/>
     </xsl:variable>
     <xsl:variable name="new-function">
-      <xsl:apply-templates select="document($newfile)//function[@name = $function]" mode="astext"/>
+      <xsl:apply-templates select="document($new-file)//function[@name = $function]" mode="astext"/>
     </xsl:variable>
     <xsl:choose>
       <xsl:when test="$old-count = 0">
@@ -684,11 +742,11 @@
   <xsl:template match="tablespace" mode="comment">
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="old-comment"
-                  select="document($oldfile)//tablespace[@name = $name]/comment/text()"/>
+                  select="document($old-file)//tablespace[@name = $name]/comment/text()"/>
     <xsl:variable name="new-comment"
-                  select="document($newfile)//tablespace[@name = $name]/comment/text()"/>
+                  select="document($new-file)//tablespace[@name = $name]/comment/text()"/>
     <xsl:variable name="old-name"
-                  select="document($oldfile)//tablespace[@name = $name]/@name"/>
+                  select="document($old-file)//tablespace[@name = $name]/@name"/>
     <xsl:if test="fcn:check-comment($new-comment,$old-comment,$old-name) = 'true'">
       <xsl:element name="information">
         <xsl:attribute name="type">
@@ -708,11 +766,11 @@
   <xsl:template match="schema" mode="comment">
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="old-comment"
-                  select="document($oldfile)//schema[@name = $name]/comment/text()"/>
+                  select="document($old-file)//schema[@name = $name]/comment/text()"/>
     <xsl:variable name="new-comment"
-                  select="document($newfile)//schema[@name = $name]/comment/text()"/>
+                  select="document($new-file)//schema[@name = $name]/comment/text()"/>
     <xsl:variable name="old-name"
-                  select="document($oldfile)//schema[@name = $name]/@name"/>
+                  select="document($old-file)//schema[@name = $name]/@name"/>
     <xsl:if test="fcn:check-comment($new-comment,$old-comment,$old-name) = 'true'">
       <xsl:element name="information">
         <xsl:attribute name="type">
@@ -733,11 +791,11 @@
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="old-comment"
-                  select="document($oldfile)//domain[@name = $name]/comment/text()"/>
+                  select="document($old-file)//domain[@name = $name]/comment/text()"/>
     <xsl:variable name="new-comment"
-                  select="document($newfile)//domain[@name = $name]/comment/text()"/>
+                  select="document($new-file)//domain[@name = $name]/comment/text()"/>
     <xsl:variable name="old-name"
-                  select="document($oldfile)//domain[@name = $name]/@name"/>
+                  select="document($old-file)//domain[@name = $name]/@name"/>
     <xsl:if test="fcn:check-comment($new-comment,$old-comment,$old-name) = 'true'">
       <xsl:element name="information">
         <xsl:attribute name="type">
@@ -761,11 +819,11 @@
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="old-comment"
-                  select="document($oldfile)//sequence[@name = $name]/comment/text()"/>
+                  select="document($old-file)//sequence[@name = $name]/comment/text()"/>
     <xsl:variable name="new-comment"
-                  select="document($newfile)//sequence[@name = $name]/comment/text()"/>
+                  select="document($new-file)//sequence[@name = $name]/comment/text()"/>
     <xsl:variable name="old-name"
-                  select="document($oldfile)//sequence[@name = $name]/@name"/>
+                  select="document($old-file)//sequence[@name = $name]/@name"/>
     <xsl:if test="fcn:check-comment($new-comment,$old-comment,$old-name) = 'true'">
       <xsl:element name="information">
         <xsl:attribute name="type">
@@ -789,11 +847,11 @@
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="old-comment"
-                  select="document($oldfile)//table[@name = $name and @schema = $schema]/comment/text()"/>
+                  select="document($old-file)//table[@name = $name and @schema = $schema]/comment/text()"/>
     <xsl:variable name="new-comment"
-                  select="document($newfile)//table[@name = $name and @schema = $schema]/comment/text()"/>
+                  select="document($new-file)//table[@name = $name and @schema = $schema]/comment/text()"/>
     <xsl:variable name="old-name"
-                  select="document($oldfile)//table[@name = $name and @schema = $schema]/@name"/>
+                  select="document($old-file)//table[@name = $name and @schema = $schema]/@name"/>
     <xsl:if test="fcn:check-comment($new-comment,$old-comment,$old-name) = 'true'">
       <xsl:element name="information">
         <xsl:attribute name="type">
@@ -822,13 +880,13 @@
     <xsl:param name="table"/>
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="old-comment"
-                  select="document($oldfile)//table[@name = $table
+                  select="document($old-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $name]/comment/text()"/>
     <xsl:variable name="new-comment"
-                  select="document($newfile)//table[@name = $table
+                  select="document($new-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $name]/comment/text()"/>
     <xsl:variable name="old-name"
-                  select="document($oldfile)//table[@name = $table
+                  select="document($old-file)//table[@name = $table
                           and @schema = $schema]//column[@name = $name]/@name"/>
     <xsl:if test="fcn:check-comment($new-comment,$old-comment,$old-name) = 'true'">
       <xsl:element name="information">

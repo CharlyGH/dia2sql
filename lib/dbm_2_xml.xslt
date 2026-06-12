@@ -15,15 +15,8 @@
               doctype-system="model.dtd"
               />
 
-  <xsl:param name="project"/>
-
-  <xsl:param name="projectfile"/>
 
   <xsl:include href="functions.xslt"/>
-
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
 
 
   <fcn:function name="fcn:bool-id">
@@ -192,28 +185,26 @@
     </fcn:result>
   </fcn:function>
 
-  
-  <xsl:variable name="config" select="document($configfile)/config"/>
+  <xsl:variable name="base-schema"  select="fcn:get-config-value('base')"/>
+  <xsl:variable name="const-schema" select="fcn:get-config-value('const')"/>
+  <xsl:variable name="dim-schema"   select="fcn:get-config-value('dim')"/>
+  <xsl:variable name="fact-schema"  select="fcn:get-config-value('fact')"/>
+  <xsl:variable name="hist-schema"  select="fcn:get-config-value('hist')"/>
 
-  <xsl:variable name="valid-from"  select="exslt:node-set($config)/columnconf[@name = 'valid-from']/@value"/>
-  <xsl:variable name="valid-to"    select="exslt:node-set($config)/columnconf[@name = 'valid-to']/@value"/>
+  <xsl:variable name="valid-from"  select="fcn:get-config-value('valid-from')"/>
+  <xsl:variable name="valid-to"    select="fcn:get-config-value('valid-to')"/>
 
   <xsl:variable name="auto-column-list"
                 select="concat('#',$valid-from,'#',$valid-to,'#')"/>
   
-  <xsl:variable name="base-schema"  select="exslt:node-set($config)/schemaconf[@name = 'base']/@value"/>
-  <xsl:variable name="const-schema" select="exslt:node-set($config)/schemaconf[@name = 'const']/@value"/>
-  <xsl:variable name="dim-schema"   select="exslt:node-set($config)/schemaconf[@name = 'dim']/@value"/>
-  <xsl:variable name="fact-schema"  select="exslt:node-set($config)/schemaconf[@name = 'fact']/@value"/>
-  <xsl:variable name="hist-schema"  select="exslt:node-set($config)/schemaconf[@name = 'hist']/@value"/>
-
-  <xsl:variable name="sequ-type"    select="exslt:node-set($config)/sequenceconf[@name = 'id-type']/@value"/>
+  <xsl:variable name="sequ-type"   select="fcn:get-config-value('id-type')"/>
 
   <xsl:variable name="schemas"
                 select="concat('#',$base-schema,'#',$const-schema,'#',$dim-schema,'#',$fact-schema,'#',$hist-schema,'#')"/>
   
   <xsl:variable name="standard-types"
                 select="'#double precision#integer#date#text#'"/>
+
   
   <xsl:template match="dbmodel">
     <xsl:variable name="project" select="database/@name"/>
@@ -275,12 +266,15 @@
 
   <xsl:template match="schema">
     <xsl:variable name="schema" select="@name"/>
+    <xsl:variable name="key"   select="concat(substring-before($schema,'_'),'_{}')"/>
+    <xsl:variable name="info"  select="fcn:get-config-info('',$key)"/>
+    <xsl:variable name="auto"  select="fcn:if-then-else($info,'=','writable','NO','YES')"/>
     <xsl:element name="schema">
       <xsl:attribute name="name">
         <xsl:value-of select="$schema"/>
       </xsl:attribute>
       <xsl:attribute name="auto">
-        <xsl:value-of select="exslt:node-set($config)/schemaconf[@value = $schema]/@auto"/>
+        <xsl:value-of select="$auto"/>
       </xsl:attribute>
       <xsl:attribute name="action">
         <xsl:value-of select="'create'"/>
@@ -292,7 +286,7 @@
 
   <xsl:template match="comment">
     <xsl:element name="comment">
-      <xsl:value-of select="text()"/>
+      <xsl:value-of select="fcn:strip(text())"/>
     </xsl:element>
   </xsl:template>
 
@@ -372,7 +366,11 @@
   <xsl:template match="table">
     <xsl:variable name="schema" select="schema/@name"/>
     <xsl:variable name="name"   select="@name"/>
-    <xsl:variable name="is-auto"  select="exslt:node-set($config)/schemaconf[@value = $schema]/@auto"/>
+
+    <xsl:variable name="key"   select="concat(substring-before($schema,'_'),'_{}')"/>
+    <xsl:variable name="info"  select="fcn:get-config-info('',$key)"/>
+    <xsl:variable name="is-auto"  select="fcn:if-then-else($info,'=','writable','NO','YES')"/>
+
     <xsl:variable name="is-hist"  select="$schema = $hist-schema"/>
     <xsl:variable name="is-dim"   select="fcn:if-then-else($schema,'=',$dim-schema,'true','false')"/>
     <xsl:element name="table">

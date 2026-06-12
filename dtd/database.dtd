@@ -1,0 +1,180 @@
+<!ENTITY % BOOL          "YES|NO">
+
+<!ELEMENT database (tablespaces?,schemas?,domains?,sequences?,tables?,columns?,
+                    uniques?,unique-columns?,primaries?,primary-columns?,
+                    triggers?,foreigns?,foreign-columns?,functions?,function-defs?,metadata?)>
+
+<!ELEMENT tablespaces      (tablespace+)>
+
+<!ELEMENT tablespace        (tablespace-location)>
+<!ATTLIST tablespace        tablespace-name    NMTOKEN     #REQUIRED>
+
+
+<!ELEMENT tablespace-location         (#PCDATA)>
+
+<!ELEMENT schemas          (schema+)>
+
+<!ELEMENT schema           (schema-comment?)>
+<!ATTLIST schema            schema-name        NMTOKEN     #REQUIRED>
+
+
+<!ELEMENT schema-comment   (#PCDATA)>
+
+
+<!ELEMENT domains          (domain+)>
+
+<!ELEMENT domain           (default-value?,domain-comment?)>
+<!ATTLIST domain            domain-name        NMTOKEN     #REQUIRED
+                            type-name          CDATA       #REQUIRED
+                            is-nullable        (%BOOL;)     #REQUIRED>
+
+<!ELEMENT default-value    (#PCDATA)>
+
+<!ELEMENT domain-comment   (#PCDATA)>
+
+
+<!ELEMENT sequences        (sequence+)>
+
+<!ELEMENT sequence         (sequence-comment?)>
+<!ATTLIST sequence          sequence-name      NMTOKEN     #REQUIRED
+                            sequence-type      NMTOKEN     #REQUIRED
+                            start-value        CDATA       #REQUIRED
+                            min-value          CDATA       #REQUIRED
+                            max-value          CDATA       #REQUIRED
+                            increment-by       CDATA       #REQUIRED>
+
+<!ELEMENT sequence-comment (#PCDATA)>
+
+<!ELEMENT tables           (table+)>
+
+<!ELEMENT table            (table-comment?)>
+<!ATTLIST table             table-name         NMTOKEN     #REQUIRED
+                            schema-name        NMTOKEN     #REQUIRED
+                            tablespace-name    NMTOKEN     #REQUIRED>
+
+<!ELEMENT table-comment    (#PCDATA)>
+
+<!ELEMENT columns          (column+)>
+
+<!ELEMENT column           (default-value?,column-comment?)>
+<!ATTLIST column            column-name        NMTOKEN     #REQUIRED
+                            schema-name        NMTOKEN     #REQUIRED
+                            table-name         NMTOKEN     #REQUIRED
+                            domain-name        NMTOKEN     #REQUIRED
+                            data-type          CDATA       #REQUIRED
+                            precision          CDATA       #REQUIRED
+                            scale              CDATA       #REQUIRED
+                            is-nullable       (%BOOL;)     #REQUIRED
+                            is-pk             (%BOOL;)     #REQUIRED
+                            position           CDATA       #REQUIRED>
+
+<!ELEMENT column-comment   (#PCDATA)>
+
+<!ELEMENT uniques          (unique+)>
+
+<!ELEMENT unique           (key-column-name-list)>
+<!ATTLIST unique            constraint-name     NMTOKEN     #REQUIRED
+                            schema-name         NMTOKEN     #REQUIRED
+                            table-name          NMTOKEN     #REQUIRED>
+
+<!ELEMENT key-column-name-list      (#PCDATA)>
+
+<!ELEMENT unique-columns    (unique-column+)>
+
+<!ELEMENT unique-column    (#PCDATA)>
+<!ATTLIST unique-column     constraint-name     NMTOKEN     #REQUIRED
+                            schema-name         NMTOKEN     #REQUIRED
+                            table-name          NMTOKEN     #REQUIRED
+                            column-name         NMTOKEN     #REQUIRED
+                            position            CDATA       #REQUIRED>
+
+
+<!ELEMENT primaries        (primary+)>
+
+<!ELEMENT primary          (key-column-name-list)>
+<!ATTLIST primary           constraint-name     NMTOKEN     #REQUIRED
+                            schema-name         NMTOKEN     #REQUIRED
+                            table-name          NMTOKEN     #REQUIRED>
+
+
+<!ELEMENT primary-columns  (primary-column+)>
+
+<!ELEMENT primary-column   (#PCDATA)>
+<!ATTLIST primary-column    constraint-name     NMTOKEN     #REQUIRED
+                            schema-name         NMTOKEN     #REQUIRED
+                            table-name          NMTOKEN     #REQUIRED
+                            column-name         NMTOKEN     #REQUIRED
+                            position            CDATA       #REQUIRED>
+
+
+<!ELEMENT triggers         (trigger+)>
+
+<!ELEMENT trigger          (#PCDATA)>
+<!ATTLIST trigger           trigger-name          NMTOKEN     #REQUIRED
+                            trigger-schema        NMTOKEN     #REQUIRED
+                            event-action          NMTOKEN     #REQUIRED
+                            event-schema          NMTOKEN     #REQUIRED
+                            event-table           NMTOKEN     #REQUIRED
+                            event-order           NMTOKEN     #REQUIRED
+                            action-statement      CDATA       #REQUIRED
+                            action-level          NMTOKEN     #REQUIRED
+                            action-timing         NMTOKEN     #REQUIRED
+                            function-name         NMTOKEN     #REQUIRED
+                            function-schema       NMTOKEN     #REQUIRED>
+
+
+<!ELEMENT foreigns         (foreign+)>
+
+<!ELEMENT foreign          (column-name-list,ref-column-name-list)>
+<!ATTLIST foreign           constraint-name         NMTOKEN     #REQUIRED
+                            schema-name             NMTOKEN     #REQUIRED
+                            table-name              NMTOKEN     #REQUIRED
+                            ref-constraint-name     NMTOKEN     #REQUIRED
+                            ref-schema-name         NMTOKEN     #REQUIRED
+                            ref-table-name          NMTOKEN     #REQUIRED>
+
+
+<!ELEMENT column-name-list  (#PCDATA)>
+
+<!ELEMENT ref-column-name-list  (#PCDATA)>
+
+<!ELEMENT foreign-columns   (foreign-column+)>
+
+<!ELEMENT foreign-column    (#PCDATA)>
+<!ATTLIST foreign-column     constraint-name        NMTOKEN     #REQUIRED
+                             schema-name            NMTOKEN     #REQUIRED
+                             table-name             NMTOKEN     #REQUIRED
+                             column-name            NMTOKEN     #REQUIRED
+                             position               CDATA       #REQUIRED
+                             ref-constraint-name    NMTOKEN     #REQUIRED
+                             ref-schema-name        NMTOKEN     #REQUIRED
+                             ref-table-name         NMTOKEN     #REQUIRED
+                             ref-column-name        NMTOKEN     #REQUIRED
+                             ref-position           CDATA       #REQUIRED>
+
+
+
+<!ELEMENT functions         (function+)>
+ 
+<!ELEMENT function          (argument-types)>
+<!ATTLIST function           function-name         NMTOKEN     #REQUIRED
+                             schema-name           NMTOKEN     #REQUIRED
+                             result-type           NMTOKEN     #REQUIRED
+                             function-type         NMTOKEN     #REQUIRED
+                             volatility            NMTOKEN     #REQUIRED
+                             language              NMTOKEN     #REQUIRED>
+
+<!ELEMENT argument-types    (#PCDATA)>
+
+<!ELEMENT function-defs     (function-def+)>
+
+<!ELEMENT function-def      (function-definition)>
+<!ATTLIST function-def       function-name         NMTOKEN     #REQUIRED
+                             schema-name           NMTOKEN     #REQUIRED>
+
+<!ELEMENT function-definition        (#PCDATA)>
+
+<!ELEMENT metadata          (#PCDATA)>
+<!ATTLIST metadata           project          NMTOKEN     #REQUIRED
+                             version          CDATA       #REQUIRED>
+

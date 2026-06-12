@@ -4,16 +4,25 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:exslt="http://exslt.org/common"
                 xmlns:fcn="http://exslt.org/functions"
+                xmlns:str="http://exslt.org/strings"
                 xmlns:dyn="http://exslt.org/dynamic"
-                extension-element-prefixes="fcn dyn">
+                extension-element-prefixes="fcn dyn str">
 
   
+  <xsl:variable name="k">
+    <xsl:text>,</xsl:text>
+  </xsl:variable>
+
   <xsl:variable name="q">
     <xsl:text>&apos;</xsl:text>
   </xsl:variable>
 
   <xsl:variable name="dq">
     <xsl:text>&quot;</xsl:text>
+  </xsl:variable>
+
+  <xsl:variable name="nl">
+    <xsl:text>&#10;</xsl:text>
   </xsl:variable>
 
 
@@ -169,4 +178,40 @@
   </fcn:function>
 
 
+  <fcn:function name="fcn:strip" >
+    <xsl:param name="arg" />
+    <fcn:result>
+      <xsl:value-of select="substring($arg,2,string-length($arg) - 2)" />
+    </fcn:result>
+  </fcn:function>
+
+
+  <fcn:function name="fcn:find">
+    <xsl:param name="string"/>
+    <xsl:param name="key"/>
+    <xsl:param name="delimiter" select="' '"/>
+    <xsl:variable name="list" select="str:tokenize($string,$delimiter)"/>
+    <xsl:variable name="position">
+      <xsl:for-each select="exslt:node-set($list)">
+        <xsl:if test="$key = text()">
+          <xsl:value-of select="position()"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="result">
+      <xsl:choose>
+        <xsl:when test="string-length($position) = 0">
+          <xsl:value-of select="0"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$position"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <fcn:result>
+      <xsl:value-of select="$result"/>
+    </fcn:result>
+  </fcn:function>
+
+  
 </xsl:stylesheet> 

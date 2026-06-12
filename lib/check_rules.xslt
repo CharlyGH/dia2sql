@@ -39,24 +39,13 @@
 
   <xsl:param name="historisation"/>
   
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
-
   <xsl:variable name="d">
     <xsl:text>:</xsl:text>
-  </xsl:variable>
-
-  <xsl:variable name="k">
-    <xsl:text>,</xsl:text>
   </xsl:variable>
 
   <xsl:variable name="s">
     <xsl:text>.</xsl:text>
   </xsl:variable>
-
-  <xsl:include href="functions.xslt"/>
-
   <fcn:function name="fcn:count-lines">
     <xsl:param name="strg"/>
     <xsl:param name="target" select="$nl"/>
@@ -133,18 +122,29 @@
   </fcn:function>
   
   
-  <xsl:variable name="config" select="document($configfile)/config"/>
+  <xsl:include href="functions.xslt"/>
 
-  <xsl:variable name="base-schema"  select="exslt:node-set($config)/schemaconf[@name = 'base']/@value"/>
-  <xsl:variable name="const-schema" select="exslt:node-set($config)/schemaconf[@name = 'const']/@value"/>
-  <xsl:variable name="dim-schema"   select="exslt:node-set($config)/schemaconf[@name = 'dim']/@value"/>
-  <xsl:variable name="fact-schema"  select="exslt:node-set($config)/schemaconf[@name = 'fact']/@value"/>
-  <xsl:variable name="hist-schema"  select="exslt:node-set($config)/schemaconf[@name = 'hist']/@value"/>
+  <xsl:variable name="project">
+    <xsl:value-of select="fcn:to-lower-case(/model/@project)"/>
+  </xsl:variable>
 
-  <xsl:variable name="valid-from"  select="exslt:node-set($config)/columnconf[@name = 'valid-from']/@value"/>
-  <xsl:variable name="valid-to"    select="exslt:node-set($config)/columnconf[@name = 'valid-to']/@value"/>
+  <xsl:variable name="version">
+    <xsl:value-of select="fcn:to-lower-case(/model/@version)"/>
+  </xsl:variable>
 
+  <xsl:include href="configuration.xslt"/>
   
+
+  <xsl:variable name="base-schema"  select="fcn:get-config-value('base')"/>
+  <xsl:variable name="const-schema" select="fcn:get-config-value('const')"/>
+  <xsl:variable name="dim-schema"   select="fcn:get-config-value('dim')"/>
+  <xsl:variable name="fact-schema"  select="fcn:get-config-value('fact')"/>
+  <xsl:variable name="hist-schema"  select="fcn:get-config-value('hist')"/>
+
+  <xsl:variable name="valid-from"  select="fcn:get-config-value('valid-from')"/>
+  <xsl:variable name="valid-to"    select="fcn:get-config-value('valid-to')"/>
+
+
   <xsl:template match="model">
     <xsl:variable name="errors">
       <xsl:apply-templates select="tables/table"            mode="rule_1_1"/>

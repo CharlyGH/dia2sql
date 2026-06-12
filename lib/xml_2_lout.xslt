@@ -12,10 +12,6 @@
     <xsl:text>    </xsl:text>
   </xsl:variable>
 
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
-
   <xsl:variable name="max-size" select="5" />
 
   <xsl:include href="functions.xslt"/>

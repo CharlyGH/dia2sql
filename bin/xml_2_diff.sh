@@ -1,5 +1,32 @@
 #!/usr/bin/bash
 
+function create_diff_name() {
+
+    local oldname="$1"
+    local newname="$2"
+    local olddir="${oldname%/*}"
+    local newdir="${newname%/*}"
+    [[ "${olddir}" != "${newdir}" ]] && echo "directory name missmatch: ${olddir} != ${newdir}" && return 1
+    oldname="${oldname##*/}"
+    newname="${newname##*/}"
+    local oldprefix="${oldname%_*}"
+    local newprefix="${newname%_*}"
+    [[ "${oldprefix}" != "${newprefix}" ]] && echo "file name prefix missmatch: ${oldprefix} != ${newprefix}" && return 1
+    local oldsuffix="${oldname##*_}"
+    local newsuffix="${newname##*_}"
+    local oldext="${oldsuffix#*.}"
+    local newext="${newsuffix#*.}"
+    [[ "${oldext}" != "${newext}" ]] && echo "file name extension missmatch: ${oldext} != ${newext}" && return 1
+    local oldsuffix="${oldsuffix%.*}"
+    local newsuffix="${newsuffix%.*}"
+    [[ "${oldsuffix}" == "${newsuffix}" ]] && echo "file name suffix match: ${oldsuffix} == ${newsuffix}" && return 1
+    echo "${olddir}/${oldprefix}_${oldsuffix}_${newsuffix}.${oldext}"
+
+    return 0
+}
+
+
+
 
 #set -x
 
@@ -57,19 +84,17 @@ done
 [[ -z "${inputfiles}" ]] && error_exit "missing -i inputfiles option" "${USAGE}" 1
 oldinputfile="${ROOT_DIR}/${inputfiles%,*}"
 newinputfile="${ROOT_DIR}/${inputfiles#*,}"
-[[ "${oldinputfile}" == "${newinputfile}" ]] && error_exit "invalid -i inputfiles option" "${USAGE}" 1
+[[ "${oldinputfile}" == "${newinputfile}" ]] && error_exit "duplicate -i inputfiles option" "${USAGE}" 1
+
+
+outputfile=$(create_diff_name "${oldinputfile}" "${newinputfile}")
+ret="$?"
+
+[[ "${ret}" != "0" ]] && error_exit "error in create_diff_name" "${outputfile}" ${ret}
+
 
 [[ ! -r "${oldinputfile}" ]] && error_exit "cannot read old input file ${oldinputfile}" "" 1
 [[ ! -r "${newinputfile}" ]] && error_exit "cannot read new input file ${newinputfile}" "" 1
-
-
-DIFF_FILE_NAME="${LIB_DIR}/diff_file_name.awk"
-
-if [[ -z "${outputfile}" ]] ; then
-    outputfile="$(echo "${oldinputfile%.*}#${newinputfile%.*}" | awk -F'#' -f "${DIFF_FILE_NAME}" ).xml"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in script ${DIFF_FILE_NAME}" "" 1
-fi
 
 
 XML_2_DIFF="${LIB_DIR}/xml_2_diff.xslt"
@@ -77,13 +102,13 @@ XML_2_DIFF="${LIB_DIR}/xml_2_diff.xslt"
 EMPTY_DELTA="${XML_DIR}/delta.xml"
 
 xslt_params=""
-xslt_params="${xslt_params} --stringparam oldfile ${oldinputfile}"
-xslt_params="${xslt_params} --stringparam newfile ${newinputfile}"
+xslt_params="${xslt_params} --stringparam old-file ${oldinputfile}"
+xslt_params="${xslt_params} --stringparam new-file ${newinputfile}"
 xslt_params="${xslt_params} --path ${DTD_DIR}"
 
 
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_DIFF} ${EMPTY_DELTA} ${outputfile}"
-xsltproc ${xslt_params} "${XML_2_DIFF}" "${EMPTY_DELTA}" > "${outputfile}"
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${outputfile}" ${XML_2_DIFF} ${EMPTY_DELTA} 
+xsltproc ${xslt_params} --output "${outputfile}" "${XML_2_DIFF}" "${EMPTY_DELTA}"
 ret="$?"
 [[ "${ret}" != "0" ]] && echo "error in script ${XML_2_DIFF}" && exit "${ret}"
 

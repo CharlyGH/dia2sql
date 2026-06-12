@@ -12,17 +12,7 @@
 
   <xsl:param name="schemainfo"/>
   
-  <xsl:variable name="nl" select="'&#10;'" />
-
   <xsl:include href="functions.xslt"/>
-
-  
-  <fcn:function name="fcn:strip" >
-    <xsl:param name="arg" />
-    <fcn:result>
-      <xsl:value-of select="substring($arg,2,string-length($arg) - 2)" />
-    </fcn:result>
-  </fcn:function>
 
   
   <fcn:function name="fcn:encode-boolean" >

@@ -1,0 +1,753 @@
+drop schema if exists hist_verein cascade;
+drop schema if exists fakt_verein cascade;
+drop schema if exists dim_verein cascade;
+drop schema if exists const_verein cascade;
+drop schema if exists base_verein cascade;
+
+
+drop tablespace if exists base_verein;
+create tablespace base_verein location '/var/lib/postgresql/18/base_verein';
+
+drop tablespace if exists const_verein;
+create tablespace const_verein location '/var/lib/postgresql/18/const_verein';
+
+drop tablespace if exists dim_verein;
+create tablespace dim_verein location '/var/lib/postgresql/18/dim_verein';
+
+drop tablespace if exists fakt_verein;
+create tablespace fakt_verein location '/var/lib/postgresql/18/fakt_verein';
+
+drop tablespace if exists hist_verein;
+create tablespace hist_verein location '/var/lib/postgresql/18/hist_verein';
+
+
+create schema base_verein;
+comment on schema base_verein is 'Schema für Base-Daten';
+
+create schema const_verein;
+comment on schema const_verein is 'Schema für Const-Daten';
+
+create schema dim_verein;
+comment on schema dim_verein is 'Schema für Dim-Daten';
+
+create schema fakt_verein;
+comment on schema fakt_verein is 'Schema für Fact-Daten';
+
+create schema hist_verein;
+comment on schema hist_verein is 'Schema für Hist-Daten';
+
+
+create domain base_verein.amount_type as double precision default 0.0;
+comment on domain base_verein.amount_type is 'Betragstyp';
+
+create domain base_verein.count_type as integer;
+comment on domain base_verein.count_type is 'Anzahl';
+
+create domain base_verein.date_type as date default '01.01.1900'::date;
+comment on domain base_verein.date_type is 'Datum';
+
+create domain base_verein.id_type as integer default 0 not null;
+comment on domain base_verein.id_type is 'Schlüssel in PK und FK';
+
+create domain base_verein.text_type as text default ''::text;
+comment on domain base_verein.text_type is 'Text beliebiger Länge';
+
+
+create sequence base_verein.seq_adresse_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_adresse_id is 'Sequence für PK der Tabelle Adresse';
+
+create sequence base_verein.seq_ereignis_art_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_ereignis_art_id is 'Sequence für PK der Tabelle Ereignis_Art';
+
+create sequence base_verein.seq_funktion_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_funktion_id is 'Sequence für PK der Tabelle Funktion';
+
+create sequence base_verein.seq_grad_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_grad_id is 'Sequence für PK der Tabelle Guertel_Grad';
+
+create sequence base_verein.seq_mitgliedschaft_art_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_mitgliedschaft_art_id is 'Sequence für PK der Tabelle Mitgliedschaft_Art';
+
+create sequence base_verein.seq_mitgliedschaft_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_mitgliedschaft_id is 'Sequence für PK der Tabelle Mitgliedschaft';
+
+create sequence base_verein.seq_person_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_person_id is 'Sequence für PK der Tabelle Person';
+
+create sequence base_verein.seq_rolle_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_rolle_id is 'Sequence für PK der Tabelle Rolle';
+
+create sequence base_verein.seq_rollen_art_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_rollen_art_id is 'Sequence für PK der Tabelle Rollen_Art';
+
+create sequence base_verein.seq_status_art_id as integer
+                increment by 1   minvalue 1   maxvalue 2147483647   start with 1   no cycle;
+comment on sequence base_verein.seq_status_art_id is 'Sequence für PK der Tabelle Status_Art';
+
+
+create table const_verein.ereignis_art (
+    ereignis_art_id                base_verein.id_type not null,
+    ereignis_bezeichnung           base_verein.text_type not null,
+    constraint                     uk_ereignis_art
+                                   unique  (ereignis_bezeichnung)
+                                   using index tablespace const_verein,
+    constraint                     pk_ereignis_art
+                                   primary key  (ereignis_art_id)
+                                   using index tablespace const_verein
+) tablespace const_verein;
+comment on table const_verein.ereignis_art is 'Art des Ereignisses';
+
+comment on column const_verein.ereignis_art.ereignis_art_id is 'technische Id';
+comment on column const_verein.ereignis_art.ereignis_bezeichnung is 'Art des Ereignisses';
+
+
+
+
+create table const_verein.guertel_grad (
+    grad_id                        base_verein.id_type not null,
+    bezeichnung                    base_verein.text_type not null,
+    constraint                     uk_guertel_grad
+                                   unique  (bezeichnung)
+                                   using index tablespace const_verein,
+    constraint                     pk_guertel_grad
+                                   primary key  (grad_id)
+                                   using index tablespace const_verein
+) tablespace const_verein;
+comment on table const_verein.guertel_grad is 'Grad des Gürtels';
+
+comment on column const_verein.guertel_grad.grad_id is 'technische Id';
+comment on column const_verein.guertel_grad.bezeichnung is 'Grad des Gürtels';
+
+
+
+
+create table const_verein.mitgliedschaft_art (
+    mitgliedschaft_art_id          base_verein.id_type not null,
+    mitgliedschaft_bezeichnung     base_verein.text_type not null,
+    constraint                     uk_mitgliedschaft_art
+                                   unique  (mitgliedschaft_bezeichnung)
+                                   using index tablespace const_verein,
+    constraint                     pk_mitgliedschaft_art
+                                   primary key  (mitgliedschaft_art_id)
+                                   using index tablespace const_verein
+) tablespace const_verein;
+comment on table const_verein.mitgliedschaft_art is 'Art der Mitgliedschaft';
+
+comment on column const_verein.mitgliedschaft_art.mitgliedschaft_art_id is 'technische Id';
+comment on column const_verein.mitgliedschaft_art.mitgliedschaft_bezeichnung is 'Art der Mitgliedschaft';
+
+
+
+
+create table const_verein.rollen_art (
+    rollen_art_id                  base_verein.id_type not null,
+    rollen_bezeichnung             base_verein.text_type not null,
+    constraint                     uk_rollen_art
+                                   unique  (rollen_bezeichnung)
+                                   using index tablespace const_verein,
+    constraint                     pk_rollen_art
+                                   primary key  (rollen_art_id)
+                                   using index tablespace const_verein
+) tablespace const_verein;
+comment on table const_verein.rollen_art is 'Art der Rolle';
+
+comment on column const_verein.rollen_art.rollen_art_id is 'technische Id';
+comment on column const_verein.rollen_art.rollen_bezeichnung is 'Art der Rolle';
+
+
+
+
+create table const_verein.status_art (
+    status_art_id                  base_verein.id_type not null,
+    status_bezeichnung             base_verein.text_type not null,
+    constraint                     uk_status_art
+                                   unique  (status_bezeichnung)
+                                   using index tablespace const_verein,
+    constraint                     pk_status_art
+                                   primary key  (status_art_id)
+                                   using index tablespace const_verein
+) tablespace const_verein;
+comment on table const_verein.status_art is 'Art des Status';
+
+comment on column const_verein.status_art.status_art_id is 'technische Id';
+comment on column const_verein.status_art.status_bezeichnung is 'Art des Status';
+
+
+
+
+create table dim_verein.adresse (
+    adresse_id                     base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    plz                            base_verein.text_type not null,
+    stadt                          base_verein.text_type not null,
+    strasse                        base_verein.text_type not null,
+    haus_nr                        base_verein.text_type not null,
+    postergaenzung                 base_verein.text_type,
+    constraint                     uk_adresse
+                                   unique  (plz, stadt, strasse, haus_nr, postergaenzung)
+                                   using index tablespace dim_verein,
+    constraint                     pk_adresse
+                                   primary key  (adresse_id)
+                                   using index tablespace dim_verein
+) tablespace dim_verein;
+comment on table dim_verein.adresse is 'Adressen';
+
+comment on column dim_verein.adresse.adresse_id is 'Technische Id';
+comment on column dim_verein.adresse.gueltig_ab is 'gueltig-ab';
+comment on column dim_verein.adresse.gueltig_bis is 'gueltig-bis';
+comment on column dim_verein.adresse.plz is 'Postleitzahl';
+comment on column dim_verein.adresse.stadt is 'Wohnort';
+comment on column dim_verein.adresse.strasse is 'Strasse';
+comment on column dim_verein.adresse.haus_nr is 'Hausnummer';
+comment on column dim_verein.adresse.postergaenzung is 'Postergänzung';
+
+create or replace function dim_verein.adresse_trg_fun()
+ returns trigger
+ language plpgsql
+as $function$
+  begin
+        insert into hist_verein.adresse
+          (adresse_id,gueltig_ab,gueltig_bis,plz,stadt,strasse,haus_nr,postergaenzung)
+        select new.adresse_id, new.gueltig_ab, new.gueltig_bis, new.plz, new.stadt, new.strasse, new.haus_nr, new.postergaenzung
+        on conflict on constraint pk_adresse
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           plz = excluded.plz, stadt = excluded.stadt, strasse = excluded.strasse, haus_nr = excluded.haus_nr, postergaenzung = excluded.postergaenzung;
+        return new;
+  end;
+$function$;
+
+
+create or replace trigger adresse_ins_trg
+       after insert on dim_verein.adresse
+       for each row
+       EXECUTE FUNCTION dim_verein.adresse_trg_fun();
+
+create or replace trigger adresse_upd_trg
+       after update on dim_verein.adresse
+       for each row
+       EXECUTE FUNCTION dim_verein.adresse_trg_fun();
+
+
+
+create table dim_verein.funktion (
+    funktion_id                    base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    person_id                      base_verein.id_type not null,
+    rolle_id                       base_verein.id_type not null,
+    start_date                     base_verein.date_type not null,
+    constraint                     pk_funktion
+                                   primary key  (funktion_id)
+                                   using index tablespace dim_verein
+) tablespace dim_verein;
+comment on table dim_verein.funktion is 'Funktionen';
+
+comment on column dim_verein.funktion.funktion_id is 'technische Id';
+comment on column dim_verein.funktion.gueltig_ab is 'gueltig-ab';
+comment on column dim_verein.funktion.gueltig_bis is 'gueltig-bis';
+comment on column dim_verein.funktion.person_id is 'technische Id';
+comment on column dim_verein.funktion.rolle_id is 'technische Id';
+comment on column dim_verein.funktion.start_date is 'Beginndatum';
+
+create or replace function dim_verein.funktion_trg_fun()
+ returns trigger
+ language plpgsql
+as $function$
+  begin
+        insert into hist_verein.funktion
+          (funktion_id,gueltig_ab,gueltig_bis,person_id,rolle_id,start_date)
+        select new.funktion_id, new.gueltig_ab, new.gueltig_bis, new.person_id, new.rolle_id, new.start_date
+        on conflict on constraint pk_funktion
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           person_id = excluded.person_id, rolle_id = excluded.rolle_id, start_date = excluded.start_date;
+        return new;
+  end;
+$function$;
+
+
+create or replace trigger funktion_ins_trg
+       after insert on dim_verein.funktion
+       for each row
+       EXECUTE FUNCTION dim_verein.funktion_trg_fun();
+
+create or replace trigger funktion_upd_trg
+       after update on dim_verein.funktion
+       for each row
+       EXECUTE FUNCTION dim_verein.funktion_trg_fun();
+
+
+
+create table dim_verein.mitgliedschaft (
+    mitgliedschaft_id              base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    mitgliedschaft_art_id          base_verein.id_type not null,
+    adresse_id                     base_verein.id_type not null,
+    name                           base_verein.text_type not null,
+    start_datum                    base_verein.date_type not null,
+    beitrag                        base_verein.amount_type not null,
+    constraint                     uk_mitgliedschaft
+                                   unique  (name)
+                                   using index tablespace dim_verein,
+    constraint                     pk_mitgliedschaft
+                                   primary key  (mitgliedschaft_id)
+                                   using index tablespace dim_verein
+) tablespace dim_verein;
+comment on table dim_verein.mitgliedschaft is 'Mitgliedschaften';
+
+comment on column dim_verein.mitgliedschaft.mitgliedschaft_id is 'technische Id';
+comment on column dim_verein.mitgliedschaft.gueltig_ab is 'gueltig-ab';
+comment on column dim_verein.mitgliedschaft.gueltig_bis is 'gueltig-bis';
+comment on column dim_verein.mitgliedschaft.mitgliedschaft_art_id is 'Mitgliedschaftsart';
+comment on column dim_verein.mitgliedschaft.adresse_id is 'technische Id';
+comment on column dim_verein.mitgliedschaft.name is 'Name';
+comment on column dim_verein.mitgliedschaft.start_datum is 'Beginndatum';
+comment on column dim_verein.mitgliedschaft.beitrag is 'Mitgliedsbeitrag';
+
+create or replace function dim_verein.mitgliedschaft_trg_fun()
+ returns trigger
+ language plpgsql
+as $function$
+  begin
+        insert into hist_verein.mitgliedschaft
+          (mitgliedschaft_id,gueltig_ab,gueltig_bis,mitgliedschaft_art_id,adresse_id,name,start_datum,beitrag)
+        select new.mitgliedschaft_id, new.gueltig_ab, new.gueltig_bis, new.mitgliedschaft_art_id, new.adresse_id, new.name, new.start_datum, new.beitrag
+        on conflict on constraint pk_mitgliedschaft
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           mitgliedschaft_art_id = excluded.mitgliedschaft_art_id, adresse_id = excluded.adresse_id, name = excluded.name, start_datum = excluded.start_datum, beitrag = excluded.beitrag;
+        return new;
+  end;
+$function$;
+
+
+create or replace trigger mitgliedschaft_ins_trg
+       after insert on dim_verein.mitgliedschaft
+       for each row
+       EXECUTE FUNCTION dim_verein.mitgliedschaft_trg_fun();
+
+create or replace trigger mitgliedschaft_upd_trg
+       after update on dim_verein.mitgliedschaft
+       for each row
+       EXECUTE FUNCTION dim_verein.mitgliedschaft_trg_fun();
+
+
+
+create table dim_verein.person (
+    person_id                      base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    mitgliedschaft_id              base_verein.id_type not null,
+    status_art_id                  base_verein.id_type not null,
+    nachname                       base_verein.text_type not null,
+    vorname                        base_verein.text_type not null,
+    geburtsdatum                   base_verein.date_type not null,
+    constraint                     uk_person
+                                   unique  (nachname, vorname, geburtsdatum)
+                                   using index tablespace dim_verein,
+    constraint                     pk_person
+                                   primary key  (person_id)
+                                   using index tablespace dim_verein
+) tablespace dim_verein;
+comment on table dim_verein.person is 'Personen';
+
+comment on column dim_verein.person.person_id is 'technische Id';
+comment on column dim_verein.person.gueltig_ab is 'gueltig-ab';
+comment on column dim_verein.person.gueltig_bis is 'gueltig-bis';
+comment on column dim_verein.person.mitgliedschaft_id is 'technische Id';
+comment on column dim_verein.person.status_art_id is 'technische Id';
+comment on column dim_verein.person.nachname is 'Nachname';
+comment on column dim_verein.person.vorname is 'Vorname';
+comment on column dim_verein.person.geburtsdatum is 'Geburtsdatum';
+
+create or replace function dim_verein.person_trg_fun()
+ returns trigger
+ language plpgsql
+as $function$
+  begin
+        insert into hist_verein.person
+          (person_id,gueltig_ab,gueltig_bis,mitgliedschaft_id,status_art_id,nachname,vorname,geburtsdatum)
+        select new.person_id, new.gueltig_ab, new.gueltig_bis, new.mitgliedschaft_id, new.status_art_id, new.nachname, new.vorname, new.geburtsdatum
+        on conflict on constraint pk_person
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           mitgliedschaft_id = excluded.mitgliedschaft_id, status_art_id = excluded.status_art_id, nachname = excluded.nachname, vorname = excluded.vorname, geburtsdatum = excluded.geburtsdatum;
+        return new;
+  end;
+$function$;
+
+
+create or replace trigger person_ins_trg
+       after insert on dim_verein.person
+       for each row
+       EXECUTE FUNCTION dim_verein.person_trg_fun();
+
+create or replace trigger person_upd_trg
+       after update on dim_verein.person
+       for each row
+       EXECUTE FUNCTION dim_verein.person_trg_fun();
+
+
+
+create table dim_verein.rolle (
+    rolle_id                       base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    bezeichnung                    base_verein.text_type not null,
+    rollen_art_id                  base_verein.id_type not null,
+    entgelt                        base_verein.amount_type,
+    constraint                     uk_rolle
+                                   unique  (bezeichnung)
+                                   using index tablespace dim_verein,
+    constraint                     pk_rolle
+                                   primary key  (rolle_id)
+                                   using index tablespace dim_verein
+) tablespace dim_verein;
+comment on table dim_verein.rolle is 'Rollen';
+
+comment on column dim_verein.rolle.rolle_id is 'technische Id';
+comment on column dim_verein.rolle.gueltig_ab is 'gueltig-ab';
+comment on column dim_verein.rolle.gueltig_bis is 'gueltig-bis';
+comment on column dim_verein.rolle.bezeichnung is 'Rollenbezeichnung';
+comment on column dim_verein.rolle.rollen_art_id is 'technische Id';
+comment on column dim_verein.rolle.entgelt is 'Monatsentgelt';
+
+create or replace function dim_verein.rolle_trg_fun()
+ returns trigger
+ language plpgsql
+as $function$
+  begin
+        insert into hist_verein.rolle
+          (rolle_id,gueltig_ab,gueltig_bis,bezeichnung,rollen_art_id,entgelt)
+        select new.rolle_id, new.gueltig_ab, new.gueltig_bis, new.bezeichnung, new.rollen_art_id, new.entgelt
+        on conflict on constraint pk_rolle
+        do update set
+           gueltig_ab = current_date, gueltig_bis = excluded.gueltig_bis,
+           bezeichnung = excluded.bezeichnung, rollen_art_id = excluded.rollen_art_id, entgelt = excluded.entgelt;
+        return new;
+  end;
+$function$;
+
+
+create or replace trigger rolle_ins_trg
+       after insert on dim_verein.rolle
+       for each row
+       EXECUTE FUNCTION dim_verein.rolle_trg_fun();
+
+create or replace trigger rolle_upd_trg
+       after update on dim_verein.rolle
+       for each row
+       EXECUTE FUNCTION dim_verein.rolle_trg_fun();
+
+
+
+create table fakt_verein.ausgaben (
+    ereignis_id                    base_verein.id_type not null,
+    buchungsdatum                  base_verein.date_type not null,
+    betrag                         base_verein.amount_type not null,
+    constraint                     pk_ausgaben
+                                   primary key  (ereignis_id, buchungsdatum)
+                                   using index tablespace fakt_verein
+) tablespace fakt_verein;
+comment on table fakt_verein.ausgaben is 'Ausgaben';
+
+comment on column fakt_verein.ausgaben.ereignis_id is 'technische Id';
+comment on column fakt_verein.ausgaben.buchungsdatum is 'Buchungsdatum';
+comment on column fakt_verein.ausgaben.betrag is 'Beitragsbetrag';
+
+
+
+
+create table fakt_verein.beitrag (
+    buchungsdatum                  base_verein.date_type not null,
+    mitgliedschaft_id              base_verein.id_type not null,
+    betrag                         base_verein.amount_type not null,
+    constraint                     pk_beitrag
+                                   primary key  (buchungsdatum, mitgliedschaft_id)
+                                   using index tablespace fakt_verein
+) tablespace fakt_verein;
+comment on table fakt_verein.beitrag is 'Mitgliedsbeiträge';
+
+comment on column fakt_verein.beitrag.buchungsdatum is 'Buchungsdatum';
+comment on column fakt_verein.beitrag.mitgliedschaft_id is 'technische Id';
+comment on column fakt_verein.beitrag.betrag is 'Beitragsbetrag';
+
+
+
+
+create table fakt_verein.entgelt (
+    funktion_id                    base_verein.id_type not null,
+    buchungsdatum                  base_verein.date_type not null,
+    betrag                         base_verein.amount_type not null,
+    constraint                     pk_entgelt
+                                   primary key  (funktion_id, buchungsdatum)
+                                   using index tablespace fakt_verein
+) tablespace fakt_verein;
+comment on table fakt_verein.entgelt is 'Entgelte';
+
+comment on column fakt_verein.entgelt.funktion_id is 'technische Id';
+comment on column fakt_verein.entgelt.buchungsdatum is 'Buchungsdatum';
+comment on column fakt_verein.entgelt.betrag is 'Entgeltbetrag';
+
+
+
+
+create table fakt_verein.ereignis (
+    ereignis_id                    base_verein.id_type not null,
+    bezeichnung                    base_verein.text_type not null,
+    datum                          base_verein.date_type not null,
+    ereignis_art_id                base_verein.id_type not null,
+    constraint                     pk_ereignis
+                                   primary key  (ereignis_id)
+                                   using index tablespace fakt_verein
+) tablespace fakt_verein;
+comment on table fakt_verein.ereignis is 'Ereignisse';
+
+comment on column fakt_verein.ereignis.ereignis_id is 'technische Id';
+comment on column fakt_verein.ereignis.bezeichnung is 'Bezeichnung';
+comment on column fakt_verein.ereignis.datum is 'Ereignisdatum';
+comment on column fakt_verein.ereignis.ereignis_art_id is 'technische Id';
+
+
+
+
+create table fakt_verein.pruefung (
+    person_id                      base_verein.id_type not null,
+    pruefungsdatum                 base_verein.date_type not null,
+    grad_id                        base_verein.id_type not null,
+    constraint                     pk_pruefung
+                                   primary key  (person_id, pruefungsdatum)
+                                   using index tablespace fakt_verein
+) tablespace fakt_verein;
+comment on table fakt_verein.pruefung is 'Gürtelprüfungen';
+
+comment on column fakt_verein.pruefung.person_id is 'technische Id';
+comment on column fakt_verein.pruefung.pruefungsdatum is 'Prüfungsdatum';
+comment on column fakt_verein.pruefung.grad_id is 'Gürtelgrad';
+
+
+
+
+create table hist_verein.adresse (
+    adresse_id                     base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    plz                            base_verein.text_type not null,
+    stadt                          base_verein.text_type not null,
+    strasse                        base_verein.text_type not null,
+    haus_nr                        base_verein.text_type not null,
+    postergaenzung                 base_verein.text_type,
+    constraint                     pk_adresse
+                                   primary key  (adresse_id, gueltig_ab)
+                                   using index tablespace hist_verein
+) tablespace hist_verein;
+comment on table hist_verein.adresse is 'Adressen';
+
+comment on column hist_verein.adresse.adresse_id is 'Technische Id';
+comment on column hist_verein.adresse.gueltig_ab is 'automatisch erzeugtes gueltig_ab-Datum';
+comment on column hist_verein.adresse.gueltig_bis is 'automatisch erzeugtes gueltig_bis-Datum';
+comment on column hist_verein.adresse.plz is 'Postleitzahl';
+comment on column hist_verein.adresse.stadt is 'Wohnort';
+comment on column hist_verein.adresse.strasse is 'Strasse';
+comment on column hist_verein.adresse.haus_nr is 'Hausnummer';
+comment on column hist_verein.adresse.postergaenzung is 'Postergänzung';
+
+
+
+
+create table hist_verein.funktion (
+    funktion_id                    base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    person_id                      base_verein.id_type not null,
+    rolle_id                       base_verein.id_type not null,
+    start_date                     base_verein.date_type not null,
+    constraint                     pk_funktion
+                                   primary key  (funktion_id, gueltig_ab)
+                                   using index tablespace hist_verein
+) tablespace hist_verein;
+comment on table hist_verein.funktion is 'Funktionen';
+
+comment on column hist_verein.funktion.funktion_id is 'technische Id';
+comment on column hist_verein.funktion.gueltig_ab is 'automatisch erzeugtes gueltig_ab-Datum';
+comment on column hist_verein.funktion.gueltig_bis is 'automatisch erzeugtes gueltig_bis-Datum';
+comment on column hist_verein.funktion.person_id is 'technische Id';
+comment on column hist_verein.funktion.rolle_id is 'technische Id';
+comment on column hist_verein.funktion.start_date is 'Beginndatum';
+
+
+
+
+create table hist_verein.mitgliedschaft (
+    mitgliedschaft_id              base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    mitgliedschaft_art_id          base_verein.id_type not null,
+    adresse_id                     base_verein.id_type not null,
+    name                           base_verein.text_type not null,
+    start_datum                    base_verein.date_type not null,
+    beitrag                        base_verein.amount_type not null,
+    constraint                     pk_mitgliedschaft
+                                   primary key  (mitgliedschaft_id, gueltig_ab)
+                                   using index tablespace hist_verein
+) tablespace hist_verein;
+comment on table hist_verein.mitgliedschaft is 'Mitgliedschaften';
+
+comment on column hist_verein.mitgliedschaft.mitgliedschaft_id is 'technische Id';
+comment on column hist_verein.mitgliedschaft.gueltig_ab is 'automatisch erzeugtes gueltig_ab-Datum';
+comment on column hist_verein.mitgliedschaft.gueltig_bis is 'automatisch erzeugtes gueltig_bis-Datum';
+comment on column hist_verein.mitgliedschaft.mitgliedschaft_art_id is 'Mitgliedschaftsart';
+comment on column hist_verein.mitgliedschaft.adresse_id is 'technische Id';
+comment on column hist_verein.mitgliedschaft.name is 'Name';
+comment on column hist_verein.mitgliedschaft.start_datum is 'Beginndatum';
+comment on column hist_verein.mitgliedschaft.beitrag is 'Mitgliedsbeitrag';
+
+
+
+
+create table hist_verein.person (
+    person_id                      base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    mitgliedschaft_id              base_verein.id_type not null,
+    status_art_id                  base_verein.id_type not null,
+    nachname                       base_verein.text_type not null,
+    vorname                        base_verein.text_type not null,
+    geburtsdatum                   base_verein.date_type not null,
+    constraint                     pk_person
+                                   primary key  (person_id, gueltig_ab)
+                                   using index tablespace hist_verein
+) tablespace hist_verein;
+comment on table hist_verein.person is 'Personen';
+
+comment on column hist_verein.person.person_id is 'technische Id';
+comment on column hist_verein.person.gueltig_ab is 'automatisch erzeugtes gueltig_ab-Datum';
+comment on column hist_verein.person.gueltig_bis is 'automatisch erzeugtes gueltig_bis-Datum';
+comment on column hist_verein.person.mitgliedschaft_id is 'technische Id';
+comment on column hist_verein.person.status_art_id is 'technische Id';
+comment on column hist_verein.person.nachname is 'Nachname';
+comment on column hist_verein.person.vorname is 'Vorname';
+comment on column hist_verein.person.geburtsdatum is 'Geburtsdatum';
+
+
+
+
+create table hist_verein.rolle (
+    rolle_id                       base_verein.id_type not null,
+    gueltig_ab                     base_verein.date_type default current_date not null,
+    gueltig_bis                    base_verein.date_type default '31.12.9999'::date not null,
+    bezeichnung                    base_verein.text_type not null,
+    rollen_art_id                  base_verein.id_type not null,
+    entgelt                        base_verein.amount_type,
+    constraint                     pk_rolle
+                                   primary key  (rolle_id, gueltig_ab)
+                                   using index tablespace hist_verein
+) tablespace hist_verein;
+comment on table hist_verein.rolle is 'Rollen';
+
+comment on column hist_verein.rolle.rolle_id is 'technische Id';
+comment on column hist_verein.rolle.gueltig_ab is 'automatisch erzeugtes gueltig_ab-Datum';
+comment on column hist_verein.rolle.gueltig_bis is 'automatisch erzeugtes gueltig_bis-Datum';
+comment on column hist_verein.rolle.bezeichnung is 'Rollenbezeichnung';
+comment on column hist_verein.rolle.rollen_art_id is 'technische Id';
+comment on column hist_verein.rolle.entgelt is 'Monatsentgelt';
+
+
+
+
+
+alter table dim_verein.funktion
+      add constraint fk_funktion_person
+      foreign key (person_id)
+      references dim_verein.person (person_id);
+
+alter table dim_verein.funktion
+      add constraint fk_funktion_rolle
+      foreign key (rolle_id)
+      references dim_verein.rolle (rolle_id);
+
+alter table dim_verein.mitgliedschaft
+      add constraint fk_mitgliedschaft_mitgliedschaft_art
+      foreign key (mitgliedschaft_art_id)
+      references const_verein.mitgliedschaft_art (mitgliedschaft_art_id);
+
+alter table dim_verein.mitgliedschaft
+      add constraint fk_mitgliedschaft_adresse
+      foreign key (adresse_id)
+      references dim_verein.adresse (adresse_id);
+
+alter table dim_verein.person
+      add constraint fk_person_status_art
+      foreign key (status_art_id)
+      references const_verein.status_art (status_art_id);
+
+alter table dim_verein.person
+      add constraint fk_person_mitgliedschaft
+      foreign key (mitgliedschaft_id)
+      references dim_verein.mitgliedschaft (mitgliedschaft_id);
+
+alter table dim_verein.rolle
+      add constraint fk_rolle_rollen_art
+      foreign key (rollen_art_id)
+      references const_verein.rollen_art (rollen_art_id);
+
+alter table fakt_verein.ausgaben
+      add constraint fk_ausgaben_ereignis
+      foreign key (ereignis_id)
+      references fakt_verein.ereignis (ereignis_id);
+
+alter table fakt_verein.beitrag
+      add constraint fk_beitrag_mitgliedschaft
+      foreign key (mitgliedschaft_id)
+      references dim_verein.mitgliedschaft (mitgliedschaft_id);
+
+alter table fakt_verein.entgelt
+      add constraint fk_entgelt_funktion
+      foreign key (funktion_id)
+      references dim_verein.funktion (funktion_id);
+
+alter table fakt_verein.ereignis
+      add constraint fk_ereignis_ereignis_art
+      foreign key (ereignis_art_id)
+      references const_verein.ereignis_art (ereignis_art_id);
+
+alter table fakt_verein.pruefung
+      add constraint fk_pruefung_guertel_grad
+      foreign key (grad_id)
+      references const_verein.guertel_grad (grad_id);
+
+alter table fakt_verein.pruefung
+      add constraint fk_pruefung_person
+      foreign key (person_id)
+      references dim_verein.person (person_id);
+
+
+create table base_verein.metadata (
+    project                        base_verein.text_type not null,
+    version                        base_verein.count_type not null,
+    constraint                     pk_metadata
+                                   primary key  (version)
+                                   using index tablespace base_verein
+) tablespace base_verein;
+
+
+
+
+
+insert into base_verein.metadata (project, version)
+            values ('verein', 1);
+
+commit;
+

@@ -94,9 +94,7 @@ do
 done
 
 
-XML_2_SQL="${LIB_DIR}/xml_2_sql.xslt"
 XML_2_FMT="${LIB_DIR}/xml_2_fmt.xslt"
-XML_2_XML="${LIB_DIR}/xml_2_xml.xslt"
 FMT_2_DAT="${LIB_DIR}/fmt_2_dat.awk"
 FMT_2_CNT="${LIB_DIR}/fmt_2_cnt.awk"
 
@@ -108,10 +106,10 @@ FMT_2_CNT="${LIB_DIR}/fmt_2_cnt.awk"
 #set -x
 
 filetype=""
-projectname="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
-[[ -z "${projectname}" ]] && error_exit "no project name in ${inputfile}"
+project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
+[[ -z "${project}" ]] && error_exit "no project name in ${inputfile}"
 
-[[ -z "${database}" ]] && database="${projectname}"
+[[ -z "${database}" ]] && database="${project}"
 
 name="${inputfile%.*}"
 name="${name##*/}"
@@ -127,14 +125,9 @@ outputfile="${OUT_DIR}/${name}.dat.sql"
 inputpath="${FULL_DATA_DIR}/${inputfile##*/}"
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found" "" 1
 
-[[ -n "${verbose}" ]] && echo "${BIN_DIR}/create_config.sh ${verbose_option} -i ${inputfile} -p ${projectfile} -o ${tempprj}"
-${BIN_DIR}/create_config.sh ${verbose_option} -i "${inputfile}" -p "${projectfile}" -o "${tempprj}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" "1"
-
 
 if [[ -n "${check}" ]] ; then
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -p "${tempprj}" -o "${tempchk}" 
+    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}"  -o "${tempchk}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" "1"
 #    cat "${tempchk}"
@@ -144,7 +137,8 @@ fi
 
 if [[ -n "${generate}" ]] ; then
 
-    xslt_params="--stringparam configfile ${tempprj}"
+    xslt_params="--stringparam project ${project}"
+    xslt_params="${xslt_params} --stringparam config-file ${projectfile}"
     [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
     [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
     xslt_params="${xslt_params}  --path ${DTD_DIR}"

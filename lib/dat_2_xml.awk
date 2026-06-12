@@ -273,11 +273,13 @@ BEGIN {
 
     source_table                     = id_tab[source_id];
     source_table_tab[foreign_count]  = source_table;
-    source_schema_tab[foreign_count] = table_schema_tab[source_table];
+    source_schema                    = table_schema_tab[source_table];
+    source_schema_tab[foreign_count] = source_schema;
 
     target_table                     = id_tab[target_id];
-    target_table_tab[foreign_count]  = target_table
-    target_schema_tab[foreign_count] = table_schema_tab[target_table];;
+    target_table_tab[foreign_count]  = target_table;
+    target_schema                    = table_schema_tab[target_table];
+    target_schema_tab[foreign_count] = target_schema;
 }
 
 

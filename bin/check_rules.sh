@@ -8,7 +8,7 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 
 source "${BIN_DIR}/utils.lib.sh"
 
-USAGE="usage: ${ME} -i inputfile -o outputfile -p projectconfig [-a] [-c] [-h] [-k] [-t] [-v]"
+USAGE="usage: ${ME} -i inputfile -o outputfile [-p projectconfig] [-a] [-c] [-h] [-k] [-t] [-v]"
 HELP="${USAGE}
     -a auto         check hist tables
     -h help         print this help message
@@ -23,7 +23,7 @@ auto=""
 inputfile=""
 keep=""
 outputfile=""
-projectconfig=""
+projectconfig="${FULL_PROJECT_FILE}"
 verbose=""
 
 

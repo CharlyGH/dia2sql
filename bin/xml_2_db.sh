@@ -116,22 +116,18 @@ name="${inputfile%.*}"
 name="${name##*/}"
 
 tempchk="${TEMP_DIR}/${name}.chk.dat"
-tempprj="${FULL_TEMP_DIR}/${name}.prj.xml"
 
 outputfile="${OUT_DIR}/${name}.sql"
 
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found" "" 1
 
+project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
+
 
 if [[ -n "${check}" ]] ; then
-    [[ -n "${verbose}" ]] && "echo ${BIN_DIR}/create_config.sh ${verbose_option} -i ${inputfile} -p ${projectfile} -o ${tempprj}"
-    ${BIN_DIR}/create_config.sh ${verbose_option} -i "${inputfile}" -p "${projectfile}" -o "${tempprj}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in xslt script create_config.sh" "" 1
 
-
-    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verbose_option} -a -i ${inputfile} -p ${tempprj} -o ${tempchk}" 
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -p "${tempprj}" -o "${tempchk}" 
+    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verbose_option} -a -i ${inputfile} -o ${tempchk}" 
+    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}" -o "${tempchk}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" 1
 #    cat "${tempchk}"
@@ -140,7 +136,8 @@ fi
 
 #set -x
 
-xslt_params="--stringparam configfile ${tempprj}"
+
+xslt_params="--stringparam config-file ${projectfile}"
 [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
 [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
 xslt_params="${xslt_params}  --path ${DTD_DIR}"

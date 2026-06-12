@@ -8,6 +8,7 @@ test/*
 !pdf/dia2sql.pdf
 user.txt
 test.sh
+used.sh
 *~
 gui/__pycache__/
 gui/connect.json

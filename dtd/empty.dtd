@@ -1,0 +1,3 @@
+<!ELEMENT empty (tablespaces?,schemas?,domains?,sequences?,tables?,columns?,
+                 uniques?,unique-columns?,primaries?,primary-columns?,
+                 triggers?,functions?,function-defs?,foreigns?,foreign-columns?,metadata?)>

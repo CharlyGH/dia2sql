@@ -66,209 +66,61 @@ done
 [[ -z "${project}" ]] && error_exit "missing -p project option" "" 1
 [[ -z "${database}" ]] && database="${project}"
 
-DB_2_REF="${LIB_DIR}/db_2_ref.tpl"
-DB_2_STR="${LIB_DIR}/db_2_str.tpl"
-DB_2_DOM="${LIB_DIR}/db_2_dom.tpl"
-DB_2_FK="${LIB_DIR}/db_2_fk.tpl"
-DB_2_MD="${LIB_DIR}/db_2_md.tpl"
-DB_2_FUN="${LIB_DIR}/db_2_fun.tpl"
+SQL="select concat('v', trim(to_char(m.version,'00')), ':', m.project) line  from base_verein.metadata m;"
+[[ -n "${verbose}" ]] && echo "psql -A -t -d ${database} -c ${SQL}"
+info="$(psql -A -t -d "${database}" -c "${SQL}")"
 
-DB_DAT_2_XML="${LIB_DIR}/db_dat_2_xml.awk"
-
-PROJECT_XML="${XML_DIR}/project.xml"
-PROJECT_XML_2_DAT="${LIB_DIR}/project.xslt"
-
-XML_2_DAT="${LIB_DIR}/project.xslt"
+version="${info%:*}"
+project="${info#*:}"
 
 
 
+project_config_file="${FULL_XML_DIR}/project.xml"
 
-temprs="${TEMP_DIR}/${project}.ref.sql"
-temprd="${TEMP_DIR}/${project}.ref.dat"
+tempsql="${TEMP_DIR}/${project}_${version}.tmp.sql"
+tempxml="${TEMP_DIR}/${project}_${version}.tmp.xml"
+tempqt="${TEMP_DIR}/${project}_${version}.dqt.xml"
+[[ -z "${outputfile}" ]] && outputfile="${DATA_DIR}/${project}_db_${version}.xml"
 
-tempss="${TEMP_DIR}/${project}.str.sql"
-tempsd="${TEMP_DIR}/${project}.str.dat"
+DB_2_SQL="${LIB_DIR}/db_2_sql.xslt"
+TMP_2_XML="${LIB_DIR}/db_tmp_2_xml.xslt"
 
-tempds="${TEMP_DIR}/${project}.dom.sql"
-tempdd="${TEMP_DIR}/${project}.dom.dat"
+xmllint_params="--path ${DTD_DIR}"
+xslt_params="--path ${DTD_DIR}"
+xslt_params="${xslt_params} --stringparam project ${project}"
+xslt_params="${xslt_params} --stringparam config-file ${project_config_file}"
 
-tempfks="${TEMP_DIR}/${project}.fk.sql"
-tempfkd="${TEMP_DIR}/${project}.fk.dat"
-
-temppd="${TEMP_DIR}/${project}.prj.dat"
-
-tempms="${TEMP_DIR}/${project}.md.sql"
-tempmd="${TEMP_DIR}/${project}.md.dat"
-
-tempfus="${TEMP_DIR}/${project}.fun.sql"
-tempfut="${TEMP_DIR}/${project}.fun.tmp"
-tempfud="${TEMP_DIR}/${project}.fun.dat"
-
-xslt_params="--stringparam basename ${project}"
-xslt_params="${xslt_params} --path ${DTD_DIR}"
-
-[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${PROJECT_XML_2_DAT} ${PROJECT_XML} ${temppd}"
-xsltproc ${xslt_params} "${PROJECT_XML_2_DAT}" "${PROJECT_XML}" >"${temppd}"
-
-
-schemas="$(cat "${temppd}" \
-               | grep '^schemaconf#' \
-               | cut -d'#' -f3 \
-               | sed -e "s/^/'/" -e "s/$/',/" \
-               | tr -d '\n' \
-               | sed -e "s/,$//" )"
-
-[[ -n "${verbose}" ]] && echo "schemas=[${schemas}]"
-
-
-base="$(cat ${temppd} | grep '#base#' | cut -d'#' -f3)"
-
-sed_options="-e s/{base}/${base}/ -e s/{schemas}/${schemas}/ -e s/{user}/${USER}/"
-[[ -n "${verbose}" ]] && echo "sed ${sed_options} ${DB_2_DOM} ${tempds}"
-sed ${sed_options} "${DB_2_DOM}" >"${tempds}"
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempsql} ${DB_2_SQL} ${XML_DIR}/empty.xml"
+xsltproc ${xslt_params} --output "${tempsql}" "${DB_2_SQL}" "${XML_DIR}/empty.xml"
 ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sed execution" "" 1
+[[ "${ret}" != "0" ]] && echo "error in script ${DB_2_SQL}" && exit 1
 
-psql_options="-q -A -t"
-[[ -n "${database}" ]] && psql_options="${psql_options} -d ${database}"
-[[ -n "${user}" ]] && psql_options="${psql_options} -U ${user}"
-
-[[ -n "${verbose}" ]] && echo "psql ${psql_options} -f ${tempds} ${tempdd}"
-psql ${psql_options} -f "${tempds}" >"${tempdd}"
+[[ -n "${verbose}" ]] && echo "psql -A -t -d ${project} -f ${tempsql} -o ${tempxml}"
+psql -A -t -d "${database}" -f "${tempsql}" -o "${tempxml}"
 ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sql script ${tempds}" "" 1
-
-
-[[ -n "${verbose}" ]] && echo "sed -e s/{schemas}/${schemas}/ -e s/{user}/${USER}/ ${DB_2_REF} ${temprs}"
-sed -e "s/{schemas}/${schemas}/" -e "s/{user}/${USER}/" "${DB_2_REF}" >"${temprs}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sed execution" "" 1
-
-[[ -n "${verbose}" ]] && echo "psql ${psql_options} -f ${temprs} ${temprd}"
-psql ${psql_options} -f "${temprs}" >"${temprd}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sql script ${temprs}" "" 1
-
-
-[[ -n "${verbose}" ]] && echo "sed -e s/{schemas}/${schemas}/ -e s/{user}/${USER}/ ${DB_2_FK} ${tempfks}"
-sed -e "s/{schemas}/${schemas}/" -e "s/{user}/${USER}/" "${DB_2_FK}" >"${tempfks}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sed execution" "" 1
-
-[[ -n "${verbose}" ]] && echo "psql ${psql_options} -f ${tempfks} ${tempfkd}"
-psql ${psql_options}  -f "${tempfks}" >"${tempfkd}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sql script ${tempfks}" "" 1
-
-
-
-
-ref_dat="$(cat "${temprd}" | grep '^dim_')"
-
-echo "select 'functions';" >"${tempfus}"
-for line in ${ref_dat}; do
-    schema=${line%#*}
-    table=${line#*#}
-    [[ -n "${verbose}" ]] && echo "sed -e s/{user}/${USER}/ -e s/{schema}/${schema}/ -e s/{table}/${table}/ ${DB_2_FUN} ${tempfus}"
-    sed -e "s/{user}/${USER}/" -e "s/{schema}/${schema}/"  -e "s/{table}/${table}/" "${DB_2_FUN}" >>"${tempfus}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in sed execution" "" 1
-
-done
-
-
-
-
-[[ -n "${verbose}" ]] && echo "psql ${psql_options} -f ${tempfus} ${tempfut}"
-psql ${psql_options}  -f "${tempfus}" >"${tempfut}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sql script ${tempfus}" "" 1
-
-
-[[ -n "${verbose}" ]] && echo "sed ${tempfut} ${tempfud}"
-cat "${tempfut}" | grep '.' \
-                 | sed -e '/^definition#/,/^###/ s/^/def#/' \
-                 | sed -e 's/^def#definition#/definition#/' \
-                 | sed -e 's/^def####/###/'                 >"${tempfud}" 
-echo "end" >>"${tempfud}" 
-
-
-
-#cat "${tempsd}"
-
-ref_dat="$(cat "${temprd}")"
-
-echo "select 'tables';" >"${tempss}"
-for line in ${ref_dat}; do
-    schema=${line%#*}
-    table=${line#*#}
-    [[ "${table}" = "metadata" ]] && continue
-    [[ -n "${verbose}" ]] && echo "sed -e s/{user}/${USER}/ -e s/{schema}/${schema}/ -e s/{table}/${table}/ ${DB_2_STR} ${tempss}"
-    sed -e "s/{user}/${USER}/" -e "s/{schema}/${schema}/"  -e "s/{table}/${table}/" "${DB_2_STR}" >>"${tempss}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in sed execution" "" 1
-
-done
-
-[[ -n "${verbose}" ]] && echo "psql ${psql_options}  -f ${tempss} ${tempsd}"
-psql ${psql_options}  -f "${tempss}" >"${tempsd}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sql script ${tempss}" "" 1
-
-echo "end" >>"${tempsd}" 
-
-#cat "${tempsd}"
-
-line=$(echo "${ref_dat}" | grep 'metadata')
-schema=${line%#*}
-table=${line#*#}
-
-[[ -n "${verbose}" ]] && echo "sed -e s/{user}/${USER}/ -e s/{schema}/${schema}/ -e s/{table}/${table}/ ${DB_2_MD} ${tempms}"
-sed -e "s/{user}/${USER}/" -e "s/{schema}/${schema}/"  -e "s/{table}/${table}/" "${DB_2_MD}" >"${tempms}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sed execution" "" 1
-
-[[ -n "${verbose}" ]] && echo "psql ${psql_options}  -f ${tempms} ${tempmd}"
-psql ${psql_options}  -f "${tempms}" >"${tempmd}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in sql script ${tempss}" "" 1
-
-#cat "${tempmd}"
-
-infoline="$(cat "${tempmd}" | grep '^data#' | cut -d'#' -f2-3 | tr '#' ':')"
-
-#set -x
-db_project="${infoline%:*}"
-db_version="v${infoline#*:}"
-[[ "${#db_version}" == 2 ]] && db_version="${db_version/v/v0}"
-
-[[ "${db_project}" != "${project}" ]] && error_exit "project name missmatch, expected: ${project}, found: ${db_project}" "" 1
-
-echo "exporting version ${db_version} of project ${db_project}"
-
-[[ -z "${outputfile}" ]] && outputfile="${DATA_DIR}/${project}_db_${db_version}.xml"
-
-
-awk_params=""
-[[ -n "${verbose}" ]] && echo "awk -F'#' -f ${DB_DAT_2_XML} ${awk_params} \
-                         ${temppd} ${tempdd} ${tempsd} ${tempfkd} ${tempfud} ${tempmd} ${outputfile}"
-awk -F'#' -f "${DB_DAT_2_XML}" ${awk_params} \
-                         "${temppd}" "${tempdd}" "${tempsd}" "${tempfkd}" "${tempfud}" "${tempmd}" >"${outputfile}"
-ret="$?"
-[[ "${ret}" != "0" ]] && error_exit "error in awk script ${DB_DAT_2_XML}" "" 1
-
-
+[[ "${ret}" != "0" ]] && echo "error in script ${tempsql}" && exit 1
 
 if [[ -n "${check}" ]] ; then
-    [[ -n "${verbose}"  ]] && echo "xmllint --path "${DTD_DIR}" --valid --noout ${outputfile}"
-    xmllint --path "${DTD_DIR}" --valid --noout "${outputfile}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "schema validation failed" "" 1
+    [[ -n "${verbose}" ]] && echo "xmllint ${xmllint_params} --valid --noout ${tempxml}"
+    xmllint ${xmllint_params} --valid --noout "${tempxml}"
 fi
 
+[[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempqt} ${TMP_2_XML} ${tempxml}"
+xsltproc ${xslt_params} --output "${tempqt}" "${TMP_2_XML}" "${tempxml}"
+ret="$?"
+[[ "${ret}" != "0" ]] && echo "error in script ${TMP_2_XML}" && exit
+
+[[ -n "${verbose}" ]] && echo "cat ${tempqt} | tr ' \" > ${outputfile}"
+cat "${tempqt}" | tr '"' "'" > "${outputfile}"
+    
+if [[ -n "${check}" ]] ; then
+    [[ -n "${verbose}" ]] && echo "xmllint ${xmllint_params} --valid --noout ${outputfile}"
+    xmllint ${xmllint_params} --valid --noout "${outputfile}"
+fi
+
+
 if [[ -z "${keep}" ]] ; then
-    for file in "${temprs}" "${temprd}" "${tempss}" "${tempsd}" "${tempds}" "${tempdd}" "${temppd}" \
-                "${tempfkd}" "${tempfks}" "${tempfut}" "${tempfud}" "${tempfus}" "${tempms}" "${tempmd}" ; do
+    for file in "${tempsql}" "${tempxml}" "${tempqt}"; do
         [[ -f "${file}" ]] && rm "${file}"
     done
 fi
