@@ -227,9 +227,10 @@ if [[ -n "${check}" ]] ; then
     if [[ -n "${lout}" ]] ; then
         lout_cr_file="${TEMP_DIR}/${name}"
         output="${TEMP_DIR}/${name}.lout.pdf"
+        error="${TEMP_DIR}/${name}.lout.error"
         lout_params="-r${repeat} -c "${lout_cr_file}" -Z -I ${DTD_DIR}"
-        [[ -n "${verbose}" ]] && echo "lout ${lout_params} -o ${output} ${templ}"
-        lout ${lout_params} -o "${output}" "${templ}"
+        [[ -n "${verbose}" ]] && echo "lout ${lout_params} -o ${output} -e ${error} ${templ}"
+        lout ${lout_params} -o "${output}" -e "${error}" "${templ}"
         ret="$?"
         [[ "${ret}" != "0" ]] && error_exit "error in lout script ${templ}" "" "${ret}"
     fi
@@ -270,6 +271,7 @@ if [[ -n "${pdf}" ]] ; then
     templp="${TEMP_DIR}/${name}.lout.pdf"
     lout_cr_file="${TEMP_DIR}/${name}"
     output="${PDF_DIR}/${name}.pdf"
+    error="${TEMP_DIR}/${name}.lout.error"
     dot_params="-T pdf"
     
     [[ -n "${verbose}" ]] && echo "dot ${dot_params} ${tempd} ${tempdp}"
@@ -286,8 +288,8 @@ if [[ -n "${pdf}" ]] ; then
 
     
     lout_params="-r${repeat} -c "${lout_cr_file}" -Z -I ${DTD_DIR}"
-    [[ -n "${verbose}" ]] && echo "lout ${lout_params} -o ${templp} ${templ}"
-    lout ${lout_params} -o "${templp}" "${templ}"
+    [[ -n "${verbose}" ]] && echo "lout ${lout_params} -o ${templp} -e ${error} ${templ}"
+    lout ${lout_params} -o "${templp}"  -e "${error}" "${templ}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in lout script ${templ}" "" "${ret}"
 
@@ -308,7 +310,7 @@ fi
 
 if [[ -z "${keep}" ]] ; then
     for file in "${tempd}" "${temphd}" "${templ}" "${templu}" "${tempdp}" "${templp}"  "${temps0}" \
-                "${temps1}" "${temps2}" ; do
+                "${temps1}" "${temps2}" "${error}"; do
         if [[ -f "${file}" ]] ; then
             [[ -n "${verbose}" ]] && echo "rm  ${file}"
             rm  "${file}"
