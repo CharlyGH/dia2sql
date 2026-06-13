@@ -68,21 +68,21 @@
     <xsl:param name="table"/>
     <xsl:param name="field"/>
     <xsl:variable name="primary-list"
-                  select="/database/primaries/primary[@schema-name = $schema and @table-name = $table]/key-column-name-list/text()"/>
+                  select="/database/primaries/primary[@schema-name = $schema and
+                          @table-name = $table]/key-column-name-list/text()"/>
     <xsl:variable name="position" select="fcn:find($primary-list,$field,',')"/>
     <xsl:variable name="result" select="fcn:if-then-else($position,'=',0,'other','primary')"/>
+    <fcn:result>
+      <xsl:value-of select="$result"/> 
+    </fcn:result>
+  </fcn:function>
+
 <!--
     <xsl:message terminate="no">
       <xsl:value-of select="concat('schema=',$schema,'  table=',$table,'  field=',$field,
                             '  primary-list=',$primary-list,'  position=',$position,'  result=',$result)"/>
     </xsl:message>
 -->
-    <fcn:result>
-      <xsl:value-of select="$result"/> 
-    </fcn:result>
-  </fcn:function>
-
-  
 
 
   <xsl:template match="database">

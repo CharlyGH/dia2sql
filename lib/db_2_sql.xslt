@@ -182,6 +182,53 @@
   </fcn:function>
   
 
+  <fcn:function name="fcn:get-alias">
+    <xsl:param name="name"/>
+    <xsl:param name="delimiter" select="'_'"/>
+    <xsl:variable name="prefix" select="substring($name,1,1)"/>
+    <xsl:variable name="rest" select="substring-after($name,$delimiter)"/>
+    <fcn:result>
+      <xsl:choose>
+        <xsl:when test="contains($name,$delimiter)">
+          <xsl:value-of select="concat($prefix,fcn:get-alias($rest,$delimiter))"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$prefix"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </fcn:result>
+  </fcn:function>
+  
+
+  
+
+  
+  <xsl:template name="select-table">
+    <xsl:param name="tab"/>
+    <xsl:param name="alias"/>
+    <xsl:param name="key"/>
+    <xsl:param name="keys"/>
+    <xsl:param name="schema"/>
+    <xsl:param name="table"/>
+    <xsl:param name="filter"/>
+    <xsl:param name="sort-list"/>
+    <xsl:param name="column-list"/>
+    <xsl:param name="child-list"/>
+    <xsl:variable name="ntab" select="concat($tab,$gtab)"/>
+    <xsl:variable name="nntab" select="concat($ntab,$gtab)"/>
+    <xsl:value-of select="concat(fcn:empty-tag($tab,$keys),$nl2)"/>
+    <xsl:value-of select="fcn:tag-start($ntab,$key)"/>
+    <xsl:value-of select="fcn:attribute-list($column-list,$alias)"/>
+    <xsl:value-of select="concat($end-tag,$nl)"/>
+    <xsl:value-of select="concat(fcn:text-tag-list($nntab,$child-list,$alias),$nl)"/>
+    <xsl:value-of select="concat($nntab,fcn:end-tag($ntab,$key),')',$nl)"/>
+    <xsl:value-of select="concat(fcn:from-clause($schema,$table,$alias),$nl)"/>
+    <xsl:value-of select="concat(fcn:where-in-list($alias,$filter),$nl)"/>
+    <xsl:value-of select="concat(fcn:order-by-list($alias,$sort-list),$nl2)"/>
+    <xsl:value-of select="concat(fcn:empty-tag($tab,concat('/',$keys)),$nl3)"/>
+  </xsl:template>
+
+  
   <xsl:template match="empty">
     <xsl:variable name="tab" select="''"/>
     <xsl:variable name="ntab" select="concat($tab,$gtab)"/>
@@ -240,32 +287,6 @@
   </xsl:template>
 
 
-  <xsl:template name="select-table">
-    <xsl:param name="tab"/>
-    <xsl:param name="alias"/>
-    <xsl:param name="key"/>
-    <xsl:param name="keys"/>
-    <xsl:param name="schema"/>
-    <xsl:param name="table"/>
-    <xsl:param name="filter"/>
-    <xsl:param name="sort-list"/>
-    <xsl:param name="column-list"/>
-    <xsl:param name="child-list"/>
-    <xsl:variable name="ntab" select="concat($tab,$gtab)"/>
-    <xsl:variable name="nntab" select="concat($ntab,$gtab)"/>
-    <xsl:value-of select="concat(fcn:empty-tag($tab,$keys),$nl2)"/>
-    <xsl:value-of select="fcn:tag-start($ntab,$key)"/>
-    <xsl:value-of select="fcn:attribute-list($column-list,$alias)"/>
-    <xsl:value-of select="concat($end-tag,$nl)"/>
-    <xsl:value-of select="concat(fcn:text-tag-list($nntab,$child-list,$alias),$nl)"/>
-    <xsl:value-of select="concat($nntab,fcn:end-tag($ntab,$key),')',$nl)"/>
-    <xsl:value-of select="concat(fcn:from-clause($schema,$table,$alias),$nl)"/>
-    <xsl:value-of select="concat(fcn:where-in-list($alias,$filter),$nl)"/>
-    <xsl:value-of select="concat(fcn:order-by-list($alias,$sort-list),$nl2)"/>
-    <xsl:value-of select="concat(fcn:empty-tag($tab,concat('/',$keys)),$nl3)"/>
-  </xsl:template>
-
-  
   <xsl:template match="tablespaces">
     <xsl:param name="tab"/>
     <xsl:call-template name="select-table">
