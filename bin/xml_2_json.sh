@@ -72,7 +72,7 @@ name="${name##*/}"
 [[ "${inputfile}" = "${outputfile}" ]] && error_exit "input file '${inputfile}' and output file are identical" ""  1
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found"  ""  1
 
-project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
+set_info "${inputfile}" "model" "filetype" "project" "version" ""
 
 xslt_params="--path ${DTD_DIR}"
 xslt_params="${xslt_params} --stringparam project ${project}"

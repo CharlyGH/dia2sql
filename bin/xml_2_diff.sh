@@ -118,12 +118,12 @@ if [[ -n "${check}" ]] ; then
     xmllint --valid --noout --path "${DTD_DIR}" "${outputfile}"
     ret="$?"
 fi
-
-${BIN_DIR}/xpath.sh -i data/verein_v01_v02.xml -p "concat('migrate version ',/delta/@old-version,' to ',/delta/@new-version)"
-
+[[ "${ret}" != "0" ]] && error_exit "syntax error in generated xml file ${outputfile}" "" "${ret}"
 
 
-[[ "${ret}" != "0" ]] && error_exit "syntax error in generated xml file ${output}" "" "${ret}"
+set_info  "${outputfile}" "delta" "filetype" "project" "old_version" "new_version"
+echo "migrate version ${old_version} to ${new_version}"
+
 
 #cat "${output}"
 

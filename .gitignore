@@ -1,6 +1,7 @@
 data/*.xml
 data/*.lout.li
 out/*.sql
+out/*.save
 out/*.json
 pdf/*.pdf
 temp/*

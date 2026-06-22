@@ -94,20 +94,15 @@ do
 done
 
 
-XML_2_FMT="${LIB_DIR}/xml_2_fmt.xslt"
-FMT_2_DAT="${LIB_DIR}/fmt_2_dat.awk"
-FMT_2_CNT="${LIB_DIR}/fmt_2_cnt.awk"
+XML_2_DAT="${LIB_DIR}/xml_2_dat.xslt"
 
 [[ -z "${execute}${generate}" ]] && error_exit "missing -g and -e option" "${USAGE}" 1
 
 [[ -z "${inputfile}" ]] && error_exit "missing -i inputfile option" "${USAGE}" 1
 [[ ! -r "${inputfile}" ]] && error_exit "cannot read inputfile ${inputfile}" "${USAGE}" 1
 
-#set -x
 
-filetype=""
-project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
-[[ -z "${project}" ]] && error_exit "no project name in ${inputfile}"
+set_info "${inputfile}" "model" "filetype" "project" "version" ""
 
 [[ -z "${database}" ]] && database="${project}"
 
@@ -115,10 +110,7 @@ name="${inputfile%.*}"
 name="${name##*/}"
 
 tempchk="${TEMP_DIR}/${name}.chk.dat"
-tempfmt="${TEMP_DIR}/${name}.fmt.dat"
-tempprj="${FULL_TEMP_DIR}/${name}.prj.xml"
-tempsrt="${FULL_TEMP_DIR}/${name}.srt.xml"
-tempcnts="${TEMP_DIR}/${name}.cnt.sql"
+tempcnt="${TEMP_DIR}/${name}.cnt.sql"
 
 outputfile="${OUT_DIR}/${name}.dat.sql"
 
@@ -137,40 +129,23 @@ fi
 
 if [[ -n "${generate}" ]] ; then
 
-    xslt_params="--stringparam project ${project}"
+    xslt_params="--path ${DTD_DIR}"
     xslt_params="${xslt_params} --stringparam config-file ${projectfile}"
-    [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
-    [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
-    xslt_params="${xslt_params}  --path ${DTD_DIR}"
-    # supply full path of xml file, see comment in stylesheet
-    xslt_params="${xslt_params} --stringparam xmldoc ${inputpath}"
-    xslt_params="${xslt_params} --stringparam tmpsrt ${tempsrt}"
 
-    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_FMT} ${inputfile} ${tempfmt}"
-    xsltproc ${xslt_params} "${XML_2_FMT}" "${inputfile}" > "${tempfmt}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${XML_2_AWK}" "" "${ret}"
+    xslt_params="${xslt_params} --stringparam document-name ${inputpath}"
+    xslt_params="${xslt_params} --stringparam count ${lines}"
 
-    awk_params=""
-    [[ -n "${verbose}" ]] && echo "awk -F'#' -f ${FMT_2_CNT}  ${awk_params} ${tempfmt}  ${tempcnts}"
-    awk -F'#' -f "${FMT_2_CNT}" -v pass=insert ${awk_params} "${tempfmt}" >"${tempcnts}"
+    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempcnt} ${XML_2_DAT} ${inputfile}"
+    xsltproc --stringparam mode count ${xslt_params} --output "${tempcnt}" "${XML_2_DAT}" "${inputfile}"
     ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in awk script ${FMT_2_CNT}" "" "${ret}"
+    [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${XML_2_DAT}" "" "${ret}"
+
+#    export LC_NUMERIC="C"
+
+    [[ -n "${verbose}" ]] && echo "xsltproc --stringparam mode data ${xslt_params} --output ${outputfile} ${XML_2_DAT} ${inputfile}"
+    xsltproc --stringparam mode data ${xslt_params} --output "${outputfile}" "${XML_2_DAT}" "${inputfile}"
     
-    awk_params="-v lines=${lines}"
-    [[ -n "${delete}" ]] && awk_params="${awk_params} -v truncate="${delete}""
-    export LC_NUMERIC="C"
-    if [[ -n "${delete}" ]] ; then
-        [[ -n "${verbose}" ]] && echo "awk -F'#' -f ${FMT_2_DAT} -v pass=truncate ${awk_params} ${tempfmt}  ${outputfile}"
-        awk -F'#' -f "${FMT_2_DAT}" -v pass=truncate ${awk_params} "${tempfmt}" >"${outputfile}"
-    else
-        echo -n "" >"${outputfile}"
-    fi
-    [[ -n "${verbose}" ]] && echo "awk -F'#' -f ${FMT_2_DAT} -v pass=insert ${awk_params} ${tempfmt}  ${outputfile}"
-    awk -F'#' -f "${FMT_2_DAT}" -v pass=insert ${awk_params} "${tempfmt}" >>"${outputfile}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in awk script ${FMT_2_DAT}" "" "${ret}"
-    unset LC_NUMERIC
+#    unset LC_NUMERIC
 
     
     psql_options="-q -A -t"
@@ -179,17 +154,14 @@ if [[ -n "${generate}" ]] ; then
 fi
 
 if [[ -n "${execute}" ]] ; then
+
     result="$(psql ${psql_options} -c "select dat.table_name from dba.all_tables dat where dat.schema_name like 'base_%' and  dat.table_name = 'metadata'")"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "Cannot access dba.all_tables" "Is dba.sql installed?" "${ret}"
 
     db_version=""
 
-    project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /model/@project)"
     if [[ -n "${project}" ]] ; then
-        version="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /model/@version)"
-        [[ -z "${version}" ]] && error_exit "no version found for project ${project} in ${inputfile}" "" 1
- 
         if [[ -z "${result}" ]] ; then
             echo "Cannot find base_${project}, assuming no version of ${project} installed"
         else
@@ -198,10 +170,11 @@ if [[ -n "${execute}" ]] ; then
 
         [[ "${db_version}" != "${version}" ]] && error_exit "DB version [${db_version}] does not match script version [${version}]" "" 1
 
-        lines="$(psql ${psql_options} -f ${tempcnts})"
+        lines="$(psql ${psql_options} -f ${tempcnt})"
         
         if [[ "${lines}" != "0" ]] ;then
-            echo "Warning: database contains a total of [${lines}] lines"
+            echo "Error: database contains a total of [${lines}] lines"
+            exit 1
         fi
     else
         error_exit "no project found in file ${inputfile}" "" 1
@@ -220,7 +193,7 @@ fi
 
 
 if [[ -z "${keep}" ]] ; then
-    for file in "${tempchk}" "${tempfmt}" "${tempprj}" "${tempsrt}" "${tempcnts}"; do
+    for file in "${tempchk}" "${tempcnt}"; do
         [[ -n "${verbose}" ]] && echo "rm ${file}"
         [[ -f "${file}" ]] && rm "${file}"
     done

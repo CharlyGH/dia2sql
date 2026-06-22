@@ -136,10 +136,15 @@ if [[ -n "${gendot}" ]] ; then
     tempd="${TEMP_DIR}/${name}.dot"
     temphd="${TEMP_DIR}/${name}.hist.dot"
 
-#    set -x
-    project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
+    set_info "${inputfile}" "model" "filetype" "project" "version" ""
+
     hist_schema="hist_${project}"
-    hist_table="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "//table[@schema = '${hist_schema}']/@name")"
+   
+    xslt_params="--path ${DTD_DIR}"
+    xslt_params="${xslt_params} --stringparam objectlist table"
+    xslt_params="${xslt_params} --stringparam schema ${hist_schema}"
+
+    hist_table="$(xsltproc ${xslt_params} "${LIB_DIR}/show_content.xslt" "${inputfile}")"
 
     if [[ -n "${hist_table}" && -z "${svg}" ]] ; then
         xslt_params="--path ${DTD_DIR}"
@@ -149,6 +154,7 @@ if [[ -n "${gendot}" ]] ; then
         [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_DOT} ${inputfile} ${temphd}"
         xsltproc ${xslt_params} "${XML_2_DOT}" "${inputfile}" > "${temphd}"
         ret="$?"
+
         [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${XML_2_DOT}" "" "${ret}"
     fi
         

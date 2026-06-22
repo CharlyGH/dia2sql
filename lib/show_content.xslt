@@ -13,170 +13,142 @@
               version="1.0"
               />
 
-  <xsl:variable name="nl">
-    <xsl:text>&#10;</xsl:text>
-  </xsl:variable>
 
   <xsl:variable name="gtab">
     <xsl:text>    </xsl:text>
   </xsl:variable>
 
   
-  <xsl:param name="level"/>
+  <xsl:param name="objectlist"/>
 
+  <xsl:param name="schema"/>
+
+  <xsl:param name="table"/>
+
+  <xsl:include href="functions.xslt"/>
 
   <xsl:template match="model">
-    <xsl:if test="$level = 'all'">
-      <xsl:apply-templates select="//tablespace">
-        <xsl:with-param name="ltab"  select="$gtab"/>
+    <xsl:variable name="ntab" select="fcn:if-contains-else($objectlist,'model',$gtab,'')"/>
+
+    <xsl:if test="contains($objectlist,'model')">
+      <xsl:value-of select="concat(@project,$nl)"/>
+    </xsl:if>
+
+    <xsl:apply-templates select="model/tablespaces/tablespace">
+        <xsl:with-param name="ltab"  select="$ntab"/>
       </xsl:apply-templates>
-    </xsl:if> 
-    <xsl:if test="$level = 'schema'">
-      <xsl:apply-templates select="//schema" mode="list">
-        <xsl:with-param name="ltab"  select="$gtab"/>
-      </xsl:apply-templates>
-    </xsl:if> 
-    <xsl:if test="$level = 'all' or $level = 'table' or $level = 'column'">
-      <xsl:apply-templates select="//schema" mode="detail">
-        <xsl:with-param name="ltab"  select="$gtab"/>
-      </xsl:apply-templates>
-    </xsl:if> 
-    <xsl:if test="$level = 'reference'">
-      <xsl:apply-templates select="//schema" mode="reference">
-        <xsl:with-param name="ltab"  select="$gtab"/>
-      </xsl:apply-templates>
-    </xsl:if> 
-    <xsl:if test="$level = 'function'">
-      <xsl:apply-templates select="//schema" mode="function">
-        <xsl:with-param name="ltab"  select="$gtab"/>
-      </xsl:apply-templates>
-    </xsl:if> 
+
+    <xsl:choose>
+      <xsl:when test="string-length($schema) != 0">
+        <xsl:apply-templates select="//schema[@name = $schema]">
+          <xsl:with-param name="ltab"  select="$ntab"/>
+        </xsl:apply-templates>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates select="//schema">
+          <xsl:with-param name="ltab"  select="$ntab"/>
+        </xsl:apply-templates>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
 
-  <xsl:template match="tablespace | domain | sequence | column">
+  <xsl:template match="tablespace">
     <xsl:param name="ltab"/>
-    <xsl:value-of select="concat($ltab,@name,$nl)"/>
+    <xsl:if test="contains($objectlist,'tablespace')">
+      <xsl:value-of select="concat($ltab,@name,$nl)"/>
+    </xsl:if> 
   </xsl:template>
 
 
-
-  <xsl:template match="schema" mode="list">
-    <xsl:param name="ltab"/>
-    <xsl:value-of select="concat($ltab,@name,$nl)"/>
-  </xsl:template>
-
-
-
-  <xsl:template match="schema" mode="detail">
+  <xsl:template match="schema">
     <xsl:param name="ltab"/>
     <xsl:variable name="schema" select="@name"/>
-    <xsl:value-of select="concat($ltab,$schema,$nl)"/>
+    <xsl:variable name="ntab" select="fcn:if-contains-else($objectlist,'schema',concat($ltab,$gtab),$ltab)"/>
 
-    <xsl:if test="$level = 'all'">
-      <xsl:apply-templates select="//domain[@schema = $schema]">
-        <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-      </xsl:apply-templates>
-      <xsl:apply-templates select="//sequence[@schema = $schema]">
-        <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-      </xsl:apply-templates>
+    <xsl:if test="contains($objectlist,'schema')">
+      <xsl:value-of select="concat($ltab,$schema,$nl)"/>
     </xsl:if>
-    <xsl:apply-templates select="//table[@schema = $schema]">
-      <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
+    <xsl:apply-templates select="/model/domains/domain[@schema = $schema]">
+      <xsl:with-param name="ltab"  select="$ntab"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="/model/sequences/sequence[@schema = $schema]">
+      <xsl:with-param name="ltab"  select="$ntab"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="/model/tables/table[@schema = $schema]">
+      <xsl:with-param name="ltab"  select="$ntab"/>
     </xsl:apply-templates>
   </xsl:template>
-
 
 
   <xsl:template match="table">
     <xsl:param name="ltab"/>
+    <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="table" select="@name"/>
-    <xsl:value-of select="concat($ltab,@name,$nl)"/>
-    <xsl:if test="$level = 'all' or $level = 'column'">
-      <xsl:apply-templates select=".//column">
-        <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-      </xsl:apply-templates>
+    <xsl:variable name="ntab" select="fcn:if-contains-else($objectlist,'table',concat($ltab,$gtab),ltab)"/>
+
+    <xsl:if test="contains($objectlist,'table')">
+      <xsl:value-of select="concat($ltab,$table,$nl)"/>
+    </xsl:if>
+
+    <xsl:apply-templates select="columns/column">
+      <xsl:with-param name="ltab"  select="$ntab"/>
+    </xsl:apply-templates>
+
+    <xsl:apply-templates select="/model/references/reference/source[@schema = $schema and @table = $table]/..">
+      <xsl:with-param name="ltab"  select="$ntab"/>
+    </xsl:apply-templates>
+    
+    <xsl:apply-templates select="/model/functions/function[@schema = $schema and @table = $table]">
+      <xsl:with-param name="ltab"  select="$ntab"/>
+    </xsl:apply-templates>
+    
+  </xsl:template>
+
+  
+  <xsl:template match="column">
+    <xsl:param name="ltab"/>
+    <xsl:if test="contains($objectlist,'column')">
+      <xsl:value-of select="concat($ltab,@name,$nl)"/>
     </xsl:if>
   </xsl:template>
 
   
-  <xsl:template match="schema" mode="reference">
+  <xsl:template match="domain">
     <xsl:param name="ltab"/>
-    <xsl:variable name="schema" select="@name"/>
-    <xsl:apply-templates select="//table[@schema = $schema]" mode="reference">
-      <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-    </xsl:apply-templates>
+
+    <xsl:if test="contains($objectlist,'domain')">
+      <xsl:value-of select="concat($ltab,@name,$nl)"/>
+    </xsl:if>
   </xsl:template>
 
   
-  <xsl:template match="schema" mode="function">
+  <xsl:template match="sequence">
     <xsl:param name="ltab"/>
-    <xsl:variable name="schema" select="@name"/>
-    <xsl:value-of select="concat($ltab,$schema,$nl)"/>
-    <xsl:apply-templates select="//table[@schema = $schema]" mode="function">
-      <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-    </xsl:apply-templates>
+
+    <xsl:if test="contains($objectlist,'sequence')">
+      <xsl:value-of select="concat($ltab,@name,$nl)"/>
+    </xsl:if>
   </xsl:template>
 
-  
-  <xsl:template match="table" mode="reference">
+
+  <xsl:template match="reference">
     <xsl:param name="ltab"/>
-    <xsl:variable name="schema" select="@schema"/>
-    <xsl:variable name="table"  select="@name"/>
-    <xsl:apply-templates select="//source[@schema = $schema and @table = $table]">
-      <xsl:with-param name="ltab"  select="concat($ltab,$gtab)"/>
-    </xsl:apply-templates>
+    <xsl:if test="contains($objectlist,'reference')">
+      <xsl:value-of select="concat($ltab,@name,$nl)"/>
+    </xsl:if>
   </xsl:template>
 
-  
-
-  <xsl:template match="table" mode="function">
-    <xsl:param name="ltab"/>
-    <xsl:variable name="schema" select="@schema"/>
-    <xsl:variable name="table"  select="@name"/>
-    <xsl:apply-templates select="//function[@schema = $schema and @table = $table]">
-      <xsl:with-param name="ltab"  select="$ltab"/>
-    </xsl:apply-templates>
-  </xsl:template>
 
   <xsl:template match="function">
     <xsl:param name="ltab"/>
-    <xsl:variable name="schema" select="@schema"/>
-    <xsl:variable name="table" select="@table"/>
-    <xsl:variable name="function" select="@name"/>
-    <xsl:value-of select="concat($ltab,$function,' (',$table,')',$nl)"/>
-  </xsl:template>
-  
-
-  <xsl:template match="source">
-    <xsl:param name="ltab"/>
-    <xsl:variable name="src-schema" select="@schema"/>
-    <xsl:variable name="src-table"  select="@table"/>
-    <xsl:variable name="src-pos"    select="position()"/>
-    <xsl:if test="$src-pos = 1">
-      <xsl:value-of select="concat($ltab,'s:',$src-schema,'.',$src-table,$nl)"/>
-      <xsl:apply-templates select="//target">
-        <xsl:with-param name="ltab"   select="concat($ltab,$gtab)"/>
-        <xsl:with-param name="src-schema" select="$src-schema"/>
-        <xsl:with-param name="src-table"  select="$src-table"/>
-        <xsl:with-param name="src-pos"    select="$src-pos"/>
-      </xsl:apply-templates>
+    <xsl:if test="contains($objectlist,'function')">
+      <xsl:value-of select="concat($ltab,@name,$nl)"/>
     </xsl:if>
   </xsl:template>
 
 
-  <xsl:template match="target">
-    <xsl:param name="ltab"/>
-    <xsl:param name="src-schema"/>
-    <xsl:param name="src-table"/>
-    <xsl:param name="src-pos"/>
-    <xsl:variable name="tgt-schema" select="@schema"/>
-    <xsl:variable name="tgt-table"  select="@table"/>
-    <xsl:variable name="tgt-pos"    select="position()"/>
-    <xsl:if test="../source/@schema = $src-schema and ../source/@table = $src-table">
-      <xsl:value-of select="concat($ltab,'t:',$tgt-schema,'.',$tgt-table,$nl)"/>
-    </xsl:if>
-  </xsl:template>
+
 
 
 </xsl:stylesheet>

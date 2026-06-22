@@ -9,9 +9,10 @@ source "${BIN_DIR}/utils.lib.sh"
 
 USAGE="usage: ${ME} -i inputfile [-r reffiles] [-d database] [-u user] [-o outputfile] [-p projectfile] [-c] [-e] [-h] [-k] [-r] [-v] [-y]"
 HELP="${USAGE}
-    -c check         check the xml file before generating sql code
+    -c check         check the xml file before generating sql code and check database version
     -d database      database, default is project name
-    -e execute       execute generated sql script 
+    -e execute       generate and execute  sql script
+    -g generate      generate sql script
     -h help          print this help text
     -i inputfile     filename to process
     -k keep          keep, do not delete temp files
@@ -92,12 +93,8 @@ XML_2_XML="${LIB_DIR}/xml_2_xml.xslt"
 
 #set -x
 
-filetype=""
-projectname="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
-[[ -n "${projectname}" ]] && filetype="model"
-[[ -z "${projectname}" ]] && projectname="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/delta/@project")"
-[[ -n "${projectname}" && -z "${filetype}" ]] && filetype="delta"
-[[ -z "${projectname}" ]] && error_exit "no project name in ${inputfile}" "" 1
+set_info "${inputfile}" "" "filetype" "project" "old_version" "new_version"
+ 
 
 if [[ "${filetype}" == "delta" ]] ; then
     [[ -z "${reffiles}" ]] && error_exit "missing -r referencefile option" "${USAGE}" 1
@@ -109,7 +106,7 @@ if [[ "${filetype}" == "delta" ]] ; then
     [[ ! -r "${newfile}" ]] && error_exit "cannot readnew reference file ${oldfile}" "${USAGE}" 1
 fi
 
-[[ -z "${database}" ]] && database="${projectname}"
+[[ -z "${database}" ]] && database="${project}"
 
 
 name="${inputfile%.*}"
@@ -120,9 +117,6 @@ tempchk="${TEMP_DIR}/${name}.chk.dat"
 outputfile="${OUT_DIR}/${name}.sql"
 
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found" "" 1
-
-project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p "/model/@project")"
-
 
 if [[ -n "${check}" ]] ; then
 
@@ -135,7 +129,6 @@ fi
 
 
 #set -x
-
 
 xslt_params="--stringparam config-file ${projectfile}"
 [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
@@ -158,7 +151,7 @@ psql_options="-q -A -t"
 
 #set -x
 
-if [[ -n "${execute}" ]] ; then
+if [[ -n "${execute}" || -n "${check}" ]] ; then
     SELECT="select table_name from dba.all_tables where schema_name like 'base_%' and table_name = 'metadata';"
     result="$(psql ${psql_options} -c "${SELECT}")"
     ret="$?"
@@ -166,18 +159,16 @@ if [[ -n "${execute}" ]] ; then
 
     db_version=""
 
-    action=""
-    project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /model/@project)"
-    if [[ -n "${project}" ]] ; then
-        action="model"
-        version="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /model/@version)"
-        [[ -z "${version}" ]] && error_exit "no version found for project ${project} in ${inputfile}" "" 1
+    if [[ "${filetype}"  == "model" ]] ; then
+        version="${old_version}"
+        [[ -n "${verbose}" ]] && echo "version=${version}"
  
         if [[ -z "${result}" ]] ; then
             echo "Cannot find base_${project}, assuming no old version exists"
         else
             SELECT="select version from base_${project}.metadata;"
             db_version="$(psql ${psql_options} -c "${SELECT}")"
+            [[ -n "${verbose}" ]] && echo "db_version=${db_version}"
         fi
 
         if [[ -n "${db_version}" ]] ;then
@@ -188,43 +179,36 @@ if [[ -n "${execute}" ]] ; then
             fi
         fi
     else
-        project="$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /delta/@project)"
-        if [[ -n "${project}" ]] ; then
-            action="delta"
-            old_version="""$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /delta/@old-version)"
-            new_version="""$(${BIN_DIR}/xpath.sh -i "${inputfile}" -p /delta/@new-version)"
+        [[ -n "${verbose}" ]] && echo "old_version=${old_version}"
+        [[ -n "${verbose}" ]] && echo "new_version=${new_version}"
 
-            [[ -z "${old_version}" ]] && error_exit "no old_version found for project ${project} in ${inputfile}" "" 1
-            [[ -z "${new_version}" ]] && error_exit "no new_version found for project ${project} in ${inputfile}" "" 1
-
-            if [[ -z "${result}" ]] ; then
-                echo "Cannot find base_${project}, assuming no old version exists"
-            else
-                SELECT="select version from base_${project}.metadata;"
-                db_version="$(psql ${psql_options} -c "${SELECT}")"
-            fi
-
-            [[ -z "${db_version}" ]] && error_exit "no db_version found for project ${project} in database" "" 1
-            if [[ "${db_version}" = "${old_version}" ]] ; then
-                echo "replacing installed version ${db_version} with version ${new_version}"                
-            else
-                error_exit "old_version ${old_version} does not match db_version ${db_version}" "" 1
-            fi
+        if [[ -z "${result}" ]] ; then
+            echo "Cannot find base_${project}, assuming no old version exists"
         else
-            error_exit "no project found in file ${inputfile}" "" 1
+            SELECT="select version from base_${project}.metadata;"
+            db_version="$(psql ${psql_options} -c "${SELECT}")"
+            [[ -n "${verbose}" ]] && echo "db_version=${db_version}"
+        fi
+
+        [[ -z "${db_version}" ]] && error_exit "no db_version found for project ${project} in database" "" 1
+        if [[ "${db_version}" = "${old_version}" ]] ; then
+            echo "replacing installed version ${db_version} with version ${new_version}"                
+        else
+            error_exit "old_version ${old_version} does not match db_version ${db_version}" "" 1
         fi
     fi
-    [[ -z "${action}" ]] && error_exit "input file ${inputfile} is neither model nor delta" "" 1
 fi
 
-#set -x
+if [[ -n "${execute}" ]] ; then
+    if [[ -n "${yes}" && "${filetype}" == "model" ]] || [[ "${filetype}" == "delta" ]] ; then
+        [[ -n "${verbose}" ]] && echo "psql ${psql_options} -f ${outputfile}"
+        psql ${psql_options} -f "${outputfile}"
+        ret="$?"
+        [[ "${ret}" != "0" ]] && error_exit "error in sql script ${outputfile}" "" "${ret}"
+    fi
 
-if [[ -n "${yes}" && "${action}" == "model" ]] || [[ "${action}" == "delta" ]] ; then
-    [[ -n "${verbose}" ]] && echo "psql ${psql_options} -f ${outputfile}"
-    psql ${psql_options} -f "${outputfile}"
-    ret="$?"
-    [[ "${ret}" != "0" ]] && error_exit "error in sql script ${outputfile}" "" "${ret}"
 fi
+
 
 
 
