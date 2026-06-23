@@ -28,17 +28,15 @@
       #   4. fact tables
       #      4.1 it shoud have a primary key of a date_type and at least one id_type
       #      4.2 it shoud have no unique key
-      #      4.3 each primary key field should reference the primary key of a dim table
+      #      4.3 if not referenced itself, each primary key field should reference the primary key of a dim table
       #   5. hist tables
       #      5.1 it should have a primary key of one id_type and valid_from field of date_type
       #      5.2 it should have no unique key
       #      5.3 it should have a valid_to field of date_type
     -->
   
-  <xsl:param name="configfile"/>
+  <xsl:param name="config-file"/>
 
-  <xsl:param name="historisation"/>
-  
   <xsl:variable name="d">
     <xsl:text>:</xsl:text>
   </xsl:variable>
@@ -144,6 +142,9 @@
   <xsl:variable name="valid-from"  select="fcn:get-config-value('valid-from')"/>
   <xsl:variable name="valid-to"    select="fcn:get-config-value('valid-to')"/>
 
+  <xsl:variable name="hist-count" select="count(//table[@schema = $hist-schema])"/>
+  <xsl:variable name="historisation" select="fcn:if-then-else($hist-count,'=',0,'false','true')"/>
+  
 
   <xsl:template match="model">
     <xsl:variable name="errors">
@@ -168,13 +169,10 @@
         <xsl:apply-templates select="tables/table[@schema = $hist-schema]" mode="rule_5_2"/>
         <xsl:apply-templates select="tables/table[@schema = $hist-schema]" mode="rule_5_3"/>
       </xsl:if>
-
     </xsl:variable>
-    
     <xsl:variable name="lines-count" select="fcn:count-lines($errors)"/> 
     <xsl:variable name="warning-count" select="fcn:count-lines($errors,':WARNING:')"/> 
     <xsl:variable name="error-count" select="fcn:count-lines($errors,':ERROR:')"/> 
-
     <xsl:value-of select="concat('historisation: ',$historisation,$nl)"/>
     <xsl:value-of select="concat('rules checked: ',$lines-count,$nl)"/>
     <xsl:value-of select="concat('warnings found: ',$warning-count,$nl)"/>
@@ -623,8 +621,9 @@
     <xsl:variable name="table" select="@name" />
     <xsl:variable name="schema" select="@schema"/>
     <xsl:variable name="primary-count" select="count(primary)"/>
+    <xsl:variable name="is-target"  select="//target[@table = $table and @schema = $schema]/../@name"/>
     <xsl:variable name="errors">
-      <xsl:apply-templates select="primary"  mode="rule_4_3">
+      <xsl:apply-templates select="primary[string-length($is-target) = 0]"  mode="rule_4_3">
         <xsl:with-param name="schema" select="$schema"/>
         <xsl:with-param name="table" select="$table"/>
       </xsl:apply-templates>
@@ -664,11 +663,10 @@
     <xsl:param name="table"/>
     <xsl:param name="schema"/>
     <xsl:param name="unique"/>
-    <xsl:variable name="column" select="text()"/>
-    <xsl:variable name="type" select="//table[@name = $table and @schema = $schema]//column[@name = $column]/@type"/>
-
+    <xsl:variable name="column"     select="text()"/>
+    <xsl:variable name="type"       select="//table[@name = $table and @schema = $schema]//column[@name = $column]/@type"/>
     <xsl:if test="$type = 'id_type'">
-      <xsl:variable name="target">
+    <xsl:variable name="target">
         <xsl:for-each select="//source[@schema = $schema and @table = $table]/../foreign/key">
           <xsl:if test="text() = $column">
             <xsl:value-of select="concat(../../target/@schema,$d,../../target/@table,$d,text())"/>

@@ -11,21 +11,44 @@
   
   <xsl:param name="config-file"/>
 
-  <xsl:variable name="global-config" select="document($config-file)"/>
+  <xsl:template match="project">
+    <xsl:element name="project">
+      <xsl:apply-templates select="item"/>
+    </xsl:element>
+  </xsl:template>
 
+
+  <xsl:template match="item">
+    <xsl:element name="item">
+      <xsl:attribute name="name">
+        <xsl:value-of select="@name"/>
+      </xsl:attribute>
+      <xsl:attribute name="value">
+        <xsl:value-of select="fcn:replace-first(@value,'{}',$project)"/>
+      </xsl:attribute>
+      <xsl:attribute name="info">
+        <xsl:value-of select="@info"/>
+      </xsl:attribute>
+      <xsl:attribute name="color">
+        <xsl:value-of select="@color"/>
+      </xsl:attribute>
+    </xsl:element>
+  </xsl:template>
+
+  
+  <xsl:variable name="global-config">
+    <xsl:apply-templates select="document($config-file)/project"/>
+  </xsl:variable>
+
+
+
+  
   <fcn:function name="fcn:get-config-value">
     <xsl:param name="name"/>
     <xsl:param name="config" select="$global-config"/>
     <xsl:variable name="value" select="exslt:node-set($config)/project/item[@name = $name]/@value"/>
     <fcn:result>
-      <xsl:choose>
-        <xsl:when test="string-length($project) != 0">
-          <xsl:value-of select="fcn:replace-first($value,'{}',$project)"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$value"/>
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:value-of select="$value"/>
     </fcn:result>
   </fcn:function>
 
@@ -47,6 +70,19 @@
 
     <fcn:result>
       <xsl:value-of select="$info"/>
+    </fcn:result>
+  </fcn:function>
+
+
+
+  <fcn:function name="fcn:get-schema-color">
+    <xsl:param name="schema"/>
+    <xsl:param name="config" select="$global-config"/>
+    <xsl:variable name="color">
+      <xsl:value-of select="exslt:node-set($config)/project/item[@value = $schema]/@color"/>
+    </xsl:variable>
+    <fcn:result>
+      <xsl:value-of select="$color"/>
     </fcn:result>
   </fcn:function>
 

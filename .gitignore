@@ -3,6 +3,7 @@ data/*.lout.li
 out/*.sql
 out/*.save
 out/*.json
+out/*.dot
 pdf/*.pdf
 temp/*
 test/*

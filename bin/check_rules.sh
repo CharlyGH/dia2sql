@@ -8,9 +8,8 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 
 source "${BIN_DIR}/utils.lib.sh"
 
-USAGE="usage: ${ME} -i inputfile -o outputfile [-p projectconfig] [-a] [-c] [-h] [-k] [-t] [-v]"
+USAGE="usage: ${ME} -i inputfile -o outputfile [-p projectconfig] [-c] [-h] [-k] [-t] [-v]"
 HELP="${USAGE}
-    -a auto         check hist tables
     -h help         print this help message
     -i inputfile    name of input file
     -k keep         keep tempfiles, do not delete at end
@@ -19,7 +18,6 @@ HELP="${USAGE}
     -v verbose      list all steps of execution
 "
 
-auto=""
 inputfile=""
 keep=""
 outputfile=""
@@ -27,12 +25,9 @@ projectconfig="${FULL_PROJECT_FILE}"
 verbose=""
 
 
-while getopts "achi:ko:p:tv" OPT
+while getopts "chi:ko:p:tv" OPT
 do
     case ${OPT} in
-        a)
-            auto="1"
-            ;;
         h)
             echo "${HELP}"
             exit 0;
@@ -60,7 +55,7 @@ done
 
 [[ -z "${inputfile}" ]] && error_exit "missing -i inputfile option" "${USAGE}"  1
 [[ -z "${outputfile}" ]] && error_exit "missing -o outputfile option" "${USAGE}"  1
-[[ -z "${projectconfig}" ]] && error_exit "missing -p projectconfig option" "${USAGE}"  1
+[[ -z "${config-file}" ]] && error_exit "missing -p projectconfig option" "${USAGE}"  1
 
 
 
@@ -77,11 +72,7 @@ xmllint ${xmllint_params} "${inputfile}"
 ret="$?"
 [[ "${ret}" != "0" ]] && error_exit "schema validation failed" "" 1
 
-historisation="false"
-[[ -n "${auto}" ]] && historisation="true"
-
-xslt_params="--path ${DTD_DIR} --stringparam projectconfig ${projectconfig}"
-xslt_params="${xslt_params} --stringparam historisation ${historisation}"
+xslt_params="--path ${DTD_DIR} --stringparam config-file ${projectconfig}"
 [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${CHECK_XSLT} ${inputfile} ${outputfile}"
 xsltproc ${xslt_params} "${CHECK_XSLT}" "${inputfile}" > "${outputfile}"
 ret="$?"

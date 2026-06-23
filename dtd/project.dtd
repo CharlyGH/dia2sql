@@ -3,4 +3,5 @@
 <!ELEMENT item       EMPTY>
 <!ATTLIST item name  CDATA #REQUIRED
                value CDATA #REQUIRED
-               info  CDATA #IMPLIED>
+               info  CDATA #IMPLIED
+               color CDATA #IMPLIED>

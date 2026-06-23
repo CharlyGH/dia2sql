@@ -130,8 +130,8 @@ if [[ -n "${auto}" ]] ; then
     cat "${tempqt}" | tr '"' "'"  > "${outputfile}"
     done="1"
     if [[ -n "${check}" ]] ; then
-        [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verb_opt} -a -i ${outputfile} -o ${tempchk} -p ${tempprj}" 
-        "${BIN_DIR}/check_rules.sh" ${verb_opt} -a -i "${outputfile}" -o "${tempchk}" -p "${tempprj}" 
+        [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verb_opt} -i ${outputfile} -o ${tempchk} -p ${tempprj}" 
+        "${BIN_DIR}/check_rules.sh" ${verb_opt} -i "${outputfile}" -o "${tempchk}" -p "${tempprj}" 
         ret="$?"
         [[ "${ret}" != "0" ]] && error_exit "error in script check_rules.sh" "" 1
     fi

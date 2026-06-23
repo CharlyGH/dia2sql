@@ -11,8 +11,6 @@
 
   <xsl:param name="debug"/>
   
-  <xsl:param name="hist-schema"/>
-  
   <xsl:param name="proc-hist-schema"/>
   
   <xsl:variable name="space">
@@ -103,7 +101,26 @@
 
   <xsl:include href="functions.xslt"/>
 
-  
+  <xsl:variable name="project">
+    <xsl:value-of select="fcn:to-lower-case(/model/@project)"/>
+  </xsl:variable>
+
+  <xsl:variable name="version">
+    <xsl:value-of select="fcn:to-lower-case(/model/@version)"/>
+  </xsl:variable>
+
+  <xsl:include href="configuration.xslt"/>
+
+  <xsl:variable name="base-schema"  select="fcn:get-config-value('base')"/>
+  <xsl:variable name="const-schema" select="fcn:get-config-value('const')"/>
+  <xsl:variable name="dim-schema"   select="fcn:get-config-value('dim')"/>
+  <xsl:variable name="fact-schema"  select="fcn:get-config-value('fact')"/>
+  <xsl:variable name="hist-schema"  select="fcn:get-config-value('hist')"/>
+
+  <xsl:variable name="valid-from"  select="fcn:get-config-value('valid-from')"/>
+  <xsl:variable name="valid-to"    select="fcn:get-config-value('valid-to')"/>
+ 
+
   <xsl:template name="get-references">
     <xsl:param name="filter"/>
     <xsl:for-each select="//table[dyn:evaluate($filter)]">
@@ -224,9 +241,12 @@
       </xsl:if>
     </xsl:variable>
 
-
+    <xsl:variable name="color" select="fcn:get-schema-color($schema)"/>
+    
     <xsl:value-of select="concat($tab,$dq,$table-name,$dq,' [',$nl)"/>
     <xsl:value-of select="concat($tab,$tab,$shape-plain,$nl)"/>
+    <xsl:value-of select="concat($tab,$tab,'color = ',$dq,$color,$dq,$nl)"/>
+    <xsl:value-of select="concat($tab,$tab,'fontcolor = ',$dq,$color,$dq,$nl)"/>
     <xsl:value-of select="concat($tab,$tab,$table-header,$nl)"/>
 
     <xsl:value-of select="concat($big-tab,$trb,$nl)"/>

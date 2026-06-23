@@ -8,7 +8,7 @@ BIN_DIR="$(cd ${BASH_SOURCE%/*}; pwd)"
 source "${BIN_DIR}/utils.lib.sh"
 
 
-USAGE="usage: ${ME} -i inputfile [-o outputfile] {-d | -l | -p | -s} [-c] [-D] [-h] [-k] [-r repeat] [-v]"
+USAGE="usage: ${ME} -i inputfile [-o outputfile] [-P projectfile] {-d | -l | -p | -s} [-c] [-D] [-h] [-k] [-r repeat] [-v]"
 HELP="${USAGE}
     -D debug       debug mode
     -c check       check generated dot or lout file
@@ -19,6 +19,7 @@ HELP="${USAGE}
     -l lout        create lout docu
     -o outputfile  name of output file
     -p pdf         create pdf docu, implies dot and lout
+    -P projectfile   configuration file for historization, default is ${PROJECT_FILE}
     -r repeat      remoce lout index files an set repeat value 
     -s svg         create svg docu, implies dot
     -v verbose     show all steps of execution
@@ -33,6 +34,7 @@ inputfile=""
 keep=""
 lout=""
 outputfile=""
+projectfile="${FULL_PROJECT_FILE}"
 pdf=""
 repeat=""
 svg=""
@@ -144,11 +146,12 @@ if [[ -n "${gendot}" ]] ; then
     xslt_params="${xslt_params} --stringparam objectlist table"
     xslt_params="${xslt_params} --stringparam schema ${hist_schema}"
 
+    [[ -n "${verbose}" ]] && echo "hist_table=(xsltproc ${xslt_params} ${LIB_DIR}/show_content.xslt ${inputfile})"
     hist_table="$(xsltproc ${xslt_params} "${LIB_DIR}/show_content.xslt" "${inputfile}")"
 
     if [[ -n "${hist_table}" && -z "${svg}" ]] ; then
         xslt_params="--path ${DTD_DIR}"
-        xslt_params="${xslt_params} --stringparam hist-schema ${hist_schema}"
+        xslt_params="${xslt_params} --stringparam config-file ${projectfile}"
         xslt_params="${xslt_params} --stringparam proc-hist-schema only"
         [[ -n "${debug}" ]] && xslt_params="${xslt_params} --stringparam debug 1"
         [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} ${XML_2_DOT} ${inputfile} ${temphd}"
@@ -159,7 +162,7 @@ if [[ -n "${gendot}" ]] ; then
     fi
         
     xslt_params="--path ${DTD_DIR}"
-    xslt_params="${xslt_params} --stringparam hist-schema ${hist_schema}"
+    xslt_params="${xslt_params} --stringparam config-file ${projectfile}"
     if [[ -n "${svg}" ]] ; then
         xslt_params="${xslt_params} --stringparam proc-hist-schema all"
     else
@@ -299,12 +302,13 @@ if [[ -n "${pdf}" ]] ; then
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in lout script ${templ}" "" "${ret}"
 
-    [[ -n "${verbose}" ]] && echo "pdfunite  ${templp} ${tempdp} ${output}"
 
-    
+    echo "hist_table=[${hist_table}]"
     if [[ -n "${hist_table}" ]] ; then
+        [[ -n "${verbose}" ]] && echo "pdfunite  ${templp} ${temphdp} ${tempdp} ${output}"
         pdfunite "${templp}" "${temphdp}" "${tempdp}" "${output}"
     else
+        [[ -n "${verbose}" ]] && echo "pdfunite  ${templp} ${tempdp} ${output}"
         pdfunite "${templp}" "${tempdp}" "${output}"
     fi
     

@@ -119,7 +119,8 @@ inputpath="${FULL_DATA_DIR}/${inputfile##*/}"
 
 
 if [[ -n "${check}" ]] ; then
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -a -i "${inputfile}"  -o "${tempchk}" 
+    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verbose_option} -i ${inputfile}  -o ${tempchk}" 
+    ${BIN_DIR}/check_rules.sh ${verbose_option} -i "${inputfile}"  -o "${tempchk}" 
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" "1"
 #    cat "${tempchk}"

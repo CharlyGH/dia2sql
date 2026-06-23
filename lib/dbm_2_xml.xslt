@@ -266,8 +266,7 @@
 
   <xsl:template match="schema">
     <xsl:variable name="schema" select="@name"/>
-    <xsl:variable name="key"   select="concat(substring-before($schema,'_'),'_{}')"/>
-    <xsl:variable name="info"  select="fcn:get-config-info('',$key)"/>
+    <xsl:variable name="info"  select="fcn:get-config-info('',$schema)"/>
     <xsl:variable name="auto"  select="fcn:if-then-else($info,'=','writable','NO','YES')"/>
     <xsl:element name="schema">
       <xsl:attribute name="name">
@@ -367,8 +366,7 @@
     <xsl:variable name="schema" select="schema/@name"/>
     <xsl:variable name="name"   select="@name"/>
 
-    <xsl:variable name="key"   select="concat(substring-before($schema,'_'),'_{}')"/>
-    <xsl:variable name="info"  select="fcn:get-config-info('',$key)"/>
+    <xsl:variable name="info"  select="fcn:get-config-info('',$schema)"/>
     <xsl:variable name="is-auto"  select="fcn:if-then-else($info,'=','writable','NO','YES')"/>
 
     <xsl:variable name="is-hist"  select="$schema = $hist-schema"/>

@@ -34,8 +34,7 @@
 
   <fcn:function name="fcn:get-schema-auto">
     <xsl:param name="schema"/>  
-    <xsl:variable name="key" select="concat(substring-before($schema,$project),'{}')"/>
-    <xsl:variable name="info" select="fcn:get-config-info('',$key)"/>
+    <xsl:variable name="info" select="fcn:get-config-info('',$schema)"/>
     <xsl:variable name="auto" select="fcn:if-then-else($info,'=','writable','NO','YES')"/>
     <fcn:result>
       <xsl:value-of select="$auto"/>
