@@ -1,3 +1,4 @@
+data/*.save
 data/*.xml
 data/*.lout.li
 out/*.sql

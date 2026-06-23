@@ -95,6 +95,7 @@ done
 
 
 XML_2_DAT="${LIB_DIR}/xml_2_dat.xslt"
+CHECK_XSLT="${LIB_DIR}/check_rules.xslt"
 
 [[ -z "${execute}${generate}" ]] && error_exit "missing -g and -e option" "${USAGE}" 1
 
@@ -119,8 +120,12 @@ inputpath="${FULL_DATA_DIR}/${inputfile##*/}"
 
 
 if [[ -n "${check}" ]] ; then
-    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verbose_option} -i ${inputfile}  -o ${tempchk}" 
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -i "${inputfile}"  -o "${tempchk}" 
+
+    xslt_params="--path ${DTD_DIR}"
+    xslt_params="${xslt_params} --stringparam config-file ${projectfile}"
+
+    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempchk}  ${CHECK_XSLT} ${inputfile}"
+    xsltproc ${xslt_params} --output ${tempchk}  "${CHECK_XSLT}" "${inputfile}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" "1"
 #    cat "${tempchk}"

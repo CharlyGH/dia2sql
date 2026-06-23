@@ -72,6 +72,8 @@ DBM_2_DAT="${LIB_DIR}/dbm_2_dat.xslt"
 DBM_2_XML="${LIB_DIR}/dbm_2_xml.xslt"
 PROJECT_XML_2_DAT="${LIB_DIR}/project_dat.xslt"
 XML_2_XML="${LIB_DIR}/xml_2_xml.xslt"
+CHECK_XSLT="${LIB_DIR}/check_rules.xslt"
+
 
 name="${inputfile%.*}"
 name="${name##*/}"
@@ -106,10 +108,6 @@ ret="$?"
 cat "${tempqt}" | tr '"' "'"  > "${tempout}"
 
 
-xslt_params="--stringparam configfile ${tempprj}"
-xslt_params="${xslt_params} --path ${DTD_DIR}"
-
-
 if [[ -n "${auto}" ]] ; then
     dim_count="$(cat "${tempout}" | grep '<table ' | grep 'schema="dim' | wc -l)"
     hist_count="$(cat "${tempout}" | grep '<table ' | grep 'schema="dim' | wc -l)"
@@ -130,10 +128,11 @@ if [[ -n "${auto}" ]] ; then
     cat "${tempqt}" | tr '"' "'"  > "${outputfile}"
     done="1"
     if [[ -n "${check}" ]] ; then
-        [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verb_opt} -i ${outputfile} -o ${tempchk} -p ${tempprj}" 
-        "${BIN_DIR}/check_rules.sh" ${verb_opt} -i "${outputfile}" -o "${tempchk}" -p "${tempprj}" 
+
+        [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempchk}  ${CHECK_XSLT} ${outputfile}"
+        xsltproc ${xslt_params} --output ${tempchk}  "${CHECK_XSLT}" "${outputfile}"
         ret="$?"
-        [[ "${ret}" != "0" ]] && error_exit "error in script check_rules.sh" "" 1
+        [[ "${ret}" != "0" ]] && error_exit "error in script ${CHECK_XSLT}" "" 1
     fi
 else
     [[ -n "${verbose}" ]] && echo "cp ${tempout} ${outputfile}"

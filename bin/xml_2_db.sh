@@ -86,6 +86,7 @@ done
 
 XML_2_SQL="${LIB_DIR}/xml_2_sql.xslt"
 XML_2_XML="${LIB_DIR}/xml_2_xml.xslt"
+CHECK_XSLT="${LIB_DIR}/check_rules.xslt"
 
 
 [[ -z "${inputfile}" ]] && error_exit "missing -i inputfile option" "${USAGE}" 1
@@ -118,10 +119,13 @@ outputfile="${OUT_DIR}/${name}.sql"
 
 [[ ! -f "${inputfile}" ]] && error_exit "input file '${inputfile}' not found" "" 1
 
+xslt_params="--path ${DTD_DIR}"
+xslt_params="${xslt_params}  --stringparam config-file ${projectfile}"
+
 if [[ -n "${check}" ]] ; then
 
-    [[ -n "${verbose}" ]] && echo "${BIN_DIR}/check_rules.sh ${verbose_option} -i ${inputfile} -o ${tempchk}" 
-    ${BIN_DIR}/check_rules.sh ${verbose_option} -i "${inputfile}" -o "${tempchk}" 
+    [[ -n "${verbose}" ]] && echo "xsltproc ${xslt_params} --output ${tempchk}  ${CHECK_XSLT} ${inputfile}"
+    xsltproc ${xslt_params} --output ${tempchk}  "${CHECK_XSLT}" "${inputfile}"
     ret="$?"
     [[ "${ret}" != "0" ]] && error_exit "error in xslt script ${CHECK_XSLT}" "" 1
 #    cat "${tempchk}"
@@ -130,10 +134,8 @@ fi
 
 #set -x
 
-xslt_params="--stringparam config-file ${projectfile}"
 [[ -n "${oldfile}" ]] && xslt_params="${xslt_params}  --stringparam oldfile ${oldfile}"
 [[ -n "${newfile}" ]] && xslt_params="${xslt_params}  --stringparam newfile ${newfile}"
-xslt_params="${xslt_params}  --path ${DTD_DIR}"
 xslt_params="${xslt_params}  --stringparam filetype ${filetype}"
 
 
